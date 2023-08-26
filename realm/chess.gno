@@ -127,12 +127,12 @@ func NewGameWithUsername(username string) Game {
 // good resource to verify the following section:
 // https://www.fide.com/FIDE/handbook/LawsOfChess.pdf
 
-// Move specifies a move to be done on the given game, specifying in algebraic
-// notation the position where to move the piece.
+// MakeMove specifies a move to be done on the given game, specifying in
+// algebraic notation the position where to move the piece.
 // If the piece is a pawn which is moving to the last row, a promotion piece
 // must be specified.
 // Castling is specified by indicating the king's movement.
-func Move(gameID, from, to string, promote Piece) Game {
+func MakeMove(gameID, from, to string, promote Piece) Game {
 	graw, ok := gameStore.Get(id)
 	if !ok {
 		panic("game not found: " + id)
