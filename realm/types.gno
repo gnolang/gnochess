@@ -1,4 +1,27 @@
+// This file is focused on elemental types and functions for handling
+// chess games. Thus, the move legality rules are implemented here.
+//
+// To verify the following section, see the FIDE "Laws of Chess":
+// https://www.fide.com/FIDE/handbook/LawsOfChess.pdf
+
 package chess
+
+// Color determines a player's color -- either white or black.
+type Color bool
+
+const (
+	White Color = false
+	Black Color = true
+)
+
+// Piece returns the color as a piece to be OR'd into a Piece;
+// ie. 0 on White, and [PieceBlack] on black.
+func (c Color) Piece() Piece {
+	if c == White {
+		return 0
+	}
+	return PieceBlack
+}
 
 // Board is a representation of a chess board.
 // Details on how the position is encoded can be found at [Position].
@@ -46,38 +69,52 @@ func abs(n int8) int8 {
 }
 
 // ValidateMove checks whether the given move is legal in Chess.
-func (b Board) ValidateMove(previous []Move, m Move) (newBoard Board, ok bool) {
+//
+// Caller guarantees:
+//
+//   - len(previous) must be even for white moves, odd for black moves.
+//   - m may not be nil.
+//   - m.To and m.From must be valid (<64).
+//
+// ValidateMove may modify m.Flags, hence the pointer.
+func (b Board) ValidateMove(previous []Move, m *Move) (newBoard Board, ok bool) {
+	if b[m.To].StripColor() == PieceKing {
+		return
+	}
+
+	return b.validateMove(previous, m)
+}
+
+// validateMove allows for m to be a "king-capture" move, which is illegal in
+// chess, but it is useful for InCheck.
+func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) {
 	piece := b[m.From]
 	newBoard = b
 
-	// piece moved must be of player's colour
-	isBlack := len(previous)%2 == 1
-	if piece == PieceEmpty || piece.IsBlack() != isBlack ||
+	// piece moved must be of player's color
+	color := Color(len(previous)%2 == 1)
+	if piece == PieceEmpty || piece.Color() != color ||
 		// additionally, check piece has actually moved
 		m.From == m.To {
 		return
 	}
-	// destination must not be occupied by piece of same colour
-	if to := board[m.To]; to != PositionEmpty && to.IsBlack() == isBlack {
+	// destination must not be occupied by piece of same color
+	if to := b[m.To]; to != PieceEmpty && to.Color() == color {
 		return
 	}
 
-	// one of the two necessarily != 0.
-	dr, dc := func() (int8, int8) {
-		fr, fc := m.From.SplitI()
-		tr, tc := m.To.SplitI()
-		return tr - fr, tc - fc
-	}()
+	// one of the two necessarily != 0 (consequence of m.From != m.To).
+	dr, dc := m.From.Delta(m.To)
 
 	isDiag := func() bool {
-		// move diagonally (|dr| == |dc|, != 0)
-		if dr == 0 || abs(dr) != abs(dc) {
+		// move diagonally (|dr| == |dc|)
+		if abs(dr) != abs(dc) {
 			return false
 		}
 		signr, signc := sign(dr), sign(dc)
 		// positions crossed must be empty
 		for i := int8(0); i < abs(dr); i++ {
-			if board[m.From.Move(i*signr, i*signc)] != PositionEmpty {
+			if b[m.From.Move(i*signr, i*signc)] != PieceEmpty {
 				return false
 			}
 		}
@@ -90,22 +127,34 @@ func (b Board) ValidateMove(previous []Move, m Move) (newBoard Board, ok bool) {
 		}
 		// positions crossed must be empty
 		for i := int8(0); i < abs(dr); i++ {
-			if board[m.From.Move(i*sign(dr), 0)] != PositionEmpty {
+			if b[m.From.Move(i*sign(dr), 0)] != PieceEmpty {
 				return false
 			}
 		}
 		for i := int8(0); i < abs(dc); i++ {
-			if board[m.From.Move(0, i*sign(dc))] != PositionEmpty {
+			if b[m.From.Move(0, i*sign(dc))] != PieceEmpty {
 				return false
 			}
 		}
 		return true
 	}
 
-	switch piece &^ PieceBlack {
+	switch piece.StripColor() {
 	case PieceRook:
 		if !isHorizVert() {
 			return
+		}
+		// if rook has moved from a starting position, this disables castling
+		// on the side of the rook. flag accordingly in the move.
+		var fg Position
+		if color == Black {
+			fg = 7 << 3
+		}
+		switch m.From {
+		case fg: // a8
+			m.Flags |= MoveFlagNoCastleQ
+		case fg | 7: // h8
+			m.Flags |= MoveFlagNoCastleK
 		}
 
 	case PieceKnight:
@@ -127,16 +176,203 @@ func (b Board) ValidateMove(previous []Move, m Move) (newBoard Board, ok bool) {
 		}
 
 	case PieceKing:
-		// move 1sq in all directions
-		// unless piece in the way
 		// castling
+		if abs(dc) == 2 && dr == 0 {
+			// determine if castle is a valid form of castling for the given color
+			ctype := m.isCastle(color)
+			if ctype == 0 {
+				return
+			}
+
+			if false ||
+				// check that there are no previous moves which disable castling
+				castlingDisabled(previous, color, ctype) ||
+				// check that we have the exact board set ups we need
+				!b.checkCastlingSetup(color, ctype) {
+				return
+			}
+
+			// TODO check the original and crossed square are not in check
+
+			// perform rook move here
+			newBoard = newBoard.castleRookMove(color, ctype)
+			// add NoCastle flags to prevent any further castling
+			m.Flags |= MoveFlagNoCastleQ | MoveFlagNoCastleK
+			break
+		}
+		// move 1sq in all directions
+		if dc < -1 || dc > 1 || dr < -1 || dr > 1 {
+			return
+		}
+		// king has moved: disable castling.
+		m.Flags |= MoveFlagNoCastleQ | MoveFlagNoCastleK
+
 	case PiecePawn:
-		// move vertically 1sq (or 2sq)
-		// en-passant capture
-		// promotion
+		// determine direction depending on color
+		dir := 1
+		if color == Black {
+			dir = -1
+		}
+
+		switch {
+		case dc == 0 && dr == dir: // 1sq up
+			// destination must be empty (no captures allowed)
+			if b[m.To] != PieceEmpty {
+				return
+			}
+		case dc == 0 && dr == dir*2: // 2sq up (only from starting row)
+			wantRow := Position(1)
+			if color == Black {
+				wantRow = 6
+			}
+			// check starting row, and that two squares are empty
+			if (m.From>>3) != wantRow ||
+				b[m.From.Move(int8(dir), 0)] != PieceEmpty ||
+				b[m.To] != PieceEmpty {
+				return
+			}
+		case abs(dc) == 1 && dr == dir: // capture on diag
+			// must be a capture
+			if b[m.To] == PieceEmpty {
+				// TODO add exception for en passant
+				return
+			}
+			// b[m.To] is necessarily an opponent piece; we check & return
+			// b[m.To].Color == color at the beginning of the fn.
+		default: // not a recognized move
+			return
+		}
+
+		row := m.To >> 3
+		if (color == White && row == 7) ||
+			(color == Black && row == 0) {
+			// promotion required
+			if m.Flags&MoveFlagPromotion == 0 {
+				return
+			}
+			pc := m.Flags & 7
+			if pc == 0 || pc == 7 {
+				return
+			}
+			newBoard[m.From] = Piece(pc) | color.Piece()
+		}
 	}
 
-	// is our king in check?
+	to := newBoard[m.To]
+	if to.StripColor() == PieceKing {
+		// King captures don't check for our own king in check;
+		// these are only "theoretical" moves.
+		return newBoard, true
+	}
+
+	// perform "move"
+	newBoard[m.From], newBoard[m.To] = PieceEmpty, newBoard[m.From]
+
+	// is our king in check? (esp. as a result of the actual move)
+	if b.InCheck(color) {
+		return
+	}
+	return newBoard, true
+}
+
+var blackPastMoves = []Move{
+	{From: PositionInvalid, To: PositionInvalid},
+}
+
+// InCheck checks whether the king with the given color is in check.
+// If such king does not exist on the board, InCheck returns false.
+//
+// A king is in check if the move from a piece of the other color
+// towards the king is valid, ignoring any checks on the other color's king.
+//
+// NOTE: the last remark is important:
+// https://lichess.org/analysis/4k3/8/4b3/8/8/8/K3R3/8_w_-_-_0_1?color=white
+// -- this is still a check for white, even if _technically_ black couldn't
+// move the bishop (as that would check its own king)
+func (b Board) InCheck(color Color) bool {
+	pWant := PieceKing | color.Piece()
+	kingp := b.findPiece(pWant)
+	if kingp == PositionInvalid {
+		// king doesn't exist (likely recursive InCheck call)
+		return false
+	}
+
+	// use pastMoves to make validateMove check for the right color.
+	// in the for-loop, we'll be simulating a move done by the color
+	// opposite ours. => if our color is white, the simulated move is black
+	// => len(pastMoves) == 1
+	var pastMoves []Move
+	if color == White {
+		pastMoves = blackPastMoves
+	}
+
+	for pos, piece := range b {
+		if piece == PieceEmpty || piece.Color() == color {
+			continue
+		}
+		_, ok := b.validateMove(pastMoves, &Move{
+			From: Position(pos),
+			To:   kingp,
+			// validateMove (unexp) understands that moves to capture a king are
+			// "theoretical", so it doesn't check for checking on its own king,
+			// or promotion.
+		})
+		if ok {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (b Board) findPiece(pWant Piece) Position {
+	for pos, p := range b {
+		if p == pWant {
+			return Position(pos)
+		}
+	}
+	return PositionInvalid
+}
+
+func (b Board) set(p Position, pc Piece) Board {
+	b[p] = pc
+	return b
+}
+
+func (b Board) checkCastlingSetup(c Color, typ byte) bool {
+	// set up correct row and piece flags according to color
+	var fg Position
+	var pfg Piece
+	if c == Black {
+		fg, pfg = 7<<3, PieceBlack
+	}
+
+	if typ == 'K' {
+		return b[fg|4] == pfg|PieceKing &&
+			b[fg|5] == PieceEmpty &&
+			b[fg|6] == PieceEmpty &&
+			b[fg|7] == pfg|PieceRook
+	}
+	return b[fg|4] == pfg|PieceKing &&
+		b[fg|3] == PieceEmpty &&
+		b[fg|2] == PieceEmpty &&
+		b[fg|1] == PieceEmpty &&
+		b[fg|0] == pfg|PieceRook
+}
+
+func (b Board) castleRookMove(c Color, typ byte) Board {
+	var fg Position
+	var pfg Piece
+	if c == Black {
+		fg, pfg = 7<<3, PieceBlack
+	}
+
+	if typ == 'K' {
+		b[fg|7], b[fg|5] = PieceEmpty, PieceRook|pfg
+	} else {
+		b[fg|0], b[fg|3] = PieceEmpty, PieceRook|pfg
+	}
+	return b
 }
 
 // Piece represents a piece on the board.
@@ -163,7 +399,7 @@ var p = [256]Piece{
 // be white, unless p&PieceBlack != 0. Note PieceBlack is not a valid piece; it
 // must be bitwise OR'd to a non-empty piece.
 const (
-	PieceEmpty Piece = 0
+	PieceEmpty Piece = iota
 
 	PiecePawn
 	PieceRook
@@ -175,8 +411,19 @@ const (
 	PieceBlack Piece = 8 // bit-flag
 )
 
-// IsBlack returns whether the given piece is black.
-func (p Piece) IsBlack() bool { return p&PieceBlack != 0 }
+// Color returns the color of the piece.
+func (p Piece) Color() Color { return Color(p&PieceBlack != 0) }
+
+// Piece returns the given Piece without color information.
+func (p Piece) StripColor() Piece { return p &^ PieceBlack }
+
+// Switch switches the color of the given piece.
+func (p Piece) Switch() Piece {
+	if p.Color() == Black {
+		return p &^ PieceBlack
+	}
+	return p | PieceBlack
+}
 
 // Position encodes position information.
 // Indexing 0 as the LSB, bits 0-3 indicate the column and bits 4-6 indicate
@@ -244,10 +491,86 @@ func (p Position) SplitI() (row, col int8) {
 	return int8(p >> 3), int8(p & 7)
 }
 
+// Delta calculates the difference between the two positions.
+// p is the originating position, s is the ending position. dr and dc are the
+// difference in rows and columns from p to s; for instance, d1.Delta(a4) yields
+// 3, -3.
+func (p Position) Delta(s Position) (dr, dc int8) {
+	fr, fc := p.SplitI()
+	tr, tc := s.SplitI()
+	return tr - fr, tc - fc
+}
+
 // Move represents a chess game move.
 type Move struct {
 	From, To Position
-
-	// When pawn promotion happens, the piece the pawn is promoting to.
-	Promotion Piece
+	Flags    MoveFlags
 }
+
+var (
+	castleWhiteQ = Move{From: PositionFromString("e1"), To: PositionFromString("c1")}
+	castleWhiteK = Move{From: PositionFromString("e1"), To: PositionFromString("g1")}
+	castleBlackQ = Move{From: PositionFromString("e8"), To: PositionFromString("c8")}
+	castleBlackK = Move{From: PositionFromString("e8"), To: PositionFromString("g8")}
+)
+
+// returns 0, 'K' or 'Q'.
+func (m Move) isCastle(c Color) (kind byte) {
+	if c == White {
+		switch m {
+		case castleWhiteQ:
+			return 'Q'
+		case castleWhiteK:
+			return 'K'
+		}
+	} else {
+		switch m {
+		case castleBlackQ:
+			return 'Q'
+		case castleBlackK:
+			return 'K'
+		}
+	}
+	return 0
+}
+
+func castlingDisabled(moves []Move, c Color, kind byte) bool {
+	if kind != 'K' && kind != 'Q' {
+		return false
+	}
+
+	// Determine what flag we're looking for.
+	want := MoveFlagNoCastleK
+	if kind == 'Q' {
+		want = MoveFlagNoCastleQ
+	}
+
+	// Search only through even/odd moves according to color.
+	off := 0
+	if c == Black {
+		off = 1
+	}
+
+	// Iterate until we find a move with the flags we want.
+	for i := off; i < len(moves); i += 2 {
+		f := moves[i].Flags
+		if f&MoveFlagPromotion == 0 && f&want != 0 {
+			return true
+		}
+	}
+
+	return false
+}
+
+// MoveFlags represents bit-flags in a move.
+type MoveFlags byte
+
+const (
+	// Indicates moves which forbid subsequent Queenside or Kingside castling.
+	MoveFlagNoCastleQ MoveFlags = 1 << iota
+	MoveFlagNoCastleK
+	_
+	// Indicates pawn promotion. First three bits become the value of the
+	// corresponding Piece.
+	MoveFlagPromotion
+)

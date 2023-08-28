@@ -3,11 +3,12 @@ package chess
 
 import (
 	"std"
+	"strconv"
 	"time"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
-	"gno.land/p/demo/users"
+	"gno.land/r/demo/users"
 )
 
 // realm state
@@ -40,18 +41,19 @@ type GameState byte
 const (
 	GameStateInvalid = iota
 
-	GameStateFirstMoves
 	GameStateOpen
 
 	GameStateWhiteCheckmated
 	GameStateBlackCheckmated
+	GameStateStalemate
 )
 
 // IsFinished returns whether the game is in a finished state.
 func (g GameState) IsFinished() bool {
-	switch {
-	case GamestateWhiteCheckmated,
-		GameStateBlackCheckmated:
+	switch g {
+	case GameStateWhiteCheckmated,
+		GameStateBlackCheckmated,
+		GameStateStalemate:
 		return true
 	}
 	return false
@@ -60,8 +62,15 @@ func (g GameState) IsFinished() bool {
 // NewGame initialized a new game with the given opponent.
 func NewGame(opponent std.Address) Game {
 	caller := std.GetOrigCaller()
-	val, _ := user2Games.Get(caller.String())
-	games, _ := val.([]*Game) // if val == nil, this is just ([]*Game)(nil)
+	val, exist := user2Games.Get(caller.String())
+	var games []*Game
+	if exist {
+		games, _ = val.([]*Game)
+	}
+
+	if caller == opponent {
+		panic("can't create a game with yourself")
+	}
 
 	var isBlack bool
 	if len(games) > 0 {
@@ -89,7 +98,7 @@ func NewGame(opponent std.Address) Game {
 		Black:     opponent,
 		Board:     defaultBoard,
 		Moves:     nil,
-		State:     GameStateFirstMoves,
+		State:     GameStateOpen,
 		CreatedAt: time.Now(),
 	}
 	if isBlack {
@@ -105,9 +114,9 @@ func hasOngoingGameWithPlayer(games []*Game, player std.Address) bool {
 	for _, game := range games {
 		// stop processing at start of finished games
 		if game.State.IsFinished() {
-			continue
+			break
 		}
-		if game.White == opponent || game.Black == opponent {
+		if game.White == player || game.Black == player {
 			return true
 		}
 	}
@@ -124,18 +133,17 @@ func NewGameWithUsername(username string) Game {
 	return NewGame(u.Address())
 }
 
-// good resource to verify the following section:
-// https://www.fide.com/FIDE/handbook/LawsOfChess.pdf
-
 // MakeMove specifies a move to be done on the given game, specifying in
 // algebraic notation the position where to move the piece.
 // If the piece is a pawn which is moving to the last row, a promotion piece
 // must be specified.
 // Castling is specified by indicating the king's movement.
 func MakeMove(gameID, from, to string, promote Piece) Game {
-	graw, ok := gameStore.Get(id)
+	std.AssertOriginCall()
+
+	graw, ok := gameStore.Get(gameID)
 	if !ok {
-		panic("game not found: " + id)
+		panic("game not found: " + gameID)
 	}
 	g := graw.(*Game)
 
@@ -150,10 +158,28 @@ func MakeMove(gameID, from, to string, promote Piece) Game {
 	}
 
 	// validate move
+	m := Move{
+		From: PositionFromString(from),
+		To:   PositionFromString(to),
+	}
+	if m.From == PositionInvalid || m.To == PositionInvalid {
+		panic("invalid from/to position")
+	}
+	if promote > 0 && promote <= PieceKing {
+		m.Flags = MoveFlags(promote) | MoveFlagPromotion
+	}
+	newb, ok := g.Board.ValidateMove(g.Moves, &m)
+	if !ok {
+		panic("illegal move")
+	}
+
+	// TODO add endgame conditions
 
 	// add move and record new board
+	g.Moves = append(g.Moves, m)
+	g.Board = newb
 
-	return nil
+	return *g
 }
 
 func Forfeit(gameID string) Game {

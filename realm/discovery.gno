@@ -11,5 +11,7 @@ func GetGame(id string) Game {
 	if !ok {
 		panic("game not found: " + id)
 	}
-	return g.(*Game)
+	var gg *Game
+	gg = g.(*Game)
+	return *gg
 }
