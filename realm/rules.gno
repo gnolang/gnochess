@@ -151,9 +151,9 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 			fg = 7 << 3
 		}
 		switch m.From {
-		case fg: // a8
+		case fg: // a rook (either side)
 			m.Flags |= MoveFlagNoCastleQ
-		case fg | 7: // h8
+		case fg | 7: // h rook (either side)
 			m.Flags |= MoveFlagNoCastleK
 		}
 
@@ -188,11 +188,10 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 				// check that there are no previous moves which disable castling
 				castlingDisabled(previous, color, ctype) ||
 				// check that we have the exact board set ups we need
+				// + make sure that the original and crossed positions are not in check
 				!b.checkCastlingSetup(color, ctype) {
 				return
 			}
-
-			// TODO check the original and crossed square are not in check
 
 			// perform rook move here
 			newBoard = newBoard.castleRookMove(color, ctype)
@@ -231,10 +230,15 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 				b[m.To] != PieceEmpty {
 				return
 			}
+			m.Flags |= MoveFlagCanEnPassant
 		case abs(dc) == 1 && dr == dir: // capture on diag
 			// must be a capture
 			if b[m.To] == PieceEmpty {
-				// TODO add exception for en passant
+				if pos := checkEnPassant(previous, color, m.To); pos != PositionInvalid {
+					// remove other pawn
+					newBoard[pos] = PieceEmpty
+					break
+				}
 				return
 			}
 			// b[m.To] is necessarily an opponent piece; we check & return
@@ -251,7 +255,7 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 				return
 			}
 			pc := m.Flags & 7
-			if pc == 0 || pc == 7 {
+			if pc == 0 || pc == 7 { // invalid pieces
 				return
 			}
 			newBoard[m.From] = Piece(pc) | color.Piece()
@@ -268,7 +272,7 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 	// perform "move"
 	newBoard[m.From], newBoard[m.To] = PieceEmpty, newBoard[m.From]
 
-	// is our king in check? (esp. as a result of the actual move)
+	// is our king in check, as a result of the current move?
 	if b.InCheck(color) {
 		return
 	}
@@ -347,17 +351,40 @@ func (b Board) checkCastlingSetup(c Color, typ byte) bool {
 		fg, pfg = 7<<3, PieceBlack
 	}
 
+	// cross are the positions that the king starts from,
+	// crosses and "lands". they are recorded as they must all be
+	// not in check by any opponent piece.
+	var cross [3]Position
+
 	if typ == 'K' {
-		return b[fg|4] == pfg|PieceKing &&
+		if !(b[fg|4] == pfg|PieceKing &&
 			b[fg|5] == PieceEmpty &&
 			b[fg|6] == PieceEmpty &&
-			b[fg|7] == pfg|PieceRook
+			b[fg|7] == pfg|PieceRook) {
+			return false
+		}
+		cross = [3]Position{fg | 4, fg | 5, fg | 6}
+	} else {
+		if !(b[fg|4] == pfg|PieceKing &&
+			b[fg|3] == PieceEmpty &&
+			b[fg|2] == PieceEmpty &&
+			b[fg|1] == PieceEmpty &&
+			b[fg|0] == pfg|PieceRook) {
+			return false
+		}
+		cross = [3]Position{fg | 4, fg | 3, fg | 2}
 	}
-	return b[fg|4] == pfg|PieceKing &&
-		b[fg|3] == PieceEmpty &&
-		b[fg|2] == PieceEmpty &&
-		b[fg|1] == PieceEmpty &&
-		b[fg|0] == pfg|PieceRook
+
+	testb := b
+	for _, pos := range cross {
+		testb[pos] = pfg | PieceKing
+		if testb.InCheck(c) {
+			return false
+		}
+		testb[pos] = PieceEmpty
+	}
+
+	return true
 }
 
 func (b Board) castleRookMove(c Color, typ byte) Board {
@@ -373,6 +400,24 @@ func (b Board) castleRookMove(c Color, typ byte) Board {
 		b[fg|0], b[fg|3] = PieceEmpty, PieceRook|pfg
 	}
 	return b
+}
+
+func checkEnPassant(previous []Move, c Color, pos Position) Position {
+	row, col := pos.Split()
+	if (c == White && row != 5) ||
+		(c == Black && row != 2) ||
+		len(previous) == 0 {
+		return PositionInvalid
+	}
+	last := previous[len(previous)-1]
+	if last.Flags&MoveFlagCanEnPassant == 0 {
+		return PositionInvalid
+	}
+	_, lc := last.To.Split()
+	if col != lc {
+		return PositionInvalid
+	}
+	return last.To
 }
 
 // Piece represents a piece on the board.
@@ -565,11 +610,18 @@ func castlingDisabled(moves []Move, c Color, kind byte) bool {
 // MoveFlags represents bit-flags in a move.
 type MoveFlags byte
 
+// NOTE: only ones which can happen together are MoveFlagNoCastleQ and
+// MoveFlagNoCastleK.
 const (
 	// Indicates moves which forbid subsequent Queenside or Kingside castling.
 	MoveFlagNoCastleQ MoveFlags = 1 << iota
 	MoveFlagNoCastleK
-	_
+
+	// Indicates a two-square ahead move by a pawn; thus for the move
+	// immediately afterwards the pawn can be taken by a parallel opponent pawn
+	// through an en passant capture.
+	MoveFlagCanEnPassant
+
 	// Indicates pawn promotion. First three bits become the value of the
 	// corresponding Piece.
 	MoveFlagPromotion

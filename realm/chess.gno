@@ -174,6 +174,7 @@ func MakeMove(gameID, from, to string, promote Piece) Game {
 	}
 
 	// TODO add endgame conditions
+	// checkmate, stalemate, 75-move-rule, 5-fold-repetition
 
 	// add move and record new board
 	g.Moves = append(g.Moves, m)
