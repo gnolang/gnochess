@@ -104,7 +104,8 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 	}
 
 	// one of the two necessarily != 0 (consequence of m.From != m.To).
-	dr, dc := m.From.Delta(m.To)
+	delta := m.From.Sub(m.To)
+	dr, dc := delta[0], delta[1]
 
 	isDiag := func() bool {
 		// move diagonally (|dr| == |dc|)
@@ -113,7 +114,7 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 		}
 		signr, signc := sign(dr), sign(dc)
 		// positions crossed must be empty
-		for i := int8(0); i < abs(dr); i++ {
+		for i := int8(1); i < abs(dr); i++ {
 			if b[m.From.Move(i*signr, i*signc)] != PieceEmpty {
 				return false
 			}
@@ -126,12 +127,12 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 			return false
 		}
 		// positions crossed must be empty
-		for i := int8(0); i < abs(dr); i++ {
+		for i := int8(1); i < abs(dr); i++ {
 			if b[m.From.Move(i*sign(dr), 0)] != PieceEmpty {
 				return false
 			}
 		}
-		for i := int8(0); i < abs(dc); i++ {
+		for i := int8(1); i < abs(dc); i++ {
 			if b[m.From.Move(0, i*sign(dc))] != PieceEmpty {
 				return false
 			}
@@ -338,11 +339,6 @@ func (b Board) findPiece(pWant Piece) Position {
 	return PositionInvalid
 }
 
-func (b Board) set(p Position, pc Piece) Board {
-	b[p] = pc
-	return b
-}
-
 func (b Board) checkCastlingSetup(c Color, typ byte) bool {
 	// set up correct row and piece flags according to color
 	var fg Position
@@ -420,10 +416,143 @@ func checkEnPassant(previous []Move, c Color, pos Position) Position {
 	return last.To
 }
 
+// Moves implements a rudimentary move generator.
+// This is not used beyond aiding in determing stalemate and doing perft tests.
+// Each generated move is passed to cb.
+func (b Board) Moves(previous []Move, cb func(Board, Move) error) error {
+	color := Color(len(previous)%2 == 1)
+	for pos, piece := range b {
+		if piece == PieceEmpty || piece.Color() != color {
+			continue
+		}
+		dlIndex := piece.StripColor()
+		if piece == PiecePawn|PieceBlack {
+			dlIndex = 0 // special case
+		}
+		deltas := deltaLists[dlIndex]
+		for _, delta := range deltas {
+			if !delta.Valid() {
+				continue
+			}
+			// create move; if the resulting position is oob, continue
+			m := Move{
+				From: Position(pos),
+				To:   Position(pos).Apply(delta),
+			}
+			if m.To == PositionInvalid ||
+				(b[m.To] != PieceEmpty && b[m.To].Color() == color) {
+				continue
+			}
+
+			// handle promotion case
+			prom := false
+			if piece.StripColor() == PiecePawn &&
+				((color == White && m.To>>3 == 7) ||
+					(color == Black && m.To>>3 == 0)) {
+				prom = true
+				m.Flags = MoveFlagPromotion | MoveFlags(PieceQueen)
+			}
+
+			// if it's a valid move, call cb on it
+			newb, ok := b.ValidateMove(previous, &m)
+			if !ok {
+				continue
+			}
+			cb(newb, m)
+
+			// if we've promoted, handle the cases where we've promoted to a non-queen.
+			if prom {
+				for _, p := range [...]Piece{PieceRook, PieceKnight, PieceBishop} {
+					newb[m.To] = p | color.Piece()
+					m.Flags = (m.Flags &^ 7) | MoveFlags(p)
+					cb(newb, m)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+var deltaLists = [PieceKing + 1][maxCalcDelta]Delta{
+	// special case: 0 is for black pawn
+	0:           calcDeltaList(PiecePawn | PieceBlack),
+	PiecePawn:   calcDeltaList(PiecePawn),
+	PieceRook:   calcDeltaList(PieceRook),
+	PieceKnight: calcDeltaList(PieceKnight),
+	PieceBishop: calcDeltaList(PieceBishop),
+	PieceQueen:  calcDeltaList(PieceQueen),
+	PieceKing:   calcDeltaList(PieceKing),
+}
+
+// largest is queen with: 2 base vectors * 7 extensions * 4 directions
+const maxCalcDelta = 56
+
+// calcDeltaList determines the possible delta-movements of p.
+func calcDeltaList(p Piece) [maxCalcDelta]Delta {
+	if p.StripColor() == PiecePawn {
+		dir := int8(1)
+		if p.Color() == Black {
+			dir = -1
+		}
+		return [maxCalcDelta]Delta{
+			{1 * dir, 0},
+			{2 * dir, 0},
+			{1 * dir, 1},
+			{1 * dir, -1},
+		}
+	}
+
+	// expand each delta-movement, for all its scaled versions.
+	exp := func(dd [maxCalcDelta]Delta) (ee [maxCalcDelta]Delta) {
+		i := 0
+		for _, d := range dd {
+			if !d.Valid() {
+				return
+			}
+			for j := int8(1); j <= 7; j++ {
+				ee[i] = d.Mul(j)
+				i++
+			}
+		}
+	}
+
+	// rotate into the 4 axes.
+	rot := func(dd [maxCalcDelta]Delta) (rr [maxCalcDelta]Delta) {
+		i := 0
+		for _, d := range dd {
+			if !d.Valid() {
+				return
+			}
+			rr[i] = d
+			i++
+			for j := 0; j < 3; j++ {
+				d = d.Rot()
+				rr[i] = d
+				i++
+			}
+		}
+	}
+
+	// (yes, this function was born after I realised I could express
+	// all pieces except for the pawn in these terms)
+	switch p.StripColor() {
+	case PieceRook:
+		return rot(exp([maxCalcDelta]Delta{{1, 0}}))
+	case PieceKnight:
+		return rot([maxCalcDelta]Delta{{2, 1}, {1, 2}})
+	case PieceBishop:
+		return rot(exp([maxCalcDelta]Delta{{1, 1}}))
+	case PieceQueen:
+		return rot(exp([maxCalcDelta]Delta{{1, 1}, {1, 0}}))
+	case PieceKing:
+		return rot([maxCalcDelta]Delta{{1, 0}, {1, 1}})
+	}
+}
+
 // Piece represents a piece on the board.
 type Piece byte
 
-// used for quick-access
+// piece character to internal piece
 var p = [256]Piece{
 	'P': PiecePawn,
 	'R': PieceRook,
@@ -470,6 +599,30 @@ func (p Piece) Switch() Piece {
 	return p | PieceBlack
 }
 
+// Delta represents a 2d vector for indicating a movement from one position
+// to another. The first value indicates the change in column, the second the
+// change in rows.
+type Delta [2]int8
+
+// Valid ensures the two values of delta are valid.
+func (d Delta) Valid() bool {
+	return d[0] >= -7 && d[0] <= 7 &&
+		d[1] >= -7 && d[1] <= 7 &&
+		!(d[0] == 0 && d[1] == 0)
+}
+
+// Rot applies a 90 degree anti-clockwise rotation to d.
+func (d Delta) Rot() Delta {
+	// Rationale: this is just matrix-vector multiplication.
+	// 90 deg rotation is just the matrix {0, -1; 1, 0}.
+	return Delta{d[1], -d[0]}
+}
+
+// Mul multiplies both values by n, otherwise known as scalar product.
+func (d Delta) Mul(n int8) Delta {
+	return Delta{d[0] * n, d[1] * n}
+}
+
 // Position encodes position information.
 // Indexing 0 as the LSB, bits 0-3 indicate the column and bits 4-6 indicate
 // the row. For instance, position 44 (decimal) is:
@@ -484,6 +637,14 @@ type Position byte
 // PositionInvalid is returned by some Position-related methods to indicate
 // invalid parameters.
 const PositionInvalid Position = 255
+
+// String returns p in algebraic notation.
+func (p Position) String() string {
+	if p >= 64 {
+		return "<invalid>"
+	}
+	return string(p&7+'a') + string(p>>3+'1')
+}
 
 // PositionFromString returns Position, reading the human-readable algebraic
 // notation in s. s must be 2 bytes long, with the first byte a letter included
@@ -506,10 +667,7 @@ func PositionFromString(s string) Position {
 // (delta row) and horizontally according to dc (delta column).
 // If the resulting position is not on the board, then PositionInvalid is returned.
 func (p Position) Move(dr, dc int8) Position {
-	if p == PositionInvalid ||
-		dr < -7 || dr > 7 ||
-		dc < -7 || dc > 7 ||
-		(dr == 0 && dc == 0) {
+	if p == PositionInvalid || !(Delta{dr, dc}).Valid() {
 		return PositionInvalid
 	}
 
@@ -521,8 +679,12 @@ func (p Position) Move(dr, dc int8) Position {
 	if nr >= 8 || nc >= 8 {
 		return PositionInvalid
 	}
-	return nr<<3 || nc
+	return nr<<3 | nc
 }
+
+// Apply applies the given delta to position.
+// It is shorthand for p.Move(d[0], d[1]).
+func (p Position) Apply(d Delta) Position { return p.Move(d[0], d[1]) }
 
 // Split splits Position into its components.
 // This function does not check if p is invalid.
@@ -536,14 +698,14 @@ func (p Position) SplitI() (row, col int8) {
 	return int8(p >> 3), int8(p & 7)
 }
 
-// Delta calculates the difference between the two positions.
-// p is the originating position, s is the ending position. dr and dc are the
-// difference in rows and columns from p to s; for instance, d1.Delta(a4) yields
-// 3, -3.
-func (p Position) Delta(s Position) (dr, dc int8) {
+// Sub calculates the difference between the two positions.
+// p is the originating position, s is the ending position. The difference in
+// rows and columns from p to s is returned; for instance, d1.Sub(a4) yields
+// Delta{3, -3}.
+func (p Position) Sub(s Position) Delta {
 	fr, fc := p.SplitI()
 	tr, tc := s.SplitI()
-	return tr - fr, tc - fc
+	return Delta{tr - fr, tc - fc}
 }
 
 // Move represents a chess game move.
