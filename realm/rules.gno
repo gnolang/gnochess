@@ -253,7 +253,13 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 			(color == Black && row == 0) {
 			// promotion required
 			if m.Flags&MoveFlagPromotion == 0 {
-				return
+				// m.To is a king? then this is a pseudo-move check.
+				// fix the flags.
+				if b[m.To].StripColor() == PieceKing {
+					m.Flags |= MoveFlagPromotion | MoveFlags(PieceQueen)
+				} else {
+					return
+				}
 			}
 			pc := m.Flags & 7
 			if pc == 0 || pc == 7 { // invalid pieces
@@ -274,7 +280,7 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 	newBoard[m.From], newBoard[m.To] = PieceEmpty, newBoard[m.From]
 
 	// is our king in check, as a result of the current move?
-	if b.InCheck(color) {
+	if newBoard.InCheck(color) {
 		return
 	}
 	return newBoard, true
@@ -406,7 +412,8 @@ func checkEnPassant(previous []Move, c Color, pos Position) Position {
 		return PositionInvalid
 	}
 	last := previous[len(previous)-1]
-	if last.Flags&MoveFlagCanEnPassant == 0 {
+	if last.Flags&MoveFlagPromotion != 0 ||
+		last.Flags&MoveFlagCanEnPassant == 0 {
 		return PositionInvalid
 	}
 	_, lc := last.To.Split()
@@ -535,6 +542,28 @@ func calcDeltaList(p Piece) [maxCalcDelta]Delta {
 		return
 	}
 
+	// add more moves.
+	join := func(aa, bb [maxCalcDelta]Delta) (cc [maxCalcDelta]Delta) {
+		cc = aa
+		off := -1
+		for i, v := range cc {
+			if !v.Valid() {
+				off = i
+				break
+			}
+		}
+		if off < 0 {
+			return
+		}
+		for i, v := range bb {
+			if !v.Valid() {
+				return
+			}
+			cc[off+i] = v
+		}
+		return
+	}
+
 	// (yes, this function was born after I realised I could express
 	// all pieces except for the pawn in these terms)
 	switch p.StripColor() {
@@ -547,7 +576,11 @@ func calcDeltaList(p Piece) [maxCalcDelta]Delta {
 	case PieceQueen:
 		return rot(exp([maxCalcDelta]Delta{{1, 1}, {1, 0}}))
 	case PieceKing:
-		return rot([maxCalcDelta]Delta{{1, 0}, {1, 1}})
+		return join(
+			rot([maxCalcDelta]Delta{{1, 0}, {1, 1}}),
+			// castling
+			[maxCalcDelta]Delta{{0, 2}, {0, -2}},
+		)
 	}
 	panic("invalid")
 }
@@ -570,6 +603,32 @@ var p = [256]Piece{
 	'b': PieceBlack | PieceBishop,
 	'q': PieceBlack | PieceQueen,
 	'k': PieceBlack | PieceKing,
+}
+
+var pstring = [PieceBlack | PieceKing + 1]byte{
+	PiecePawn:                'P',
+	PieceRook:                'R',
+	PieceKnight:              'N',
+	PieceBishop:              'B',
+	PieceQueen:               'Q',
+	PieceKing:                'K',
+	PieceBlack | PiecePawn:   'p',
+	PieceBlack | PieceRook:   'r',
+	PieceBlack | PieceKnight: 'n',
+	PieceBlack | PieceBishop: 'b',
+	PieceBlack | PieceQueen:  'q',
+	PieceBlack | PieceKing:   'k',
+}
+
+func (p Piece) String() string {
+	if int(p) >= len(pstring) {
+		return ""
+	}
+	v := pstring[p]
+	if v == 0 {
+		return ""
+	}
+	return string(v)
 }
 
 // Possible values of Piece. Within the context of Board, Piece is assumed to
