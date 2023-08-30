@@ -209,7 +209,7 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 
 	case PiecePawn:
 		// determine direction depending on color
-		dir := 1
+		dir := int8(1)
 		if color == Black {
 			dir = -1
 		}
@@ -514,6 +514,7 @@ func calcDeltaList(p Piece) [maxCalcDelta]Delta {
 				i++
 			}
 		}
+		return
 	}
 
 	// rotate into the 4 axes.
@@ -531,6 +532,7 @@ func calcDeltaList(p Piece) [maxCalcDelta]Delta {
 				i++
 			}
 		}
+		return
 	}
 
 	// (yes, this function was born after I realised I could express
@@ -547,6 +549,7 @@ func calcDeltaList(p Piece) [maxCalcDelta]Delta {
 	case PieceKing:
 		return rot([maxCalcDelta]Delta{{1, 0}, {1, 1}})
 	}
+	panic("invalid")
 }
 
 // Piece represents a piece on the board.
