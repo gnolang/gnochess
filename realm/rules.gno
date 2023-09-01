@@ -10,25 +10,9 @@ import (
 	"errors"
 )
 
-// Color determines a player's color -- either white or black.
-type Color bool
-
-const (
-	White Color = false
-	Black Color = true
-)
-
-// Piece returns the color as a piece to be OR'd into a Piece;
-// ie. 0 on White, and [PieceBlack] on black.
-func (c Color) Piece() Piece {
-	if c == White {
-		return 0
-	}
-	return PieceBlack
-}
-
 // Board is a representation of a chess board.
-// Details on how the position is encoded can be found at [Position].
+// Details on how to transform a chess algebraic position into an index
+// can be found at [Square].
 type Board [64]Piece
 
 // NewBoard returns a Board normally set up at the initial position for standard
@@ -117,7 +101,7 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 			return false
 		}
 		signr, signc := sign(dr), sign(dc)
-		// positions crossed must be empty
+		// squares crossed must be empty
 		for i := int8(1); i < abs(dr); i++ {
 			if b[m.From.Move(i*signr, i*signc)] != PieceEmpty {
 				return false
@@ -130,7 +114,7 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 		if dr != 0 && dc != 0 {
 			return false
 		}
-		// positions crossed must be empty
+		// squares crossed must be empty
 		for i := int8(1); i < abs(dr); i++ {
 			if b[m.From.Move(i*sign(dr), 0)] != PieceEmpty {
 				return false
@@ -151,7 +135,7 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 		}
 		// if rook has moved from a starting position, this disables castling
 		// on the side of the rook. flag accordingly in the move.
-		var fg Position
+		var fg Square
 		if color == Black {
 			fg = 7 << 3
 		}
@@ -193,7 +177,7 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 				// check that there are no previous moves which disable castling
 				castlingDisabled(previous, color, ctype) ||
 				// check that we have the exact board set ups we need
-				// + make sure that the original and crossed positions are not in check
+				// + make sure that the original and crossed squares are not in check
 				!b.checkCastlingSetup(color, ctype) {
 				return
 			}
@@ -225,7 +209,7 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 				return
 			}
 		case dc == 0 && dr == dir*2: // 2sq up (only from starting row)
-			wantRow := Position(1)
+			wantRow := Square(1)
 			if color == Black {
 				wantRow = 6
 			}
@@ -239,9 +223,9 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 		case abs(dc) == 1 && dr == dir: // capture on diag
 			// must be a capture
 			if b[m.To] == PieceEmpty {
-				if pos := checkEnPassant(previous, color, m.To); pos != PositionInvalid {
+				if sq := checkEnPassant(previous, color, m.To); sq != SquareInvalid {
 					// remove other pawn
-					newBoard[pos] = PieceEmpty
+					newBoard[sq] = PieceEmpty
 					break
 				}
 				return
@@ -280,7 +264,7 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 		return newBoard, true
 	}
 
-	// perform "move"
+	// perform board mutation
 	newBoard[m.From], newBoard[m.To] = PieceEmpty, newBoard[m.From]
 
 	// is our king in check, as a result of the current move?
@@ -291,7 +275,7 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 }
 
 var blackPastMoves = []Move{
-	{From: PositionInvalid, To: PositionInvalid},
+	{From: SquareInvalid, To: SquareInvalid},
 }
 
 // InCheck checks whether the king with the given color is in check.
@@ -307,7 +291,7 @@ var blackPastMoves = []Move{
 func (b Board) InCheck(color Color) bool {
 	pWant := PieceKing | color.Piece()
 	kingp := b.findPiece(pWant)
-	if kingp == PositionInvalid {
+	if kingp == SquareInvalid {
 		// king doesn't exist (likely recursive InCheck call)
 		return false
 	}
@@ -321,12 +305,12 @@ func (b Board) InCheck(color Color) bool {
 		pastMoves = blackPastMoves
 	}
 
-	for pos, piece := range b {
+	for sq, piece := range b {
 		if piece == PieceEmpty || piece.Color() == color {
 			continue
 		}
 		_, ok := b.validateMove(pastMoves, &Move{
-			From: Position(pos),
+			From: Square(sq),
 			To:   kingp,
 			// validateMove (unexp) understands that moves to capture a king are
 			// "theoretical", so it doesn't check for checking on its own king,
@@ -340,27 +324,27 @@ func (b Board) InCheck(color Color) bool {
 	return false
 }
 
-func (b Board) findPiece(pWant Piece) Position {
-	for pos, p := range b {
+func (b Board) findPiece(pWant Piece) Square {
+	for sq, p := range b {
 		if p == pWant {
-			return Position(pos)
+			return Square(sq)
 		}
 	}
-	return PositionInvalid
+	return SquareInvalid
 }
 
 func (b Board) checkCastlingSetup(c Color, typ byte) bool {
 	// set up correct row and piece flags according to color
-	var fg Position
+	var fg Square
 	var pfg Piece
 	if c == Black {
 		fg, pfg = 7<<3, PieceBlack
 	}
 
-	// cross are the positions that the king starts from,
+	// cross are the squares that the king starts from,
 	// crosses and "lands". they are recorded as they must all be
 	// not in check by any opponent piece.
-	var cross [3]Position
+	var cross [3]Square
 
 	if typ == 'K' {
 		if !(b[fg|4] == pfg|PieceKing &&
@@ -369,7 +353,7 @@ func (b Board) checkCastlingSetup(c Color, typ byte) bool {
 			b[fg|7] == pfg|PieceRook) {
 			return false
 		}
-		cross = [3]Position{fg | 4, fg | 5, fg | 6}
+		cross = [3]Square{fg | 4, fg | 5, fg | 6}
 	} else {
 		if !(b[fg|4] == pfg|PieceKing &&
 			b[fg|3] == PieceEmpty &&
@@ -378,23 +362,23 @@ func (b Board) checkCastlingSetup(c Color, typ byte) bool {
 			b[fg|0] == pfg|PieceRook) {
 			return false
 		}
-		cross = [3]Position{fg | 4, fg | 3, fg | 2}
+		cross = [3]Square{fg | 4, fg | 3, fg | 2}
 	}
 
 	testb := b
-	for _, pos := range cross {
-		testb[pos] = pfg | PieceKing
+	for _, sq := range cross {
+		testb[sq] = pfg | PieceKing
 		if testb.InCheck(c) {
 			return false
 		}
-		testb[pos] = PieceEmpty
+		testb[sq] = PieceEmpty
 	}
 
 	return true
 }
 
 func (b Board) castleRookMove(c Color, typ byte) Board {
-	var fg Position
+	var fg Square
 	var pfg Piece
 	if c == Black {
 		fg, pfg = 7<<3, PieceBlack
@@ -408,21 +392,21 @@ func (b Board) castleRookMove(c Color, typ byte) Board {
 	return b
 }
 
-func checkEnPassant(previous []Move, c Color, pos Position) Position {
-	row, col := pos.Split()
+func checkEnPassant(previous []Move, c Color, sq Square) Square {
+	row, col := sq.Split()
 	if (c == White && row != 5) ||
 		(c == Black && row != 2) ||
 		len(previous) == 0 {
-		return PositionInvalid
+		return SquareInvalid
 	}
 	last := previous[len(previous)-1]
 	if last.Flags&MoveFlagPromotion != 0 ||
 		last.Flags&MoveFlagCanEnPassant == 0 {
-		return PositionInvalid
+		return SquareInvalid
 	}
 	_, lc := last.To.Split()
 	if col != lc {
-		return PositionInvalid
+		return SquareInvalid
 	}
 	return last.To
 }
@@ -433,12 +417,12 @@ func checkEnPassant(previous []Move, c Color, pos Position) Position {
 // If cb returns an error, it is returned without processing further moves.
 func (b Board) Moves(previous []Move, cb func(Board, Move) error) error {
 	color := Color(len(previous)%2 == 1)
-	for pos, piece := range b {
+	for sq, piece := range b {
 		if piece == PieceEmpty || piece.Color() != color {
 			continue
 		}
 
-		from := Position(pos)
+		from := Square(sq)
 
 		p := piece.StripColor()
 		// If the piece is a pawn, and they are on the second last row, we know
@@ -455,12 +439,12 @@ func (b Board) Moves(previous []Move, cb func(Board, Move) error) error {
 
 		var err error
 		deltaGenerator(p, func(delta Delta) byte {
-			// create move; if the resulting position is oob, continue
+			// create move; if the resulting square is oob, continue
 			m := Move{
 				From: from,
 				To:   from.Apply(delta),
 			}
-			if m.To == PositionInvalid ||
+			if m.To == SquareInvalid ||
 				(b[m.To] != PieceEmpty && b[m.To].Color() == color) {
 				return deltaGenStopLinear
 			}
@@ -619,6 +603,23 @@ func (b Board) IsMate(prev []Move) MateResult {
 	return Stalemate
 }
 
+// Color determines a player's color -- either white or black.
+type Color bool
+
+const (
+	White Color = false
+	Black Color = true
+)
+
+// Piece returns the color as a piece to be OR'd into a Piece;
+// ie. 0 on White, and [PieceBlack] on black.
+func (c Color) Piece() Piece {
+	if c == White {
+		return 0
+	}
+	return PieceBlack
+}
+
 // Piece represents a piece on the board.
 type Piece byte
 
@@ -695,7 +696,7 @@ func (p Piece) Switch() Piece {
 	return p | PieceBlack
 }
 
-// Delta represents a 2d vector for indicating a movement from one position
+// Delta represents a 2d vector for indicating a movement from one square
 // to another. The first value indicates the change in column, the second the
 // change in rows.
 type Delta [2]int8
@@ -719,102 +720,102 @@ func (d Delta) Mul(n int8) Delta {
 	return Delta{d[0] * n, d[1] * n}
 }
 
-// Position encodes position information.
+// Square encodes piece position information, in chess the "square" the piece is on.
 // Indexing 0 as the LSB, bits 0-3 indicate the column and bits 4-6 indicate
-// the row. For instance, position 44 (decimal) is:
+// the row. For instance, square 44 (decimal) is:
 //
 //	44 = 0b00 101  100  = d5
 //	          ^row ^col
 //
 // (note: in algebraic notation, this is swapped: the letter represents the
 // column, and the number represents the row).
-type Position byte
+type Square byte
 
-// PositionInvalid is returned by some Position-related methods to indicate
+// SquareInvalid is returned by some Square-related methods to indicate
 // invalid parameters.
-const PositionInvalid Position = 255
+const SquareInvalid Square = 255
 
 // String returns p in algebraic notation.
-func (p Position) String() string {
-	if p >= 64 {
+func (q Square) String() string {
+	if q >= 64 {
 		return "<invalid>"
 	}
-	return string(p&7+'a') + string(p>>3+'1')
+	return string(q&7+'a') + string(q>>3+'1')
 }
 
-// PositionFromString returns Position, reading the human-readable algebraic
+// SquareFromString returns Square, reading the human-readable algebraic
 // notation in s. s must be 2 bytes long, with the first byte a letter included
 // between ['a'; 'h'], and the second a number included between ['1';'8'].
-// If s is invalid, PositionInvalid is returned.
-func PositionFromString(s string) Position {
+// If s is invalid, SquareInvalid is returned.
+func SquareFromString(s string) Square {
 	if len(s) != 2 {
-		return PositionInvalid
+		return SquareInvalid
 	}
 	col, row := s[0]-'a', s[1]-'1'
 	// because s[0] is a byte, if s[0] < 'a' then the above will underflow and
 	// row will be >= 8 (same for col).
 	if row >= 8 || col >= 8 {
-		return PositionInvalid
+		return SquareInvalid
 	}
-	return Position(row<<3 | col)
+	return Square(row<<3 | col)
 }
 
-// Move changes the Position of p, moving it vertically according to dr
+// Move changes the square of q, moving it vertically according to dr
 // (delta row) and horizontally according to dc (delta column).
-// If the resulting position is not on the board, then PositionInvalid is returned.
-func (p Position) Move(dr, dc int8) Position {
-	if p == PositionInvalid || !(Delta{dr, dc}).Valid() {
-		return PositionInvalid
+// If the resulting square is not on the board, then SquareInvalid is returned.
+func (q Square) Move(dr, dc int8) Square {
+	if q == SquareInvalid || !(Delta{dr, dc}).Valid() {
+		return SquareInvalid
 	}
 
-	row, col := int8(p>>3), int8(p&7)
+	row, col := int8(q>>3), int8(q&7)
 	row += dr
 	col += dc
 
-	nr, nc := Position(row), Position(col)
+	nr, nc := Square(row), Square(col)
 	if nr >= 8 || nc >= 8 {
-		return PositionInvalid
+		return SquareInvalid
 	}
 	return nr<<3 | nc
 }
 
-// Apply applies the given delta to position.
-// It is shorthand for p.Move(d[0], d[1]).
-func (p Position) Apply(d Delta) Position { return p.Move(d[0], d[1]) }
+// Apply applies the given delta to the square.
+// It is shorthand for q.Move(d[0], d[1]).
+func (q Square) Apply(d Delta) Square { return q.Move(d[0], d[1]) }
 
-// Split splits Position into its components.
+// Split splits Square into its components.
 // This function does not check if p is invalid.
-func (p Position) Split() (row, col byte) {
-	return byte(p >> 3), byte(p & 7)
+func (q Square) Split() (row, col byte) {
+	return byte(q >> 3), byte(q & 7)
 }
 
-// SplitI works like [Position.Split], but returns int8's instead
+// SplitI works like [Square.Split], but returns int8's instead
 // of bytes.
-func (p Position) SplitI() (row, col int8) {
-	return int8(p >> 3), int8(p & 7)
+func (q Square) SplitI() (row, col int8) {
+	return int8(q >> 3), int8(q & 7)
 }
 
-// Sub calculates the difference between the two positions.
-// p is the originating position, s is the ending position. The difference in
-// rows and columns from p to s is returned; for instance, d1.Sub(a4) yields
+// Sub calculates the difference between the two squares.
+// q is the originating square, s is the ending square. The difference in
+// rows and columns from q to s is returned; for instance, d1.Sub(a4) yields
 // Delta{3, -3}.
-func (p Position) Sub(s Position) Delta {
-	fr, fc := p.SplitI()
+func (q Square) Sub(s Square) Delta {
+	fr, fc := q.SplitI()
 	tr, tc := s.SplitI()
 	return Delta{tr - fr, tc - fc}
 }
 
 // Move represents a chess game move.
 type Move struct {
-	From, To Position
+	From, To Square
 	Flags    MoveFlags
 }
 
 var (
-	castleWhiteQ = Move{From: PositionFromString("e1"), To: PositionFromString("c1")}
-	castleWhiteK = Move{From: PositionFromString("e1"), To: PositionFromString("g1")}
-	castleBlackQ = Move{From: PositionFromString("e8"), To: PositionFromString("c8")}
-	castleBlackK = Move{From: PositionFromString("e8"), To: PositionFromString("g8")}
+	castleWhiteQ = Move{From: SquareFromString("e1"), To: SquareFromString("c1")}
+	castleWhiteK = Move{From: SquareFromString("e1"), To: SquareFromString("g1")}
+	castleBlackQ = Move{From: SquareFromString("e8"), To: SquareFromString("c8")}
+	castleBlackK = Move{From: SquareFromString("e8"), To: SquareFromString("g8")}
 )
 
 // returns 0, 'K' or 'Q'.

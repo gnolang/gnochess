@@ -141,7 +141,7 @@ func hasOngoingGameWithPlayer(games []*Game, player std.Address) bool {
 }
 
 // MakeMove specifies a move to be done on the given game, specifying in
-// algebraic notation the position where to move the piece.
+// algebraic notation the square where to move the piece.
 // If the piece is a pawn which is moving to the last row, a promotion piece
 // must be specified.
 // Castling is specified by indicating the king's movement.
@@ -166,11 +166,11 @@ func MakeMove(gameID, from, to string, promote Piece) Game {
 
 	// validate move
 	m := Move{
-		From: PositionFromString(from),
-		To:   PositionFromString(to),
+		From: SquareFromString(from),
+		To:   SquareFromString(to),
 	}
-	if m.From == PositionInvalid || m.To == PositionInvalid {
-		panic("invalid from/to position")
+	if m.From == SquareInvalid || m.To == SquareInvalid {
+		panic("invalid from/to square")
 	}
 	if promote > 0 && promote <= PieceKing {
 		m.Flags = MoveFlags(promote) | MoveFlagPromotion

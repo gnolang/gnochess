@@ -8,8 +8,8 @@ import (
 
 func move(from, to string) Move {
 	return Move{
-		From: PositionFromString(from),
-		To:   PositionFromString(to),
+		From: SquareFromString(from),
+		To:   SquareFromString(to),
 	}
 }
 
@@ -212,12 +212,12 @@ func fenBoard(boardStr string) (Board, bool) {
 	}
 	var b Board
 	for idx, pieces := range rankStrs {
-		rank := (7 - Position(idx)) << 3
-		file := Position(0)
+		rank := (7 - Square(idx)) << 3
+		file := Square(0)
 		for _, ch := range pieces {
 			if ch >= '1' && ch <= '8' {
 				delta := byte(ch) - '0'
-				file += Position(delta)
+				file += Square(delta)
 				if file > 8 {
 					return b, false
 				}
@@ -260,8 +260,8 @@ func castleRightsToMoveFlags(cr string) (w, b MoveFlags) {
 }
 
 func parseEnPassant(strpos string) (Move, error) {
-	eppos := PositionFromString(strpos)
-	if eppos == PositionInvalid {
+	eppos := SquareFromString(strpos)
+	if eppos == SquareInvalid {
 		return Move{}, fmt.Errorf("invalid pos: %s", eppos)
 	}
 	row, col := eppos.Split()
@@ -276,7 +276,7 @@ func parseEnPassant(strpos string) (Move, error) {
 	}
 	return Move{
 		From:  0, // irrelevant
-		To:    Position(row<<3 | col),
+		To:    Square(row<<3 | col),
 		Flags: MoveFlagCanEnPassant,
 	}, nil
 }
