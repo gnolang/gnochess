@@ -443,9 +443,6 @@ func (b Board) Moves(previous []Move, cb func(Board, Move) error) error {
 		}
 		deltas := deltaLists[dlIndex]
 		for _, delta := range deltas {
-			if !delta.Valid() {
-				continue
-			}
 			// create move; if the resulting position is oob, continue
 			m := Move{
 				From: Position(pos),
@@ -491,7 +488,7 @@ func (b Board) Moves(previous []Move, cb func(Board, Move) error) error {
 	return nil
 }
 
-var deltaLists = [PieceKing + 1][maxCalcDelta]Delta{
+var deltaLists = [PieceKing + 1][]Delta{
 	// special case: 0 is for black pawn
 	0:           calcDeltaList(PiecePawn | PieceBlack),
 	PiecePawn:   calcDeltaList(PiecePawn),
@@ -502,17 +499,23 @@ var deltaLists = [PieceKing + 1][maxCalcDelta]Delta{
 	PieceKing:   calcDeltaList(PieceKing),
 }
 
-// largest is queen with: 2 base vectors * 7 extensions * 4 directions
-const maxCalcDelta = 56
+/*func init() {
+	for p, v := range deltaLists {
+		println(Piece(p).String() + " deltalist:")
+		for _, d := range v {
+			println("- ", d)
+		}
+	}
+}*/
 
 // calcDeltaList determines the possible delta-movements of p.
-func calcDeltaList(p Piece) [maxCalcDelta]Delta {
+func calcDeltaList(p Piece) []Delta {
 	if p.StripColor() == PiecePawn {
 		dir := int8(1)
 		if p.Color() == Black {
 			dir = -1
 		}
-		return [maxCalcDelta]Delta{
+		return []Delta{
 			{1 * dir, 0},
 			{2 * dir, 0},
 			{1 * dir, 1},
@@ -520,57 +523,25 @@ func calcDeltaList(p Piece) [maxCalcDelta]Delta {
 		}
 	}
 
-	// expand each delta-movement, for all its scaled versions.
-	exp := func(dd [maxCalcDelta]Delta) (ee [maxCalcDelta]Delta) {
-		i := 0
+	// expand each delta-movement, up to 7 positions away..
+	exp := func(dd []Delta) (ee []Delta) {
 		for _, d := range dd {
-			if !d.Valid() {
-				return
-			}
-			for j := int8(1); j <= 7; j++ {
-				ee[i] = d.Mul(j)
-				i++
+			ee = append(ee, d)
+			for j := int8(2); j <= 7; j++ {
+				ee = append(ee, d.Mul(j))
 			}
 		}
 		return
 	}
 
 	// rotate into the 4 axes.
-	rot := func(dd [maxCalcDelta]Delta) (rr [maxCalcDelta]Delta) {
-		i := 0
+	rot := func(dd []Delta) (rr []Delta) {
 		for _, d := range dd {
-			if !d.Valid() {
-				return
-			}
-			rr[i] = d
-			i++
+			rr = append(rr, d)
 			for j := 0; j < 3; j++ {
 				d = d.Rot()
-				rr[i] = d
-				i++
+				rr = append(rr, d)
 			}
-		}
-		return
-	}
-
-	// add more moves.
-	join := func(aa, bb [maxCalcDelta]Delta) (cc [maxCalcDelta]Delta) {
-		cc = aa
-		off := -1
-		for i, v := range cc {
-			if !v.Valid() {
-				off = i
-				break
-			}
-		}
-		if off < 0 {
-			return
-		}
-		for i, v := range bb {
-			if !v.Valid() {
-				return
-			}
-			cc[off+i] = v
 		}
 		return
 	}
@@ -579,18 +550,19 @@ func calcDeltaList(p Piece) [maxCalcDelta]Delta {
 	// all pieces except for the pawn in these terms)
 	switch p.StripColor() {
 	case PieceRook:
-		return rot(exp([maxCalcDelta]Delta{{1, 0}}))
+		return rot(exp([]Delta{{1, 0}}))
 	case PieceKnight:
-		return rot([maxCalcDelta]Delta{{2, 1}, {1, 2}})
+		return rot([]Delta{{2, 1}, {1, 2}})
 	case PieceBishop:
-		return rot(exp([maxCalcDelta]Delta{{1, 1}}))
+		return rot(exp([]Delta{{1, 1}}))
 	case PieceQueen:
-		return rot(exp([maxCalcDelta]Delta{{1, 1}, {1, 0}}))
+		return rot(exp([]Delta{{1, 1}, {1, 0}}))
 	case PieceKing:
-		return join(
-			rot([maxCalcDelta]Delta{{1, 0}, {1, 1}}),
+		return append(
+			rot([]Delta{{1, 0}, {1, 1}}),
+
 			// castling
-			[maxCalcDelta]Delta{{0, 2}, {0, -2}},
+			Delta{0, 2}, Delta{0, -2},
 		)
 	}
 	panic("invalid")

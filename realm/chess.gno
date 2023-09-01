@@ -43,24 +43,41 @@ const (
 
 	GameStateOpen
 
+	// "automatic" endgames following moves
 	GameStateWhiteCheckmated
 	GameStateBlackCheckmated
 	GameStateStalemate
+
+	// resign by either player
+	GameStateWhiteResign
+	GameStateBlackResign
 )
 
 // IsFinished returns whether the game is in a finished state.
 func (g GameState) IsFinished() bool {
-	switch g {
-	case GameStateWhiteCheckmated,
-		GameStateBlackCheckmated,
-		GameStateStalemate:
-		return true
-	}
-	return false
+	return g != GameStateOpen
 }
 
 // NewGame initialized a new game with the given opponent.
 func NewGame(opponent std.Address) Game {
+	std.AssertOriginCall()
+
+	return newGame(opponent)
+}
+
+// NewGameWithUsername starts a new game with a user identified by their
+// username, regularly registered at r/demo/users.
+func NewGameWithUsername(username string) Game {
+	std.AssertOriginCall()
+
+	u := users.GetUserByName(username)
+	if u == nil {
+		panic("user not found: " + username)
+	}
+	return newGame(u.Address())
+}
+
+func newGame(opponent std.Address) Game {
 	caller := std.GetOrigCaller()
 	val, exist := user2Games.Get(caller.String())
 	var games []*Game
@@ -123,16 +140,6 @@ func hasOngoingGameWithPlayer(games []*Game, player std.Address) bool {
 	return false
 }
 
-// NewGameWithUsername starts a new game with a user identified by their
-// username, regularly registered at r/demo/users.
-func NewGameWithUsername(username string) Game {
-	u := users.GetUserByName(username)
-	if u == nil {
-		panic("user not found: " + username)
-	}
-	return NewGame(u.Address())
-}
-
 // MakeMove specifies a move to be done on the given game, specifying in
 // algebraic notation the position where to move the piece.
 // If the piece is a pawn which is moving to the last row, a promotion piece
@@ -173,18 +180,50 @@ func MakeMove(gameID, from, to string, promote Piece) Game {
 		panic("illegal move")
 	}
 
-	// TODO add endgame conditions
-	// checkmate, stalemate, 75-move-rule, 5-fold-repetition
-
 	// add move and record new board
 	g.Moves = append(g.Moves, m)
 	g.Board = newb
 
+	mate := newb.IsMate(g.Moves)
+	if mate == NoMate {
+		return *g
+	}
+
+	switch {
+	case mate == Checkmate && isBlack:
+		g.State = GameStateWhiteCheckmated
+	case mate == Checkmate && !isBlack:
+		g.State = GameStateBlackCheckmated
+	case mate == Stalemate:
+		g.State = GameStateStalemate
+	}
 	return *g
 }
 
-func Forfeit(gameID string) Game {
-	// forfeit / refuse game.
+func Resign(gameID string) Game {
+	std.AssertOriginCall()
+
+	graw, ok := gameStore.Get(gameID)
+	if !ok {
+		panic("game not found: " + gameID)
+	}
+	g := graw.(*Game)
+
+	if g.State.IsFinished() {
+		panic("game is already finished")
+	}
+
+	caller := std.GetOrigCaller()
+	switch {
+	case caller == g.Black:
+		g.State = GameStateBlackResign
+	case caller == g.White:
+		g.State = GameStateWhiteResign
+	default:
+		panic("you are not involved in this game")
+	}
+
+	return *g
 }
 
 func Draw(gameID string) Game {
