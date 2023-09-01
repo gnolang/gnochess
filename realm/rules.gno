@@ -6,6 +6,10 @@
 
 package chess
 
+import (
+	"errors"
+)
+
 // Color determines a player's color -- either white or black.
 type Color bool
 
@@ -426,6 +430,7 @@ func checkEnPassant(previous []Move, c Color, pos Position) Position {
 // Moves implements a rudimentary move generator.
 // This is not used beyond aiding in determing stalemate and doing perft tests.
 // Each generated move is passed to cb.
+// If cb returns an error, it is returned without processing further moves.
 func (b Board) Moves(previous []Move, cb func(Board, Move) error) error {
 	color := Color(len(previous)%2 == 1)
 	for pos, piece := range b {
@@ -465,14 +470,20 @@ func (b Board) Moves(previous []Move, cb func(Board, Move) error) error {
 			if !ok {
 				continue
 			}
-			cb(newb, m)
+			if err := cb(newb, m); err != nil {
+				return err
+			}
 
 			// if we've promoted, handle the cases where we've promoted to a non-queen.
-			if prom {
-				for _, p := range [...]Piece{PieceRook, PieceKnight, PieceBishop} {
-					newb[m.To] = p | color.Piece()
-					m.Flags = (m.Flags &^ 7) | MoveFlags(p)
-					cb(newb, m)
+			if !prom {
+				continue
+			}
+
+			for _, p := range [...]Piece{PieceRook, PieceKnight, PieceBishop} {
+				newb[m.To] = p | color.Piece()
+				m.Flags = (m.Flags &^ 7) | MoveFlags(p)
+				if err := cb(newb, m); err != nil {
+					return err
 				}
 			}
 		}
@@ -583,6 +594,34 @@ func calcDeltaList(p Piece) [maxCalcDelta]Delta {
 		)
 	}
 	panic("invalid")
+}
+
+type MateResult byte
+
+const (
+	NoMate MateResult = iota
+	Checkmate
+	Stalemate
+)
+
+var errFound = errors.New("found")
+
+// IsMate determines whether the game, at c's turn, is in either check-
+// or stalemate.
+func (b Board) IsMate(prev []Move) MateResult {
+	err := b.Moves(prev, func(Board, Move) error {
+		return errFound
+	})
+	// If there is any legal move, this is not any kind of mate.
+	if err != nil {
+		return NoMate
+	}
+
+	// No legal moves. Is the king in check?
+	if b.InCheck(Color(len(prev)%2 == 1)) {
+		return Checkmate
+	}
+	return Stalemate
 }
 
 // Piece represents a piece on the board.

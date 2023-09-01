@@ -6,6 +6,63 @@ import (
 	"testing"
 )
 
+func move(from, to string) Move {
+	return Move{
+		From: PositionFromString(from),
+		To:   PositionFromString(to),
+	}
+}
+
+func TestCheckmate(t *testing.T) {
+	fp := unsafeFEN("rn1qkbnr/pbpp1ppp/1p6/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 0 1")
+	m := move("f3", "f7")
+	newb, ok := fp.b.ValidateMove(fp.prev, &m)
+	if !ok {
+		t.Fatal("ValidateMove returned false")
+	}
+	mr := newb.IsMate(append(fp.prev, m))
+	if mr != Checkmate {
+		t.Fatalf("expected Checkmate (%d), got %d", Checkmate, mr)
+	}
+}
+
+func TestCheckmateFromFEN(t *testing.T) {
+	fp := unsafeFEN("rn1qkbnr/pbpp1Qpp/1p6/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 1")
+	mr := fp.b.IsMate(fp.prev)
+	if mr != Checkmate {
+		t.Fatalf("expected Checkmate (%d), got %d", Checkmate, mr)
+	}
+}
+
+func TestStalemate(t *testing.T) {
+	fp := unsafeFEN("k1K5/8/8/8/8/8/8/1Q6 w - - 0 1")
+	m := move("b1", "b6")
+	newb, ok := fp.b.ValidateMove(fp.prev, &m)
+	if !ok {
+		t.Fatal("ValidateMove rejected move")
+	}
+	mr := newb.IsMate(append(fp.prev, m))
+	if mr != Stalemate {
+		t.Fatalf("expected Stalemate (%d), got %d", Stalemate, mr)
+	}
+}
+
+// position shouldn't result in check/stalemate
+// because pawn can move http://en.lichess.org/Pc6mJDZN#138
+func TestNotMate(t *testing.T) {
+	fp := unsafeFEN("8/3P4/8/8/8/7k/7p/7K w - - 2 70")
+	m := move("d7", "d8")
+	m.Flags = MoveFlagPromotion | MoveFlags(PieceQueen)
+	newb, ok := fp.b.ValidateMove(fp.prev, &m)
+	if !ok {
+		t.Fatal("ValidateMove returned false")
+	}
+	mr := newb.IsMate(append(fp.prev, m))
+	if mr != NoMate {
+		t.Fatalf("expected NoMate (%d), got %d", NoMate, mr)
+	}
+}
+
 func TestPerft(t *testing.T) {
 	moves := make([]Move, 0, 10)
 	for n, res := range perfResults {
