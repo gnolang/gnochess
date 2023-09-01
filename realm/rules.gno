@@ -437,135 +437,158 @@ func (b Board) Moves(previous []Move, cb func(Board, Move) error) error {
 		if piece == PieceEmpty || piece.Color() != color {
 			continue
 		}
-		dlIndex := piece.StripColor()
-		if piece == PiecePawn|PieceBlack {
-			dlIndex = 0 // special case
+
+		from := Position(pos)
+
+		p := piece.StripColor()
+		// If the piece is a pawn, and they are on the second last row, we know
+		// that whatever move they do (advance, or take diagonally) they're going
+		// to promote.
+		prom := p == PiecePawn &&
+			((color == White && from>>3 == 6) ||
+				(color == Black && from>>3 == 1))
+
+		// delta generator needs to know if p is black
+		if p == PiecePawn && color == Black {
+			p |= Black.Piece()
 		}
-		deltas := deltaLists[dlIndex]
-		for _, delta := range deltas {
+
+		var err error
+		deltaGenerator(p, func(delta Delta) byte {
 			// create move; if the resulting position is oob, continue
 			m := Move{
-				From: Position(pos),
-				To:   Position(pos).Apply(delta),
+				From: from,
+				To:   from.Apply(delta),
 			}
 			if m.To == PositionInvalid ||
 				(b[m.To] != PieceEmpty && b[m.To].Color() == color) {
-				continue
+				return deltaGenStopLinear
 			}
 
 			// handle promotion case
-			prom := false
-			if piece.StripColor() == PiecePawn &&
-				((color == White && m.To>>3 == 7) ||
-					(color == Black && m.To>>3 == 0)) {
-				prom = true
+			if prom {
 				m.Flags = MoveFlagPromotion | MoveFlags(PieceQueen)
 			}
 
 			// if it's a valid move, call cb on it
 			newb, ok := b.ValidateMove(previous, &m)
 			if !ok {
-				continue
+				return deltaGenOK
 			}
-			if err := cb(newb, m); err != nil {
-				return err
+			if err = cb(newb, m); err != nil {
+				return deltaGenStop
 			}
 
 			// if we've promoted, handle the cases where we've promoted to a non-queen.
 			if !prom {
-				continue
+				return deltaGenOK
 			}
 
 			for _, p := range [...]Piece{PieceRook, PieceKnight, PieceBishop} {
 				newb[m.To] = p | color.Piece()
 				m.Flags = (m.Flags &^ 7) | MoveFlags(p)
-				if err := cb(newb, m); err != nil {
-					return err
+				if err = cb(newb, m); err != nil {
+					return deltaGenStop
 				}
 			}
+			return deltaGenOK
+		})
+		if err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-var deltaLists = [PieceKing + 1][]Delta{
-	// special case: 0 is for black pawn
-	0:           calcDeltaList(PiecePawn | PieceBlack),
-	PiecePawn:   calcDeltaList(PiecePawn),
-	PieceRook:   calcDeltaList(PieceRook),
-	PieceKnight: calcDeltaList(PieceKnight),
-	PieceBishop: calcDeltaList(PieceBishop),
-	PieceQueen:  calcDeltaList(PieceQueen),
-	PieceKing:   calcDeltaList(PieceKing),
-}
+const (
+	// carry on normally
+	deltaGenOK = iota
+	// if the generator is doing a linear attack (ie. rook, bishop, queen),
+	// then stop that (there is a piece of same colour in the way.)
+	deltaGenStopLinear
+	// abort generation asap.
+	deltaGenStop
+)
 
 /*func init() {
-	for p, v := range deltaLists {
-		println(Piece(p).String() + " deltalist:")
-		for _, d := range v {
-			println("- ", d)
-		}
+	for i := PiecePawn; i <= PieceKing; i++ {
+		println("generator ", i.String())
+		deltaGenerator(i, func(d Delta) byte {
+			println("  ", d[0], d[1])
+			return deltaGenOK
+		})
 	}
 }*/
 
-// calcDeltaList determines the possible delta-movements of p.
-func calcDeltaList(p Piece) []Delta {
-	if p.StripColor() == PiecePawn {
+// deltaGenerator generates the possible ways in which p can move.
+// the callback may return one of the three deltaGen* values.
+func deltaGenerator(p Piece, cb func(d Delta) byte) {
+	doLinear := func(d Delta) bool {
+		for i := int8(1); i <= 7; i++ {
+			switch cb(d.Mul(i)) {
+			case deltaGenStopLinear:
+				return false
+			case deltaGenStop:
+				return true
+			}
+		}
+		return false
+	}
+	rotate := func(d Delta, lin bool) bool {
+		for i := 0; i < 4; i++ {
+			if lin {
+				if doLinear(d) {
+					return true
+				}
+			} else {
+				if cb(d) == deltaGenStop {
+					return true
+				}
+			}
+
+			d = d.Rot()
+		}
+		return false
+	}
+
+	// In the following, we use logical OR's to do conditional evaluation
+	// (if the first item returns true, the second won't be evaluated)
+	switch p {
+	case PiecePawn, PiecePawn | PieceBlack:
 		dir := int8(1)
 		if p.Color() == Black {
 			dir = -1
 		}
-		return []Delta{
-			{1 * dir, 0},
-			{2 * dir, 0},
-			{1 * dir, 1},
-			{1 * dir, -1},
+		// try moving 1sq forward; if we get StopLinear, don't try to do 2sq.
+		fw := cb(Delta{dir, 0})
+		if fw == deltaGenStop {
+			return
 		}
-	}
-
-	// expand each delta-movement, up to 7 positions away..
-	exp := func(dd []Delta) (ee []Delta) {
-		for _, d := range dd {
-			ee = append(ee, d)
-			for j := int8(2); j <= 7; j++ {
-				ee = append(ee, d.Mul(j))
+		if fw != deltaGenStopLinear {
+			if cb(Delta{dir * 2, 0}) == deltaGenStop {
+				return
 			}
 		}
-		return
-	}
 
-	// rotate into the 4 axes.
-	rot := func(dd []Delta) (rr []Delta) {
-		for _, d := range dd {
-			rr = append(rr, d)
-			for j := 0; j < 3; j++ {
-				d = d.Rot()
-				rr = append(rr, d)
-			}
-		}
-		return
-	}
+		_ = cb(Delta{dir, 1}) == deltaGenStop ||
+			cb(Delta{dir, -1}) == deltaGenStop
 
-	// (yes, this function was born after I realised I could express
-	// all pieces except for the pawn in these terms)
-	switch p.StripColor() {
 	case PieceRook:
-		return rot(exp([]Delta{{1, 0}}))
-	case PieceKnight:
-		return rot([]Delta{{2, 1}, {1, 2}})
+		rotate(Delta{0, 1}, true)
 	case PieceBishop:
-		return rot(exp([]Delta{{1, 1}}))
+		rotate(Delta{1, 1}, true)
+	case PieceKnight:
+		_ = rotate(Delta{1, 2}, false) ||
+			rotate(Delta{2, 1}, false)
 	case PieceQueen:
-		return rot(exp([]Delta{{1, 1}, {1, 0}}))
+		_ = rotate(Delta{0, 1}, true) ||
+			rotate(Delta{1, 1}, true)
 	case PieceKing:
-		return append(
-			rot([]Delta{{1, 0}, {1, 1}}),
-
-			// castling
-			Delta{0, 2}, Delta{0, -2},
-		)
+		_ = rotate(Delta{0, 1}, false) ||
+			rotate(Delta{1, 1}, false) ||
+			cb(Delta{0, 2}) == deltaGenStop ||
+			cb(Delta{0, -2}) == deltaGenStop
 	}
-	panic("invalid")
 }
 
 type MateResult byte
