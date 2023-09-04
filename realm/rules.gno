@@ -40,6 +40,17 @@ type Position struct {
 	Hashes []uint64
 }
 
+func (p Position) clone() Position {
+	// from bugs:
+	// https://github.com/gnolang/gno/issues/1096
+	// https://github.com/gnolang/gno/issues/1097
+	// ideally, since we're always using Position as a value, not a reference,
+	// we don't need this.
+
+	b, m, f, hmc, h := p.B, p.Moves, p.Flags, p.HalfMoveClock, p.Hashes
+	return Position{b, m, f, hmc, h}
+}
+
 // Color of the "next" move after p.Moves. (White for even len(p.Moves),
 // Black otherwise)
 func (p Position) Color() Color { return Color(len(p.Moves)&1 == 1) }
@@ -72,7 +83,9 @@ func (p Position) ValidateMove(m Move) (newP Position, valid bool) {
 
 // validateMove allows for m to be a "king-capture" move, which is illegal in
 // chess, but it is useful for InCheck.
-func (p Position) validateMove(m Move) (_ Position, ok bool) {
+func (oldp Position) validateMove(m Move) (_ Position, ok bool) {
+	p := oldp.clone()
+
 	piece := p.B[m.From]
 
 	// piece moved must be of player's color
@@ -409,12 +422,13 @@ func (p Position) checkCastlingSetup(typ byte) bool {
 		cross = [3]Square{fg | 4, fg | 3, fg | 2}
 	}
 
+	testb := p.B
 	for _, sq := range cross {
-		p.B[sq] = pfg | PieceKing
-		if p.B.InCheck(c) {
+		testb[sq] = pfg | PieceKing
+		if testb.InCheck(c) {
 			return false
 		}
-		p.B[sq] = PieceEmpty
+		testb[sq] = PieceEmpty
 	}
 
 	return true
@@ -652,7 +666,7 @@ var errFound = errors.New("found")
 // IsMate determines whether the game, at c's turn, is in either check-
 // or stalemate.
 func (p Position) IsMate() MateResult {
-	err := p.GenMoves(func(Position, Move) error {
+	err := p.GenMoves(func(newp Position, m Move) error {
 		return errFound
 	})
 	// If there is any legal move, this is not any kind of mate.
@@ -873,6 +887,14 @@ func (q Square) Sub(s Square) Delta {
 type Move struct {
 	From, To  Square
 	Promotion Piece
+}
+
+func (m Move) String() string {
+	p := ""
+	if m.Promotion != 0 {
+		p += string(m.Promotion.String()[0] + ('a' - 'A'))
+	}
+	return m.From.String() + m.To.String()
 }
 
 var (

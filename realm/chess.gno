@@ -29,8 +29,7 @@ type Game struct {
 	ID        string
 	White     std.Address
 	Black     std.Address
-	Board     Board
-	Moves     []Move
+	Position  Position
 	State     GameState
 	CreatedAt time.Time
 }
@@ -113,8 +112,7 @@ func newGame(opponent std.Address) Game {
 		ID:        strconv.FormatUint(gameIDCounter, 10),
 		White:     std.GetOrigCaller(),
 		Black:     opponent,
-		Board:     defaultBoard,
-		Moves:     nil,
+		Position:  Position{B: NewBoard()},
 		State:     GameStateOpen,
 		CreatedAt: time.Now(),
 	}
@@ -155,7 +153,7 @@ func MakeMove(gameID, from, to string, promote Piece) Game {
 	g := graw.(*Game)
 
 	// determine if this is a black move
-	isBlack := len(g.Moves)%2 == 1
+	isBlack := len(g.Position.Moves)%2 == 1
 
 	caller := std.GetOrigCaller()
 	if (isBlack && g.Black != caller) ||
@@ -173,18 +171,17 @@ func MakeMove(gameID, from, to string, promote Piece) Game {
 		panic("invalid from/to square")
 	}
 	if promote > 0 && promote <= PieceKing {
-		m.Flags = MoveFlags(promote) | MoveFlagPromotion
+		m.Promotion = promote
 	}
-	newb, ok := g.Board.ValidateMove(g.Moves, &m)
+	newp, ok := g.Position.ValidateMove(m)
 	if !ok {
 		panic("illegal move")
 	}
 
 	// add move and record new board
-	g.Moves = append(g.Moves, m)
-	g.Board = newb
+	g.Position = newp
 
-	mate := newb.IsMate(g.Moves)
+	mate := newp.IsMate()
 	if mate == NoMate {
 		return *g
 	}
