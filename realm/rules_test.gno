@@ -16,11 +16,11 @@ func move(from, to string) Move {
 func TestCheckmate(t *testing.T) {
 	fp := unsafeFEN("rn1qkbnr/pbpp1ppp/1p6/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 0 1")
 	m := move("f3", "f7")
-	newb, ok := fp.b.ValidateMove(fp.prev, &m)
+	newp, ok := fp.ValidateMove(m)
 	if !ok {
 		t.Fatal("ValidateMove returned false")
 	}
-	mr := newb.IsMate(append(fp.prev, m))
+	mr := newp.IsMate()
 	if mr != Checkmate {
 		t.Fatalf("expected Checkmate (%d), got %d", Checkmate, mr)
 	}
@@ -28,7 +28,7 @@ func TestCheckmate(t *testing.T) {
 
 func TestCheckmateFromFEN(t *testing.T) {
 	fp := unsafeFEN("rn1qkbnr/pbpp1Qpp/1p6/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 1")
-	mr := fp.b.IsMate(fp.prev)
+	mr := fp.IsMate()
 	if mr != Checkmate {
 		t.Fatalf("expected Checkmate (%d), got %d", Checkmate, mr)
 	}
@@ -37,11 +37,11 @@ func TestCheckmateFromFEN(t *testing.T) {
 func TestStalemate(t *testing.T) {
 	fp := unsafeFEN("k1K5/8/8/8/8/8/8/1Q6 w - - 0 1")
 	m := move("b1", "b6")
-	newb, ok := fp.b.ValidateMove(fp.prev, &m)
+	newp, ok := fp.ValidateMove(m)
 	if !ok {
 		t.Fatal("ValidateMove rejected move")
 	}
-	mr := newb.IsMate(append(fp.prev, m))
+	mr := newp.IsMate()
 	if mr != Stalemate {
 		t.Fatalf("expected Stalemate (%d), got %d", Stalemate, mr)
 	}
@@ -52,12 +52,12 @@ func TestStalemate(t *testing.T) {
 func TestNotMate(t *testing.T) {
 	fp := unsafeFEN("8/3P4/8/8/8/7k/7p/7K w - - 2 70")
 	m := move("d7", "d8")
-	m.Flags = MoveFlagPromotion | MoveFlags(PieceQueen)
-	newb, ok := fp.b.ValidateMove(fp.prev, &m)
+	m.Promotion = PieceQueen
+	newp, ok := fp.ValidateMove(m)
 	if !ok {
 		t.Fatal("ValidateMove returned false")
 	}
-	mr := newb.IsMate(append(fp.prev, m))
+	mr := newp.IsMate()
 	if mr != NoMate {
 		t.Fatalf("expected NoMate (%d), got %d", NoMate, mr)
 	}
@@ -67,9 +67,9 @@ func TestPerft(t *testing.T) {
 	moves := make([]Move, 0, 10)
 	for n, res := range perfResults {
 		t.Run(fmt.Sprintf("n%d", n), func(t *testing.T) {
-			moves = append(moves[:0], res.pos.prev...)
+			res.pos.Moves = append(moves[:0], res.pos.Moves...)
 			counts := make([]int, len(res.nodesPerDepth))
-			countMoves(res.pos.b, moves, len(res.nodesPerDepth), counts)
+			CountMoves(res.pos, len(res.nodesPerDepth), counts)
 			t.Logf("counts: %v", counts)
 			if !intsMatch(counts, res.nodesPerDepth) {
 				t.Errorf("counts don't match: got %v want %v", counts, res.nodesPerDepth)
@@ -90,19 +90,38 @@ func intsMatch(xx, yy []int) bool {
 	return true
 }
 
-func countMoves(b Board, prevMoves []Move, depth int, counts []int) {
+const perftDebug = false
+
+func CountMoves(p Position, depth int, counts []int) {
+	total := 0
 	l := len(counts) - depth
-	b.Moves(prevMoves, func(newb Board, m Move) error {
+	p.GenMoves(func(newp Position, m Move) error {
 		counts[l]++
 		if depth > 1 {
-			countMoves(newb, append(prevMoves, m), depth-1, counts)
+			countMoves(newp, depth-1, counts)
+		}
+		delta := counts[len(counts)-1] - total
+		if perftDebug {
+			fmt.Printf("%s%s: %d\n", m.From.String(), m.To.String(), delta)
+		}
+		total += delta
+		return nil
+	})
+}
+
+func countMoves(p Position, depth int, counts []int) {
+	l := len(counts) - depth
+	p.GenMoves(func(newp Position, m Move) error {
+		counts[l]++
+		if depth > 1 {
+			countMoves(newp, depth-1, counts)
 		}
 		return nil
 	})
 }
 
 type perfTest struct {
-	pos           fenPos
+	pos           Position
 	nodesPerDepth []int
 }
 
@@ -144,21 +163,16 @@ var perfResults = []perfTest{
 // FEN decoding: see https://www.chessprogramming.org/Forsyth-Edwards_Notation
 // copied mostly from notnil/chess and adapted to our own system.
 
-type fenPos struct {
-	b    Board
-	prev []Move
-}
-
-func unsafeFEN(fen string) fenPos {
-	b, p, e := decodeFEN(fen)
+func unsafeFEN(fen string) Position {
+	p, e := decodeFEN(fen)
 	if e != nil {
 		panic(e)
 	}
-	return fenPos{b, p}
+	return p
 }
 
 // Decodes FEN into Board and previous moves.
-func decodeFEN(fen string) (b Board, prev []Move, err error) {
+func decodeFEN(fen string) (p Position, err error) {
 	fen = strings.TrimSpace(fen)
 	parts := strings.Split(fen, " ")
 	if len(parts) != 6 {
@@ -168,7 +182,7 @@ func decodeFEN(fen string) (b Board, prev []Move, err error) {
 
 	// fen board
 	var ok bool
-	b, ok = fenBoard(parts[0])
+	p.B, ok = fenBoard(parts[0])
 	if !ok {
 		err = fmt.Errorf("chess: invalid fen board %s", parts[0])
 		return
@@ -176,26 +190,24 @@ func decodeFEN(fen string) (b Board, prev []Move, err error) {
 
 	// do castling rights first (more convenient to set prev)
 	if parts[2] != "KQkq" {
-		w, b := castleRightsToMoveFlags(parts[2])
-		prev = append(prev, Move{Flags: w}, Move{Flags: b})
+		p.Flags = castleRightsToPositionFlags(parts[2])
 	}
 
 	// color to play
 	color := Color(parts[1] == "b")
 	if color == Black {
 		// add fake move to make len(prev) odd
-		prev = append(prev, Move{})
+		p.Moves = append(p.Moves, Move{})
 	}
 
 	// en passant
 	if parts[3] != "-" {
-		m, e := parseEnPassant(parts[3])
+		f, e := parseEnPassant(parts[3])
 		if e != nil {
 			err = e
 			return
 		}
-		// add even number of moves, and set last move.
-		prev = append(prev, Move{}, m)
+		p.Flags |= f
 	}
 
 	// parts[4]: half move clock, todo after implementing 50/75-move rule
@@ -237,46 +249,34 @@ func fenBoard(boardStr string) (Board, bool) {
 	return b, true
 }
 
-const noCastle = MoveFlagNoCastleQ | MoveFlagNoCastleK
-
-func castleRightsToMoveFlags(cr string) (w, b MoveFlags) {
-	w, b = noCastle, noCastle
+func castleRightsToPositionFlags(cr string) (pf PositionFlags) {
+	pf = NoCastleWQ | NoCastleWK | NoCastleBQ | NoCastleBK
 	if cr == "-" {
 		return
 	}
 	for _, ch := range cr {
 		switch ch {
 		case 'K':
-			w = w &^ MoveFlagNoCastleK
+			pf &^= NoCastleWK
 		case 'Q':
-			w = w &^ MoveFlagNoCastleQ
+			pf &^= NoCastleWQ
 		case 'k':
-			b = b &^ MoveFlagNoCastleK
+			pf &^= NoCastleBK
 		case 'q':
-			b = b &^ MoveFlagNoCastleQ
+			pf &^= NoCastleBQ
 		}
 	}
 	return
 }
 
-func parseEnPassant(strpos string) (Move, error) {
+func parseEnPassant(strpos string) (PositionFlags, error) {
 	eppos := SquareFromString(strpos)
 	if eppos == SquareInvalid {
-		return Move{}, fmt.Errorf("invalid pos: %s", eppos)
+		return 0, fmt.Errorf("invalid pos: %s", eppos)
 	}
 	row, col := eppos.Split()
 	if row != 5 && row != 2 {
-		return Move{}, fmt.Errorf("invalid en passant pos: %s", eppos)
+		return 0, fmt.Errorf("invalid en passant pos: %s", eppos)
 	}
-	// convert row to the row where the "pawn" has gone.
-	if row == 5 {
-		row--
-	} else {
-		row++
-	}
-	return Move{
-		From:  0, // irrelevant
-		To:    Square(row<<3 | col),
-		Flags: MoveFlagCanEnPassant,
-	}, nil
+	return EnPassant | PositionFlags(col), nil
 }
