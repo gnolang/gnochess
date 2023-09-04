@@ -1,0 +1,6 @@
+{{ define "main" }}
+    <div class="container lg:max-w-[70%] xl:max-w-[50%] pt-32 lg:pt-72 {{if eq .Params.align "center"}}text-center{{end}}">
+        <h1 class="heading-500 lg:heading-700 text-center pb-10 lg:pb-20">{{ .Title }}</h1>
+        <div class="aib-content">{{ .Content }}</div>
+    </div>
+{{ end }}

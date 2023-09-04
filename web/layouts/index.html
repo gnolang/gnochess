@@ -1,0 +1,29 @@
+{{ define "meta" }} {{ partial "head/jsonld" (dict "context" . "content" "head/schema/schema-corporation.html") }} {{ partial "head/jsonld" (dict "context" . "content"
+"head/schema/schema-website.html") }} {{ end }} {{ define "main" }} {{ $data := index .Site.Data .Site.Language.Lang }}
+
+<div class="container min-h-[calc(100vh_-_theme(space.24))] grid grid-cols-12 gap-4 pt-32">
+  <div class="grid grid-cols-5 gap-4 col-span-5 place-self-center">
+    <h1 class="col-span-4 font-bold text-800 leading-none">{{.Title}}</h1>
+    <h2 class="col-span-5 mt-2">{{.Params.subtitle}}</h2>
+    <div class="flex col-span-5 space-x-10 items-center mt-4">
+      <a href="/play" class="flex shadow px-2 py-2 rounded-full font-bold items-center"
+        ><span class="ml-4">Play the game</span><span class="inline-block w-10 h-10 rounded-full bg-grey-400 ml-6"></span
+      ></a>
+      <a href="/about" class="underline">Demo Video</a>
+    </div>
+  </div>
+
+  <div class="row-start-2 col-span-6 grid grid-cols-6 gap-4 place-self-end">
+    <div class="flex flex-col justify-between shadow rounded-lg col-span-2 px-8 py-6">
+      <div class="mb-10">Spectator view</div>
+      <div>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
+    </div>
+    <div class="flex flex-col justify-between shadow rounded-lg col-span-2 px-8 py-6">
+      <span class="mb-10">Spectator view</span>
+      <span>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</span>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/js/main.js"></script>
+{{end}}

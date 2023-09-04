@@ -1,0 +1,9 @@
+{{ define "meta" }} {{ partial "head/jsonld" (dict "context" . "content" "head/schema/schema-corporation.html") }} {{ partial "head/jsonld" (dict "context" . "content"
+"head/schema/schema-website.html") }} {{ end }} {{ define "main" }} {{ $data := index .Site.Data .Site.Language.Lang }}
+
+<div class="container min-h-[calc(100vh_-_theme(space.24))] grid grid-cols-12 gap-4 pt-32">
+  <div data-component="playcontrols"></div>
+</div>
+
+<script type="module" src="/js/main.js"></script>
+{{end}}
