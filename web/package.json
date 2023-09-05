@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
-    "dev": "concurrently \"hugo server -D  --gc\" \"tsc && vite build\"",
+    "dev": "concurrently \"hugo server -D\" \"tsc && vite build\"",
     "build": "hugo --gc && tsc && vite build",
     "preview": "vite preview"
   },

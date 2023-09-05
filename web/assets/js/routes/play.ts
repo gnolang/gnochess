@@ -8,15 +8,24 @@ const playView = {
 
 const playTransition = {
   name: "play-transition",
-  leave() {},
+  sync: true,
+  leave({ current }: { current: any }) {
+    return new Promise<void>((resolve) => {
+      const titles = current.container.querySelectorAll(".js-title > .char > span");
+      const subtitles = current.container.querySelectorAll(".js-subtitle");
+      const content = current.container.querySelectorAll(".js-content");
+      gsap.to(titles, { y: "100%", autoAlpha: 0, duration: 0.4 });
+      gsap.to(subtitles, { autoAlpha: 0, duration: 0.4, onComplete: () => resolve() });
+      gsap.to(content, { autoAlpha: 0, duration: 0.4, onComplete: () => resolve() });
+    });
+  },
   enter() {
-    const DOM = {
-      background: document.getElementById("js-background"),
-    };
-    gsap.to(DOM.background, { x: 0 });
+    gsap.to("#js-background", { scaleX: 1, duration: 1.2 });
+    gsap.to("#js-background", { x: 0 });
   },
   once() {
-    gsap.set("#js-background", { x: 0 });
+    gsap.set("#js-background", { x: 0, scaleX: 1 });
+    gsap.to("#js-background", { autoAlpha: 1 });
   },
   to: {
     namespace: ["play"],

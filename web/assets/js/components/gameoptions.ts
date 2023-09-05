@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { Component } from "sevejs";
 
-const Playcontrols = class extends Component {
+const Gameoptions = class extends Component {
   constructor(opts: any) {
     super(opts); // "opts" arg from constructor to super is a mandatory to share components across the app
   }
@@ -14,4 +14,4 @@ const Playcontrols = class extends Component {
   destroy() {}
 };
 
-export { Playcontrols };
+export { Gameoptions };

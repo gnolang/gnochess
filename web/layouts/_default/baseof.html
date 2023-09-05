@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="{{ .Site.Language.Lang }}">
   {{ partial "head/head.html" . }} {{ block "meta" . }}{{ end }}
-  <body data-barba="wrapper" data-component="router">
+  <body data-barba="wrapper" data-component="router" class="min-h-screen">
     {{ block "header" . }}{{ partial "header/header.html" .}}{{ end }} {{ block "canvas" . }}{{ partial "canvas/canvas.html" .}}{{ end }}
 
     <main data-barba="container" data-barba-namespace="{{ .Params.namespace }}">{{ block "main" . }}{{ end }}</main>
-
-    {{ block "footer" . }}{{ partial "footer/footer.html" .}}{{ end }}
+    <script type="module" src="/js/main.js"></script>
   </body>
 </html>
