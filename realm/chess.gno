@@ -46,6 +46,13 @@ const (
 	GameStateWhiteCheckmated
 	GameStateBlackCheckmated
 	GameStateStalemate
+	GameStateDrawn75Move
+	GameStateDrawn5Fold
+
+	// single-party draws
+	GameStateDrawn50Move
+	GameStateDrawn3Fold
+	GameStateDrawnInsufficient
 
 	// resign by either player
 	GameStateWhiteResign
@@ -181,18 +188,23 @@ func MakeMove(gameID, from, to string, promote Piece) Game {
 	// add move and record new board
 	g.Position = newp
 
-	mate := newp.IsFinished()
-	if mate == NotFinished {
+	o := newp.IsFinished()
+	if o == NotFinished {
 		return *g
 	}
 
 	switch {
-	case mate == Checkmate && isBlack:
+	case o == Checkmate && isBlack:
 		g.State = GameStateWhiteCheckmated
-	case mate == Checkmate && !isBlack:
+	case o == Checkmate && !isBlack:
 		g.State = GameStateBlackCheckmated
-	case mate == Stalemate:
+	case o == Stalemate:
 		g.State = GameStateStalemate
+
+	case o == Drawn75Move:
+		g.State = GameStateDrawn75Move
+	case o == Drawn5Fold:
+		g.State = GameStateDrawn5Fold
 	}
 	return *g
 }
@@ -211,10 +223,10 @@ func Resign(gameID string) Game {
 	}
 
 	caller := std.GetOrigCaller()
-	switch {
-	case caller == g.Black:
+	switch caller {
+	case g.Black:
 		g.State = GameStateBlackResign
-	case caller == g.White:
+	case g.White:
 		g.State = GameStateWhiteResign
 	default:
 		panic("you are not involved in this game")
@@ -223,10 +235,40 @@ func Resign(gameID string) Game {
 	return *g
 }
 
+// Draw implements "single-party" draw (ie. not draw by agreement)
+// - Threefold repetition (§9.2)
+// - Fifty-move rule (§9.3)
+// - Insufficient material (§9.4)
+// Note: stalemate happens as a consequence of a Move, and thus is handled in that function.
 func Draw(gameID string) Game {
-	// "single-party" draw (ie. not draw by agreement)
-	// - Threefold repetition (§9.2)
-	// - Fifty-move rule (§9.3)
-	// - Insufficient material (§9.4)
-	// Note: stalemate happens as a consequence of a Move, and thus is handled in that function.
+	std.AssertOriginCall()
+
+	graw, ok := gameStore.Get(gameID)
+	if !ok {
+		panic("game not found: " + gameID)
+	}
+	g := graw.(*Game)
+
+	if g.State.IsFinished() {
+		panic("game is already finished")
+	}
+
+	caller := std.GetOrigCaller()
+	if caller != g.Black && caller != g.White {
+		panic("you are not involved in this game")
+	}
+
+	o := g.Position.IsFinished()
+	switch {
+	case o&Can50Move != 0:
+		g.Outcome = GameStateDrawn50Move
+	case o&Can3Fold != 0:
+		g.Outcome = GameStateDrawn3Fold
+	case o&CanInsufficient != 0:
+		g.Outcome = GameStateDrawnInsufficient
+	default:
+		panic("this game can't be automatically drawn")
+	}
+
+	return *g
 }

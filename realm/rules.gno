@@ -147,6 +147,8 @@ func (oldp Position) validateMove(m Move) (_ Position, ok bool) {
 
 	// Keep old castling rights; remove en passant info.
 	newFlags := p.Flags &^ (MaskEnPassant | EnPassant)
+	// Marked as true for succesful promotions.
+	var promoted bool
 
 	isDiag := func() bool {
 		// move diagonally (|dr| == |dc|)
@@ -322,8 +324,14 @@ func (oldp Position) validateMove(m Move) (_ Position, ok bool) {
 			default:
 				return
 			}
+			promoted = true
 			p.B[m.From] = m.Promotion | color.Piece()
 		}
+	}
+
+	// reject moves with promotion if there's nothing to promote
+	if m.Promotion != 0 && !promoted {
+		return
 	}
 
 	if p.B[m.To].StripColor() == PieceKing {
@@ -367,7 +375,7 @@ func (oldp Position) validateMove(m Move) (_ Position, ok bool) {
 }
 
 // used by InCheck to simulate a move by black player.
-var blackPrevMoves = make([]Move, 1, 2)
+var blackPrevMoves = make([]Move, 1)
 
 // InCheck checks whether the king with the given color is in check.
 // If such king does not exist on the board, InCheck returns false.
@@ -552,6 +560,78 @@ func (p Position) checkEnPassant(c Color, sq Square) Square {
 	return Square(3<<3 | col)
 }
 
+// InsufficientMaterial tests for insufficient material on the board, in which
+// case it returns true.
+//
+// See this reference for the rules used:
+// https://www.chess.com/article/view/how-chess-games-can-end-8-ways-explained#insufficient-material
+//
+//   - king vs king
+//   - king+N/B vs king
+//   - king+NN vs king
+//   - king+N/B vs king+N/B
+func (bd Board) InsufficientMaterial() bool {
+	// strategy:
+	// store the pieces which could count for an insufficient material
+	// scenario in w, b.
+	// if we encounter any pawn, queen, or rook, material is sufficient.
+	// if we encounter 2 bishops, material is sufficient.
+	// afterwards, we verify that w and b are one of the possible insuf material
+	// scenarios.
+
+	const (
+		imN  byte = 1 << iota // knight
+		imN2                  // second knight
+		imB                   // bishop
+	)
+	var w, b byte
+	for _, p := range bd {
+		strip := p.StripColor()
+		switch strip {
+		case PieceQueen, PiecePawn, PieceRook:
+			return false
+		case PieceKing, PieceEmpty:
+			continue
+		}
+		// strip is one of PieceBishop PieceKnight
+		t := &w
+		if p.Color() == Black {
+			t = &b
+		}
+		if strip == PieceBishop {
+			if *t&imB != 0 {
+				return false
+			}
+			*t |= imB
+		} else {
+			if *t&imN2 != 0 {
+				// third knight (ie. from pawn promotion)
+				return false
+			}
+			if *t&imN != 0 {
+				*t |= imN2
+			} else {
+				*t |= imN
+			}
+		}
+	}
+	// make it so that w is bigger than b
+	if b > w {
+		w, b = b, w
+	}
+	switch [2]byte{w, b} {
+	case [2]byte{0, 0}, // king vs king
+		[2]byte{imN, 0}, // king+N/B vs king
+		[2]byte{imB, 0},
+		[2]byte{imN | imN2, 0}, // king+NN vs king
+		[2]byte{imN, imN},      // king+N/B vs king+N/B
+		[2]byte{imB, imB},
+		[2]byte{imB, imN}: // imB > imN, so [2]byte{imN, imB} cannot happen
+		return true
+	}
+	return false
+}
+
 // GenMoves implements a rudimentary move generator.
 // This is not used beyond aiding in determing stalemate and doing perft tests.
 // Each generated move is passed to cb.
@@ -721,8 +801,8 @@ func deltaGenerator(p Piece, cb func(d Delta) byte) {
 // or by 3-fold repetition.
 //
 // Either one of the sequential outcomes will be set (values 1-5), indicating
-// that the game is terminated, or the low 3 bits will be 0, and Can50Move/Can3Fold
-// may be set.
+// that the game is terminated, or the low 3 bits will be 0, and
+// the Can* flags may be set.
 type Outcome byte
 
 const (
@@ -731,16 +811,17 @@ const (
 	Stalemate
 	Drawn75Move
 	Drawn5Fold
-	DrawnInsufficient
 
-	Can50Move Outcome = 8
-	Can3Fold  Outcome = 16
+	Can50Move       Outcome = 8
+	Can3Fold        Outcome = 16
+	CanInsufficient Outcome = 32
 )
 
 var errFound = errors.New("found")
 
 // IsFinished determines if the game at the given position can be considered
 // "finished".
+// See [Outcome] for the possible results.
 func (p Position) IsFinished() Outcome {
 	err := p.GenMoves(func(Position, Move) error {
 		return errFound
@@ -760,6 +841,9 @@ func (p Position) IsFinished() Outcome {
 		}
 		if p.HalfMoveClock >= 100 {
 			o |= Can50Move
+		}
+		if p.B.InsufficientMaterial() {
+			o |= CanInsufficient
 		}
 		return o
 	}
@@ -982,9 +1066,9 @@ type Move struct {
 func (m Move) String() string {
 	p := ""
 	if m.Promotion != 0 {
-		p += string(m.Promotion.String()[0] + ('a' - 'A'))
+		p = string(m.Promotion.String()[0] + ('a' - 'A'))
 	}
-	return m.From.String() + m.To.String()
+	return m.From.String() + m.To.String() + p
 }
 
 var (
