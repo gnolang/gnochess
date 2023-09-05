@@ -6,51 +6,94 @@
 
 package chess
 
-// Color determines a player's color -- either white or black.
-type Color bool
-
-const (
-	White Color = false
-	Black Color = true
+import (
+	"errors"
+	"sort"
 )
 
-// Piece returns the color as a piece to be OR'd into a Piece;
-// ie. 0 on White, and [PieceBlack] on black.
-func (c Color) Piece() Piece {
-	if c == White {
-		return 0
-	}
-	return PieceBlack
+// PositionFlags. The lower 4 bits indicate an en passant column; the upper
+// 4 indicate castling rights.
+type PositionFlags byte
+
+const (
+	EnPassant PositionFlags = 1 << (iota + 3)
+	NoCastleWQ
+	NoCastleWK
+	NoCastleBQ
+	NoCastleBK
+
+	MaskEnPassant = 7 // low 4 bits
+)
+
+// Position contains the information about a chessboard, and surrounding
+// context: the previous moves, the castling rights and "en passant" column.
+type Position struct {
+	B     Board
+	Moves []Move
+	Flags PositionFlags
+
+	// Halfmoves since the last pawn move or capture.
+	// https://www.chessprogramming.org/Halfmove_Clock
+	HalfMoveClock uint16
+	// Used to calculate repeating positions (3- 5-fold repetition).
+	// Zobrist hashing: https://www.chessprogramming.org/Zobrist_Hashing
+	// Reset together with halfmove clock.
+	Hashes []uint64
 }
 
-// Board is a representation of a chess board.
-// Details on how the position is encoded can be found at [Position].
-type Board [64]Piece
+// NewPosition returns a new Position, set up with the initial board position.
+func NewPosition() Position {
+	return Position{
+		B:      NewBoard(),
+		Moves:  make([]Move, 0, 80), // typical chess game is ~40 moves, 80 half-moves
+		Hashes: []uint64{hashInitialPosition},
+	}
+}
 
-// NewBoard returns a Board normally set up at the initial position for standard
-// chess.
-func NewBoard() Board { return defaultBoard }
+func (p Position) clone() Position {
+	// from bugs:
+	// https://github.com/gnolang/gno/issues/1096
+	// https://github.com/gnolang/gno/issues/1097
+	// ideally, since we're always using Position as a value, not a reference,
+	// we don't need this.
 
-var defaultBoard = Board{
-	// row 1
-	p['R'], p['N'], p['B'], p['Q'],
-	p['K'], p['B'], p['N'], p['R'],
-	// row 2
-	p['P'], p['P'], p['P'], p['P'],
-	p['P'], p['P'], p['P'], p['P'],
+	b, m, f, hmc, h := p.B, p.Moves, p.Flags, p.HalfMoveClock, p.Hashes
+	return Position{b, m, f, hmc, h}
+}
 
-	// rows 3, 4, 5, 6
-	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0,
+// Color of the "next" move after p.Moves. (White for even len(p.Moves),
+// Black otherwise)
+func (p Position) Color() Color { return Color(len(p.Moves)&1 == 1) }
 
-	// row 7
-	p['p'], p['p'], p['p'], p['p'],
-	p['p'], p['p'], p['p'], p['p'],
-	// row 8
-	p['r'], p['n'], p['b'], p['q'],
-	p['k'], p['b'], p['n'], p['r'],
+// uintSlice attaches the methods of sort.Interface to []uint64, sorting in increasing order.
+type uintSlice []uint64
+
+func (x uintSlice) Len() int           { return len(x) }
+func (x uintSlice) Less(i, j int) bool { return x[i] < x[j] }
+func (x uintSlice) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
+
+// maxHashCount counts the maximum number of repeating hashes in p.Hashes.
+func (p Position) maxHashCount() int {
+	if len(p.Hashes) == 0 {
+		return 0
+	}
+	sort.Sort(uintSlice(p.Hashes))
+	var last uint64
+	var cur, max int
+	for _, v := range p.Hashes {
+		if last != v {
+			last = v
+			if cur >= max {
+				max = cur
+			}
+			cur = 0
+		}
+		cur++
+	}
+	if cur >= max {
+		max = cur
+	}
+	return max
 }
 
 func sign(n int8) int8 {
@@ -70,36 +113,31 @@ func abs(n int8) int8 {
 
 // ValidateMove checks whether the given move is legal in Chess.
 //
-// Caller guarantees:
-//
-//   - len(previous) must be even for white moves, odd for black moves.
-//   - m may not be nil.
-//   - m.To and m.From must be valid (<64).
-//
-// ValidateMove may modify m.Flags, hence the pointer.
-func (b Board) ValidateMove(previous []Move, m *Move) (newBoard Board, ok bool) {
-	if b[m.To].StripColor() == PieceKing {
+// Caller must guarantee m.To and m.From to be valid (<64).
+func (p Position) ValidateMove(m Move) (newP Position, valid bool) {
+	if p.B[m.To].StripColor() == PieceKing {
 		return
 	}
 
-	return b.validateMove(previous, m)
+	return p.validateMove(m)
 }
 
 // validateMove allows for m to be a "king-capture" move, which is illegal in
 // chess, but it is useful for InCheck.
-func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) {
-	piece := b[m.From]
-	newBoard = b
+func (oldp Position) validateMove(m Move) (_ Position, ok bool) {
+	p := oldp.clone()
+
+	piece := p.B[m.From]
 
 	// piece moved must be of player's color
-	color := Color(len(previous)%2 == 1)
+	color := p.Color()
 	if piece == PieceEmpty || piece.Color() != color ||
 		// additionally, check piece has actually moved
 		m.From == m.To {
 		return
 	}
 	// destination must not be occupied by piece of same color
-	if to := b[m.To]; to != PieceEmpty && to.Color() == color {
+	if to := p.B[m.To]; to != PieceEmpty && to.Color() == color {
 		return
 	}
 
@@ -107,15 +145,20 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 	delta := m.From.Sub(m.To)
 	dr, dc := delta[0], delta[1]
 
+	// Keep old castling rights; remove en passant info.
+	newFlags := p.Flags &^ (MaskEnPassant | EnPassant)
+	// Marked as true for succesful promotions.
+	var promoted bool
+
 	isDiag := func() bool {
 		// move diagonally (|dr| == |dc|)
 		if abs(dr) != abs(dc) {
 			return false
 		}
 		signr, signc := sign(dr), sign(dc)
-		// positions crossed must be empty
+		// squares crossed must be empty
 		for i := int8(1); i < abs(dr); i++ {
-			if b[m.From.Move(i*signr, i*signc)] != PieceEmpty {
+			if p.B[m.From.Move(i*signr, i*signc)] != PieceEmpty {
 				return false
 			}
 		}
@@ -126,14 +169,14 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 		if dr != 0 && dc != 0 {
 			return false
 		}
-		// positions crossed must be empty
+		// squares crossed must be empty
 		for i := int8(1); i < abs(dr); i++ {
-			if b[m.From.Move(i*sign(dr), 0)] != PieceEmpty {
+			if p.B[m.From.Move(i*sign(dr), 0)] != PieceEmpty {
 				return false
 			}
 		}
 		for i := int8(1); i < abs(dc); i++ {
-			if b[m.From.Move(0, i*sign(dc))] != PieceEmpty {
+			if p.B[m.From.Move(0, i*sign(dc))] != PieceEmpty {
 				return false
 			}
 		}
@@ -147,15 +190,23 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 		}
 		// if rook has moved from a starting position, this disables castling
 		// on the side of the rook. flag accordingly in the move.
-		var fg Position
+		var fg Square
 		if color == Black {
 			fg = 7 << 3
 		}
 		switch m.From {
-		case fg: // a rook (either side)
-			m.Flags |= MoveFlagNoCastleQ
-		case fg | 7: // h rook (either side)
-			m.Flags |= MoveFlagNoCastleK
+		case fg: // a-col rook (either side)
+			if color == White {
+				newFlags |= NoCastleWQ
+			} else {
+				newFlags |= NoCastleBQ
+			}
+		case fg | 7: // h-col rook (either side)
+			if color == White {
+				newFlags |= NoCastleWK
+			} else {
+				newFlags |= NoCastleBK
+			}
 		}
 
 	case PieceKnight:
@@ -187,17 +238,21 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 
 			if false ||
 				// check that there are no previous moves which disable castling
-				castlingDisabled(previous, color, ctype) ||
+				p.castlingDisabled(color, ctype) ||
 				// check that we have the exact board set ups we need
-				// + make sure that the original and crossed positions are not in check
-				!b.checkCastlingSetup(color, ctype) {
+				// + make sure that the original and crossed squares are not in check
+				!p.checkCastlingSetup(ctype) {
 				return
 			}
 
 			// perform rook move here
-			newBoard = newBoard.castleRookMove(color, ctype)
+			p.B = p.B.castleRookMove(color, ctype)
 			// add NoCastle flags to prevent any further castling
-			m.Flags |= MoveFlagNoCastleQ | MoveFlagNoCastleK
+			if color == White {
+				newFlags |= NoCastleWQ | NoCastleWK
+			} else {
+				newFlags |= NoCastleBQ | NoCastleBK
+			}
 			break
 		}
 		// move 1sq in all directions
@@ -205,7 +260,11 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 			return
 		}
 		// king has moved: disable castling.
-		m.Flags |= MoveFlagNoCastleQ | MoveFlagNoCastleK
+		if color == White {
+			newFlags |= NoCastleWQ | NoCastleWK
+		} else {
+			newFlags |= NoCastleBQ | NoCastleBK
+		}
 
 	case PiecePawn:
 		// determine direction depending on color
@@ -217,33 +276,34 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 		switch {
 		case dc == 0 && dr == dir: // 1sq up
 			// destination must be empty (no captures allowed)
-			if b[m.To] != PieceEmpty {
+			if p.B[m.To] != PieceEmpty {
 				return
 			}
 		case dc == 0 && dr == dir*2: // 2sq up (only from starting row)
-			wantRow := Position(1)
+			wantRow := Square(1)
 			if color == Black {
 				wantRow = 6
 			}
 			// check starting row, and that two squares are empty
 			if (m.From>>3) != wantRow ||
-				b[m.From.Move(int8(dir), 0)] != PieceEmpty ||
-				b[m.To] != PieceEmpty {
+				p.B[m.From.Move(int8(dir), 0)] != PieceEmpty ||
+				p.B[m.To] != PieceEmpty {
 				return
 			}
-			m.Flags |= MoveFlagCanEnPassant
+			_, col := m.To.Split()
+			newFlags |= EnPassant | PositionFlags(col)
 		case abs(dc) == 1 && dr == dir: // capture on diag
 			// must be a capture
-			if b[m.To] == PieceEmpty {
-				if pos := checkEnPassant(previous, color, m.To); pos != PositionInvalid {
+			if p.B[m.To] == PieceEmpty {
+				if sq := p.checkEnPassant(color, m.To); sq != SquareInvalid {
 					// remove other pawn
-					newBoard[pos] = PieceEmpty
+					p.B[sq] = PieceEmpty
 					break
 				}
 				return
 			}
-			// b[m.To] is necessarily an opponent piece; we check & return
-			// b[m.To].Color == color at the beginning of the fn.
+			// p.B[m.To] is necessarily an opponent piece; we check & return
+			// p.B[m.To].Color == color at the beginning of the fn.
 		default: // not a recognized move
 			return
 		}
@@ -251,44 +311,71 @@ func (b Board) validateMove(previous []Move, m *Move) (newBoard Board, ok bool) 
 		row := m.To >> 3
 		if (color == White && row == 7) ||
 			(color == Black && row == 0) {
-			// promotion required
-			if m.Flags&MoveFlagPromotion == 0 {
+			switch m.Promotion {
+			case 0:
 				// m.To is a king? then this is a pseudo-move check.
-				// fix the flags.
-				if b[m.To].StripColor() == PieceKing {
-					m.Flags |= MoveFlagPromotion | MoveFlags(PieceQueen)
-				} else {
+				// assume queen in that case.
+				if p.B[m.To].StripColor() != PieceKing {
+					// no promotion given, invalid
 					return
 				}
-			}
-			pc := m.Flags & 7
-			if pc == 0 || pc == 7 { // invalid pieces
+				m.Promotion = PieceQueen
+			case PieceQueen, PieceBishop, PieceKnight, PieceRook:
+			default:
 				return
 			}
-			newBoard[m.From] = Piece(pc) | color.Piece()
+			promoted = true
+			p.B[m.From] = m.Promotion | color.Piece()
 		}
 	}
 
-	to := newBoard[m.To]
-	if to.StripColor() == PieceKing {
-		// King captures don't check for our own king in check;
-		// these are only "theoretical" moves.
-		return newBoard, true
-	}
-
-	// perform "move"
-	newBoard[m.From], newBoard[m.To] = PieceEmpty, newBoard[m.From]
-
-	// is our king in check, as a result of the current move?
-	if newBoard.InCheck(color) {
+	// reject moves with promotion if there's nothing to promote
+	if m.Promotion != 0 && !promoted {
 		return
 	}
-	return newBoard, true
+
+	if p.B[m.To].StripColor() == PieceKing {
+		// King captures don't check for our own king in check;
+		// these are only "theoretical" moves.
+		return Position{}, true
+	}
+
+	// perform board mutation
+	capture := p.B[m.To] != PieceEmpty
+	p.B[m.From], p.B[m.To] = PieceEmpty, p.B[m.From]
+	p.Flags = newFlags
+	p.Moves = append(p.Moves, m)
+
+	// halfmove clock + hashes logic
+	if piece.StripColor() == PiecePawn || capture {
+		// reset both
+		p.HalfMoveClock = 0
+		p.Hashes = nil
+	} else {
+		p.HalfMoveClock++
+	}
+	ep := byte(255)
+	if p.Flags&EnPassant != 0 {
+		ep = byte(p.Flags & MaskEnPassant)
+	}
+	// Not ideal, but avoids GenMoves potentially polluting "real moves" hashes.
+	p.Hashes = append([]uint64{}, p.Hashes...)
+	p.Hashes = append(
+		p.Hashes,
+		// color is inverted, because we consider the present move as already
+		// done (hence, it is the other player to move).
+		zobrist(p.B, bool(!color), byte(p.Flags)>>4, ep),
+	)
+
+	// is our king in check, as a result of the current move?
+	if p.B.InCheck(color) {
+		return
+	}
+	return p, true
 }
 
-var blackPastMoves = []Move{
-	{From: PositionInvalid, To: PositionInvalid},
-}
+// used by InCheck to simulate a move by black player.
+var blackPrevMoves = make([]Move, 1)
 
 // InCheck checks whether the king with the given color is in check.
 // If such king does not exist on the board, InCheck returns false.
@@ -303,29 +390,25 @@ var blackPastMoves = []Move{
 func (b Board) InCheck(color Color) bool {
 	pWant := PieceKing | color.Piece()
 	kingp := b.findPiece(pWant)
-	if kingp == PositionInvalid {
-		// king doesn't exist (likely recursive InCheck call)
+	if kingp == SquareInvalid {
 		return false
 	}
 
-	// use pastMoves to make validateMove check for the right color.
-	// in the for-loop, we'll be simulating a move done by the color
-	// opposite ours. => if our color is white, the simulated move is black
-	// => len(pastMoves) == 1
-	var pastMoves []Move
+	pos := Position{B: b}
 	if color == White {
-		pastMoves = blackPastMoves
+		// color == White -> simulate a move by black player -> pos.Moves odd
+		pos.Moves = blackPrevMoves
 	}
 
-	for pos, piece := range b {
+	for sq, piece := range b {
 		if piece == PieceEmpty || piece.Color() == color {
 			continue
 		}
-		_, ok := b.validateMove(pastMoves, &Move{
-			From: Position(pos),
+		_, ok := pos.validateMove(Move{
+			From: Square(sq),
 			To:   kingp,
 			// validateMove (unexp) understands that moves to capture a king are
-			// "theoretical", so it doesn't check for checking on its own king,
+			// pseudo moves, so it doesn't check for checking on its own king,
 			// or promotion.
 		})
 		if ok {
@@ -336,27 +419,60 @@ func (b Board) InCheck(color Color) bool {
 	return false
 }
 
-func (b Board) findPiece(pWant Piece) Position {
-	for pos, p := range b {
-		if p == pWant {
-			return Position(pos)
-		}
-	}
-	return PositionInvalid
+// Board is a representation of a chess board.
+// Details on how to transform a chess algebraic position into an index
+// can be found at [Square].
+type Board [64]Piece
+
+// NewBoard returns a Board normally set up at the initial position for standard
+// chess.
+func NewBoard() Board { return defaultBoard }
+
+var defaultBoard = Board{
+	// row 1
+	p['R'], p['N'], p['B'], p['Q'],
+	p['K'], p['B'], p['N'], p['R'],
+	// row 2
+	p['P'], p['P'], p['P'], p['P'],
+	p['P'], p['P'], p['P'], p['P'],
+
+	// rows 3, 4, 5, 6
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+
+	// row 7
+	p['p'], p['p'], p['p'], p['p'],
+	p['p'], p['p'], p['p'], p['p'],
+	// row 8
+	p['r'], p['n'], p['b'], p['q'],
+	p['k'], p['b'], p['n'], p['r'],
 }
 
-func (b Board) checkCastlingSetup(c Color, typ byte) bool {
+func (b Board) findPiece(pWant Piece) Square {
+	for sq, p := range b {
+		if p == pWant {
+			return Square(sq)
+		}
+	}
+	return SquareInvalid
+}
+
+func (p Position) checkCastlingSetup(typ byte) bool {
 	// set up correct row and piece flags according to color
-	var fg Position
+	c := p.Color()
+	b := p.B
+	var fg Square
 	var pfg Piece
 	if c == Black {
 		fg, pfg = 7<<3, PieceBlack
 	}
 
-	// cross are the positions that the king starts from,
+	// cross are the squares that the king starts from,
 	// crosses and "lands". they are recorded as they must all be
 	// not in check by any opponent piece.
-	var cross [3]Position
+	var cross [3]Square
 
 	if typ == 'K' {
 		if !(b[fg|4] == pfg|PieceKing &&
@@ -365,7 +481,7 @@ func (b Board) checkCastlingSetup(c Color, typ byte) bool {
 			b[fg|7] == pfg|PieceRook) {
 			return false
 		}
-		cross = [3]Position{fg | 4, fg | 5, fg | 6}
+		cross = [3]Square{fg | 4, fg | 5, fg | 6}
 	} else {
 		if !(b[fg|4] == pfg|PieceKing &&
 			b[fg|3] == PieceEmpty &&
@@ -374,23 +490,23 @@ func (b Board) checkCastlingSetup(c Color, typ byte) bool {
 			b[fg|0] == pfg|PieceRook) {
 			return false
 		}
-		cross = [3]Position{fg | 4, fg | 3, fg | 2}
+		cross = [3]Square{fg | 4, fg | 3, fg | 2}
 	}
 
-	testb := b
-	for _, pos := range cross {
-		testb[pos] = pfg | PieceKing
+	testb := p.B
+	for _, sq := range cross {
+		testb[sq] = pfg | PieceKing
 		if testb.InCheck(c) {
 			return false
 		}
-		testb[pos] = PieceEmpty
+		testb[sq] = PieceEmpty
 	}
 
 	return true
 }
 
 func (b Board) castleRookMove(c Color, typ byte) Board {
-	var fg Position
+	var fg Square
 	var pfg Piece
 	if c == Black {
 		fg, pfg = 7<<3, PieceBlack
@@ -404,185 +520,356 @@ func (b Board) castleRookMove(c Color, typ byte) Board {
 	return b
 }
 
-func checkEnPassant(previous []Move, c Color, pos Position) Position {
-	row, col := pos.Split()
-	if (c == White && row != 5) ||
-		(c == Black && row != 2) ||
-		len(previous) == 0 {
-		return PositionInvalid
+func (p Position) castlingDisabled(color Color, kind byte) bool {
+	if kind != 'K' && kind != 'Q' {
+		return false
 	}
-	last := previous[len(previous)-1]
-	if last.Flags&MoveFlagPromotion != 0 ||
-		last.Flags&MoveFlagCanEnPassant == 0 {
-		return PositionInvalid
+
+	// Determine what flag we're looking for.
+	var want PositionFlags
+	switch {
+	case color == White && kind == 'K':
+		want = NoCastleWK
+	case color == White && kind == 'Q':
+		want = NoCastleWQ
+	case color == Black && kind == 'K':
+		want = NoCastleBK
+	case color == Black && kind == 'Q':
+		want = NoCastleBQ
 	}
-	_, lc := last.To.Split()
-	if col != lc {
-		return PositionInvalid
-	}
-	return last.To
+
+	return p.Flags&want != 0
 }
 
-// Moves implements a rudimentary move generator.
+func (p Position) checkEnPassant(c Color, sq Square) Square {
+	row, col := sq.Split()
+	if p.Flags&EnPassant == 0 ||
+		(c == White && row != 5) ||
+		(c == Black && row != 2) {
+		return SquareInvalid
+	}
+	wantCol := byte(p.Flags & MaskEnPassant)
+
+	if col != wantCol {
+		return SquareInvalid
+	}
+
+	if c == White {
+		return Square(4<<3 | col)
+	}
+	return Square(3<<3 | col)
+}
+
+// InsufficientMaterial tests for insufficient material on the board, in which
+// case it returns true.
+//
+// See this reference for the rules used:
+// https://www.chess.com/article/view/how-chess-games-can-end-8-ways-explained#insufficient-material
+//
+//   - king vs king
+//   - king+N/B vs king
+//   - king+NN vs king
+//   - king+N/B vs king+N/B
+func (bd Board) InsufficientMaterial() bool {
+	// strategy:
+	// store the pieces which could count for an insufficient material
+	// scenario in w, b.
+	// if we encounter any pawn, queen, or rook, material is sufficient.
+	// if we encounter 2 bishops, material is sufficient.
+	// afterwards, we verify that w and b are one of the possible insuf material
+	// scenarios.
+
+	const (
+		imN  byte = 1 << iota // knight
+		imN2                  // second knight
+		imB                   // bishop
+	)
+	var w, b byte
+	for _, p := range bd {
+		strip := p.StripColor()
+		switch strip {
+		case PieceQueen, PiecePawn, PieceRook:
+			return false
+		case PieceKing, PieceEmpty:
+			continue
+		}
+		// strip is one of PieceBishop PieceKnight
+		t := &w
+		if p.Color() == Black {
+			t = &b
+		}
+		if strip == PieceBishop {
+			if *t&imB != 0 {
+				return false
+			}
+			*t |= imB
+		} else {
+			if *t&imN2 != 0 {
+				// third knight (ie. from pawn promotion)
+				return false
+			}
+			if *t&imN != 0 {
+				*t |= imN2
+			} else {
+				*t |= imN
+			}
+		}
+	}
+	// make it so that w is bigger than b
+	if b > w {
+		w, b = b, w
+	}
+	switch [2]byte{w, b} {
+	case [2]byte{0, 0}, // king vs king
+		[2]byte{imN, 0}, // king+N/B vs king
+		[2]byte{imB, 0},
+		[2]byte{imN | imN2, 0}, // king+NN vs king
+		[2]byte{imN, imN},      // king+N/B vs king+N/B
+		[2]byte{imB, imB},
+		[2]byte{imB, imN}: // imB > imN, so [2]byte{imN, imB} cannot happen
+		return true
+	}
+	return false
+}
+
+// GenMoves implements a rudimentary move generator.
 // This is not used beyond aiding in determing stalemate and doing perft tests.
 // Each generated move is passed to cb.
-func (b Board) Moves(previous []Move, cb func(Board, Move) error) error {
-	color := Color(len(previous)%2 == 1)
-	for pos, piece := range b {
+// If cb returns an error, it is returned without processing further moves.
+func (p Position) GenMoves(cb func(Position, Move) error) error {
+	color := p.Color()
+	for sq, piece := range p.B {
 		if piece == PieceEmpty || piece.Color() != color {
 			continue
 		}
-		dlIndex := piece.StripColor()
-		if piece == PiecePawn|PieceBlack {
-			dlIndex = 0 // special case
+
+		from := Square(sq)
+
+		pstrip := piece.StripColor()
+		// If the piece is a pawn, and they are on the second last row, we know
+		// that whatever move they do (advance, or take diagonally) they're going
+		// to promote.
+		prom := pstrip == PiecePawn &&
+			((color == White && from>>3 == 6) ||
+				(color == Black && from>>3 == 1))
+
+		// delta generator needs to know if p is black
+		if pstrip == PiecePawn && color == Black {
+			pstrip |= Black.Piece()
 		}
-		deltas := deltaLists[dlIndex]
-		for _, delta := range deltas {
-			if !delta.Valid() {
-				continue
-			}
-			// create move; if the resulting position is oob, continue
+
+		var err error
+		deltaGenerator(pstrip, func(delta Delta) byte {
+			// create move; if the resulting square is oob, continue
 			m := Move{
-				From: Position(pos),
-				To:   Position(pos).Apply(delta),
+				From: from,
+				To:   from.Apply(delta),
 			}
-			if m.To == PositionInvalid ||
-				(b[m.To] != PieceEmpty && b[m.To].Color() == color) {
-				continue
+			if m.To == SquareInvalid ||
+				(p.B[m.To] != PieceEmpty && p.B[m.To].Color() == color) {
+				return deltaGenStopLinear
 			}
 
 			// handle promotion case
-			prom := false
-			if piece.StripColor() == PiecePawn &&
-				((color == White && m.To>>3 == 7) ||
-					(color == Black && m.To>>3 == 0)) {
-				prom = true
-				m.Flags = MoveFlagPromotion | MoveFlags(PieceQueen)
+			if prom {
+				m.Promotion = PieceQueen
 			}
 
 			// if it's a valid move, call cb on it
-			newb, ok := b.ValidateMove(previous, &m)
+			newp, ok := p.ValidateMove(m)
 			if !ok {
-				continue
+				return deltaGenOK
 			}
-			cb(newb, m)
+			if err = cb(newp, m); err != nil {
+				return deltaGenStop
+			}
 
 			// if we've promoted, handle the cases where we've promoted to a non-queen.
-			if prom {
-				for _, p := range [...]Piece{PieceRook, PieceKnight, PieceBishop} {
-					newb[m.To] = p | color.Piece()
-					m.Flags = (m.Flags &^ 7) | MoveFlags(p)
-					cb(newb, m)
+			if !prom {
+				return deltaGenOK
+			}
+
+			for _, promPiece := range [...]Piece{PieceRook, PieceKnight, PieceBishop} {
+				newp.B[m.To] = promPiece | color.Piece()
+				m.Promotion = promPiece
+				if err = cb(newp, m); err != nil {
+					return deltaGenStop
 				}
 			}
+			return deltaGenOK
+		})
+		if err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-var deltaLists = [PieceKing + 1][maxCalcDelta]Delta{
-	// special case: 0 is for black pawn
-	0:           calcDeltaList(PiecePawn | PieceBlack),
-	PiecePawn:   calcDeltaList(PiecePawn),
-	PieceRook:   calcDeltaList(PieceRook),
-	PieceKnight: calcDeltaList(PieceKnight),
-	PieceBishop: calcDeltaList(PieceBishop),
-	PieceQueen:  calcDeltaList(PieceQueen),
-	PieceKing:   calcDeltaList(PieceKing),
-}
+const (
+	// carry on normally
+	deltaGenOK = iota
+	// if the generator is doing a linear attack (ie. rook, bishop, queen),
+	// then stop that (there is a piece of same colour in the way.)
+	deltaGenStopLinear
+	// abort generation asap.
+	deltaGenStop
+)
 
-// largest is queen with: 2 base vectors * 7 extensions * 4 directions
-const maxCalcDelta = 56
+/*func init() {
+	for i := PiecePawn; i <= PieceKing; i++ {
+		println("generator ", i.String())
+		deltaGenerator(i, func(d Delta) byte {
+			println("  ", d[0], d[1])
+			return deltaGenOK
+		})
+	}
+}*/
 
-// calcDeltaList determines the possible delta-movements of p.
-func calcDeltaList(p Piece) [maxCalcDelta]Delta {
-	if p.StripColor() == PiecePawn {
+// deltaGenerator generates the possible ways in which p can move.
+// the callback may return one of the three deltaGen* values.
+func deltaGenerator(p Piece, cb func(d Delta) byte) {
+	doLinear := func(d Delta) bool {
+		for i := int8(1); i <= 7; i++ {
+			switch cb(d.Mul(i)) {
+			case deltaGenStopLinear:
+				return false
+			case deltaGenStop:
+				return true
+			}
+		}
+		return false
+	}
+	rotate := func(d Delta, lin bool) bool {
+		for i := 0; i < 4; i++ {
+			if lin {
+				if doLinear(d) {
+					return true
+				}
+			} else {
+				if cb(d) == deltaGenStop {
+					return true
+				}
+			}
+
+			d = d.Rot()
+		}
+		return false
+	}
+
+	// In the following, we use logical OR's to do conditional evaluation
+	// (if the first item returns true, the second won't be evaluated)
+	switch p {
+	case PiecePawn, PiecePawn | PieceBlack:
 		dir := int8(1)
 		if p.Color() == Black {
 			dir = -1
 		}
-		return [maxCalcDelta]Delta{
-			{1 * dir, 0},
-			{2 * dir, 0},
-			{1 * dir, 1},
-			{1 * dir, -1},
-		}
-	}
-
-	// expand each delta-movement, for all its scaled versions.
-	exp := func(dd [maxCalcDelta]Delta) (ee [maxCalcDelta]Delta) {
-		i := 0
-		for _, d := range dd {
-			if !d.Valid() {
-				return
-			}
-			for j := int8(1); j <= 7; j++ {
-				ee[i] = d.Mul(j)
-				i++
-			}
-		}
-		return
-	}
-
-	// rotate into the 4 axes.
-	rot := func(dd [maxCalcDelta]Delta) (rr [maxCalcDelta]Delta) {
-		i := 0
-		for _, d := range dd {
-			if !d.Valid() {
-				return
-			}
-			rr[i] = d
-			i++
-			for j := 0; j < 3; j++ {
-				d = d.Rot()
-				rr[i] = d
-				i++
-			}
-		}
-		return
-	}
-
-	// add more moves.
-	join := func(aa, bb [maxCalcDelta]Delta) (cc [maxCalcDelta]Delta) {
-		cc = aa
-		off := -1
-		for i, v := range cc {
-			if !v.Valid() {
-				off = i
-				break
-			}
-		}
-		if off < 0 {
+		// try moving 1sq forward; if we get StopLinear, don't try to do 2sq.
+		fw := cb(Delta{dir, 0})
+		if fw == deltaGenStop {
 			return
 		}
-		for i, v := range bb {
-			if !v.Valid() {
+		if fw != deltaGenStopLinear {
+			if cb(Delta{dir * 2, 0}) == deltaGenStop {
 				return
 			}
-			cc[off+i] = v
 		}
-		return
+
+		_ = cb(Delta{dir, 1}) == deltaGenStop ||
+			cb(Delta{dir, -1}) == deltaGenStop
+
+	case PieceRook:
+		rotate(Delta{0, 1}, true)
+	case PieceBishop:
+		rotate(Delta{1, 1}, true)
+	case PieceKnight:
+		_ = rotate(Delta{1, 2}, false) ||
+			rotate(Delta{2, 1}, false)
+	case PieceQueen:
+		_ = rotate(Delta{0, 1}, true) ||
+			rotate(Delta{1, 1}, true)
+	case PieceKing:
+		_ = rotate(Delta{0, 1}, false) ||
+			rotate(Delta{1, 1}, false) ||
+			cb(Delta{0, 2}) == deltaGenStop ||
+			cb(Delta{0, -2}) == deltaGenStop
+	}
+}
+
+// Outcome is returned by IsFinished, and indicates if the game has finished,
+// and additionally if either of the player can claim draw by the 50-move rule
+// or by 3-fold repetition.
+//
+// Either one of the sequential outcomes will be set (values 1-5), indicating
+// that the game is terminated, or the low 3 bits will be 0, and
+// the Can* flags may be set.
+type Outcome byte
+
+const (
+	NotFinished Outcome = iota
+	Checkmate
+	Stalemate
+	Drawn75Move
+	Drawn5Fold
+
+	Can50Move       Outcome = 8
+	Can3Fold        Outcome = 16
+	CanInsufficient Outcome = 32
+)
+
+var errFound = errors.New("found")
+
+// IsFinished determines if the game at the given position can be considered
+// "finished".
+// See [Outcome] for the possible results.
+func (p Position) IsFinished() Outcome {
+	err := p.GenMoves(func(Position, Move) error {
+		return errFound
+	})
+	// If there is any legal move, this is not any kind of mate.
+	if err != nil {
+		mhc := p.maxHashCount()
+		switch {
+		case mhc >= 5:
+			return Drawn5Fold
+		case p.HalfMoveClock >= 150:
+			return Drawn75Move
+		}
+		var o Outcome
+		if mhc >= 3 {
+			o |= Can3Fold
+		}
+		if p.HalfMoveClock >= 100 {
+			o |= Can50Move
+		}
+		if p.B.InsufficientMaterial() {
+			o |= CanInsufficient
+		}
+		return o
 	}
 
-	// (yes, this function was born after I realised I could express
-	// all pieces except for the pawn in these terms)
-	switch p.StripColor() {
-	case PieceRook:
-		return rot(exp([maxCalcDelta]Delta{{1, 0}}))
-	case PieceKnight:
-		return rot([maxCalcDelta]Delta{{2, 1}, {1, 2}})
-	case PieceBishop:
-		return rot(exp([maxCalcDelta]Delta{{1, 1}}))
-	case PieceQueen:
-		return rot(exp([maxCalcDelta]Delta{{1, 1}, {1, 0}}))
-	case PieceKing:
-		return join(
-			rot([maxCalcDelta]Delta{{1, 0}, {1, 1}}),
-			// castling
-			[maxCalcDelta]Delta{{0, 2}, {0, -2}},
-		)
+	// No legal moves. Is the king in check?
+	if p.B.InCheck(p.Color()) {
+		return Checkmate
 	}
-	panic("invalid")
+	return Stalemate
+}
+
+// Color determines a player's color -- either white or black.
+type Color bool
+
+const (
+	White Color = false
+	Black Color = true
+)
+
+// Piece returns the color as a piece to be OR'd into a Piece;
+// ie. 0 on White, and [PieceBlack] on black.
+func (c Color) Piece() Piece {
+	if c == White {
+		return 0
+	}
+	return PieceBlack
 }
 
 // Piece represents a piece on the board.
@@ -661,7 +948,7 @@ func (p Piece) Switch() Piece {
 	return p | PieceBlack
 }
 
-// Delta represents a 2d vector for indicating a movement from one position
+// Delta represents a 2d vector for indicating a movement from one square
 // to another. The first value indicates the change in column, the second the
 // change in rows.
 type Delta [2]int8
@@ -685,102 +972,110 @@ func (d Delta) Mul(n int8) Delta {
 	return Delta{d[0] * n, d[1] * n}
 }
 
-// Position encodes position information.
+// Square encodes piece position information, in chess the "square" the piece is on.
 // Indexing 0 as the LSB, bits 0-3 indicate the column and bits 4-6 indicate
-// the row. For instance, position 44 (decimal) is:
+// the row. For instance, square 44 (decimal) is:
 //
 //	44 = 0b00 101  100  = d5
 //	          ^row ^col
 //
 // (note: in algebraic notation, this is swapped: the letter represents the
 // column, and the number represents the row).
-type Position byte
+type Square byte
 
-// PositionInvalid is returned by some Position-related methods to indicate
+// SquareInvalid is returned by some Square-related methods to indicate
 // invalid parameters.
-const PositionInvalid Position = 255
+const SquareInvalid Square = 255
 
 // String returns p in algebraic notation.
-func (p Position) String() string {
-	if p >= 64 {
+func (q Square) String() string {
+	if q >= 64 {
 		return "<invalid>"
 	}
-	return string(p&7+'a') + string(p>>3+'1')
+	return string(q&7+'a') + string(q>>3+'1')
 }
 
-// PositionFromString returns Position, reading the human-readable algebraic
+// SquareFromString returns Square, reading the human-readable algebraic
 // notation in s. s must be 2 bytes long, with the first byte a letter included
 // between ['a'; 'h'], and the second a number included between ['1';'8'].
-// If s is invalid, PositionInvalid is returned.
-func PositionFromString(s string) Position {
+// If s is invalid, SquareInvalid is returned.
+func SquareFromString(s string) Square {
 	if len(s) != 2 {
-		return PositionInvalid
+		return SquareInvalid
 	}
 	col, row := s[0]-'a', s[1]-'1'
 	// because s[0] is a byte, if s[0] < 'a' then the above will underflow and
 	// row will be >= 8 (same for col).
 	if row >= 8 || col >= 8 {
-		return PositionInvalid
+		return SquareInvalid
 	}
-	return Position(row<<3 | col)
+	return Square(row<<3 | col)
 }
 
-// Move changes the Position of p, moving it vertically according to dr
+// Move changes the square of q, moving it vertically according to dr
 // (delta row) and horizontally according to dc (delta column).
-// If the resulting position is not on the board, then PositionInvalid is returned.
-func (p Position) Move(dr, dc int8) Position {
-	if p == PositionInvalid || !(Delta{dr, dc}).Valid() {
-		return PositionInvalid
+// If the resulting square is not on the board, then SquareInvalid is returned.
+func (q Square) Move(dr, dc int8) Square {
+	if q == SquareInvalid || !(Delta{dr, dc}).Valid() {
+		return SquareInvalid
 	}
 
-	row, col := int8(p>>3), int8(p&7)
+	row, col := int8(q>>3), int8(q&7)
 	row += dr
 	col += dc
 
-	nr, nc := Position(row), Position(col)
+	nr, nc := Square(row), Square(col)
 	if nr >= 8 || nc >= 8 {
-		return PositionInvalid
+		return SquareInvalid
 	}
 	return nr<<3 | nc
 }
 
-// Apply applies the given delta to position.
-// It is shorthand for p.Move(d[0], d[1]).
-func (p Position) Apply(d Delta) Position { return p.Move(d[0], d[1]) }
+// Apply applies the given delta to the square.
+// It is shorthand for q.Move(d[0], d[1]).
+func (q Square) Apply(d Delta) Square { return q.Move(d[0], d[1]) }
 
-// Split splits Position into its components.
+// Split splits Square into its components.
 // This function does not check if p is invalid.
-func (p Position) Split() (row, col byte) {
-	return byte(p >> 3), byte(p & 7)
+func (q Square) Split() (row, col byte) {
+	return byte(q >> 3), byte(q & 7)
 }
 
-// SplitI works like [Position.Split], but returns int8's instead
+// SplitI works like [Square.Split], but returns int8's instead
 // of bytes.
-func (p Position) SplitI() (row, col int8) {
-	return int8(p >> 3), int8(p & 7)
+func (q Square) SplitI() (row, col int8) {
+	return int8(q >> 3), int8(q & 7)
 }
 
-// Sub calculates the difference between the two positions.
-// p is the originating position, s is the ending position. The difference in
-// rows and columns from p to s is returned; for instance, d1.Sub(a4) yields
+// Sub calculates the difference between the two squares.
+// q is the originating square, s is the ending square. The difference in
+// rows and columns from q to s is returned; for instance, d1.Sub(a4) yields
 // Delta{3, -3}.
-func (p Position) Sub(s Position) Delta {
-	fr, fc := p.SplitI()
+func (q Square) Sub(s Square) Delta {
+	fr, fc := q.SplitI()
 	tr, tc := s.SplitI()
 	return Delta{tr - fr, tc - fc}
 }
 
 // Move represents a chess game move.
 type Move struct {
-	From, To Position
-	Flags    MoveFlags
+	From, To  Square
+	Promotion Piece
+}
+
+func (m Move) String() string {
+	p := ""
+	if m.Promotion != 0 {
+		p = string(m.Promotion.String()[0] + ('a' - 'A'))
+	}
+	return m.From.String() + m.To.String() + p
 }
 
 var (
-	castleWhiteQ = Move{From: PositionFromString("e1"), To: PositionFromString("c1")}
-	castleWhiteK = Move{From: PositionFromString("e1"), To: PositionFromString("g1")}
-	castleBlackQ = Move{From: PositionFromString("e8"), To: PositionFromString("c8")}
-	castleBlackK = Move{From: PositionFromString("e8"), To: PositionFromString("g8")}
+	castleWhiteQ = Move{From: SquareFromString("e1"), To: SquareFromString("c1")}
+	castleWhiteK = Move{From: SquareFromString("e1"), To: SquareFromString("g1")}
+	castleBlackQ = Move{From: SquareFromString("e8"), To: SquareFromString("c8")}
+	castleBlackK = Move{From: SquareFromString("e8"), To: SquareFromString("g8")}
 )
 
 // returns 0, 'K' or 'Q'.
@@ -802,51 +1097,3 @@ func (m Move) isCastle(c Color) (kind byte) {
 	}
 	return 0
 }
-
-func castlingDisabled(moves []Move, c Color, kind byte) bool {
-	if kind != 'K' && kind != 'Q' {
-		return false
-	}
-
-	// Determine what flag we're looking for.
-	want := MoveFlagNoCastleK
-	if kind == 'Q' {
-		want = MoveFlagNoCastleQ
-	}
-
-	// Search only through even/odd moves according to color.
-	off := 0
-	if c == Black {
-		off = 1
-	}
-
-	// Iterate until we find a move with the flags we want.
-	for i := off; i < len(moves); i += 2 {
-		f := moves[i].Flags
-		if f&MoveFlagPromotion == 0 && f&want != 0 {
-			return true
-		}
-	}
-
-	return false
-}
-
-// MoveFlags represents bit-flags in a move.
-type MoveFlags byte
-
-// NOTE: only ones which can happen together are MoveFlagNoCastleQ and
-// MoveFlagNoCastleK.
-const (
-	// Indicates moves which forbid subsequent Queenside or Kingside castling.
-	MoveFlagNoCastleQ MoveFlags = 1 << iota
-	MoveFlagNoCastleK
-
-	// Indicates a two-square ahead move by a pawn; thus for the move
-	// immediately afterwards the pawn can be taken by a parallel opponent pawn
-	// through an en passant capture.
-	MoveFlagCanEnPassant
-
-	// Indicates pawn promotion. First three bits become the value of the
-	// corresponding Piece.
-	MoveFlagPromotion
-)

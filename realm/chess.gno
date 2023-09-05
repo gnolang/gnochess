@@ -29,8 +29,7 @@ type Game struct {
 	ID        string
 	White     std.Address
 	Black     std.Address
-	Board     Board
-	Moves     []Move
+	Position  Position
 	State     GameState
 	CreatedAt time.Time
 }
@@ -43,24 +42,48 @@ const (
 
 	GameStateOpen
 
+	// "automatic" endgames following moves
 	GameStateWhiteCheckmated
 	GameStateBlackCheckmated
 	GameStateStalemate
+	GameStateDrawn75Move
+	GameStateDrawn5Fold
+
+	// single-party draws
+	GameStateDrawn50Move
+	GameStateDrawn3Fold
+	GameStateDrawnInsufficient
+
+	// resign by either player
+	GameStateWhiteResign
+	GameStateBlackResign
 )
 
 // IsFinished returns whether the game is in a finished state.
 func (g GameState) IsFinished() bool {
-	switch g {
-	case GameStateWhiteCheckmated,
-		GameStateBlackCheckmated,
-		GameStateStalemate:
-		return true
-	}
-	return false
+	return g != GameStateOpen
 }
 
 // NewGame initialized a new game with the given opponent.
 func NewGame(opponent std.Address) Game {
+	std.AssertOriginCall()
+
+	return newGame(opponent)
+}
+
+// NewGameWithUsername starts a new game with a user identified by their
+// username, regularly registered at r/demo/users.
+func NewGameWithUsername(username string) Game {
+	std.AssertOriginCall()
+
+	u := users.GetUserByName(username)
+	if u == nil {
+		panic("user not found: " + username)
+	}
+	return newGame(u.Address())
+}
+
+func newGame(opponent std.Address) Game {
 	caller := std.GetOrigCaller()
 	val, exist := user2Games.Get(caller.String())
 	var games []*Game
@@ -96,8 +119,7 @@ func NewGame(opponent std.Address) Game {
 		ID:        strconv.FormatUint(gameIDCounter, 10),
 		White:     std.GetOrigCaller(),
 		Black:     opponent,
-		Board:     defaultBoard,
-		Moves:     nil,
+		Position:  NewPosition(),
 		State:     GameStateOpen,
 		CreatedAt: time.Now(),
 	}
@@ -123,18 +145,8 @@ func hasOngoingGameWithPlayer(games []*Game, player std.Address) bool {
 	return false
 }
 
-// NewGameWithUsername starts a new game with a user identified by their
-// username, regularly registered at r/demo/users.
-func NewGameWithUsername(username string) Game {
-	u := users.GetUserByName(username)
-	if u == nil {
-		panic("user not found: " + username)
-	}
-	return NewGame(u.Address())
-}
-
 // MakeMove specifies a move to be done on the given game, specifying in
-// algebraic notation the position where to move the piece.
+// algebraic notation the square where to move the piece.
 // If the piece is a pawn which is moving to the last row, a promotion piece
 // must be specified.
 // Castling is specified by indicating the king's movement.
@@ -148,7 +160,7 @@ func MakeMove(gameID, from, to string, promote Piece) Game {
 	g := graw.(*Game)
 
 	// determine if this is a black move
-	isBlack := len(g.Moves)%2 == 1
+	isBlack := len(g.Position.Moves)%2 == 1
 
 	caller := std.GetOrigCaller()
 	if (isBlack && g.Black != caller) ||
@@ -159,38 +171,104 @@ func MakeMove(gameID, from, to string, promote Piece) Game {
 
 	// validate move
 	m := Move{
-		From: PositionFromString(from),
-		To:   PositionFromString(to),
+		From: SquareFromString(from),
+		To:   SquareFromString(to),
 	}
-	if m.From == PositionInvalid || m.To == PositionInvalid {
-		panic("invalid from/to position")
+	if m.From == SquareInvalid || m.To == SquareInvalid {
+		panic("invalid from/to square")
 	}
 	if promote > 0 && promote <= PieceKing {
-		m.Flags = MoveFlags(promote) | MoveFlagPromotion
+		m.Promotion = promote
 	}
-	newb, ok := g.Board.ValidateMove(g.Moves, &m)
+	newp, ok := g.Position.ValidateMove(m)
 	if !ok {
 		panic("illegal move")
 	}
 
-	// TODO add endgame conditions
-	// checkmate, stalemate, 75-move-rule, 5-fold-repetition
-
 	// add move and record new board
-	g.Moves = append(g.Moves, m)
-	g.Board = newb
+	g.Position = newp
+
+	o := newp.IsFinished()
+	if o == NotFinished {
+		return *g
+	}
+
+	switch {
+	case o == Checkmate && isBlack:
+		g.State = GameStateWhiteCheckmated
+	case o == Checkmate && !isBlack:
+		g.State = GameStateBlackCheckmated
+	case o == Stalemate:
+		g.State = GameStateStalemate
+
+	case o == Drawn75Move:
+		g.State = GameStateDrawn75Move
+	case o == Drawn5Fold:
+		g.State = GameStateDrawn5Fold
+	}
+	return *g
+}
+
+func Resign(gameID string) Game {
+	std.AssertOriginCall()
+
+	graw, ok := gameStore.Get(gameID)
+	if !ok {
+		panic("game not found: " + gameID)
+	}
+	g := graw.(*Game)
+
+	if g.State.IsFinished() {
+		panic("game is already finished")
+	}
+
+	caller := std.GetOrigCaller()
+	switch caller {
+	case g.Black:
+		g.State = GameStateBlackResign
+	case g.White:
+		g.State = GameStateWhiteResign
+	default:
+		panic("you are not involved in this game")
+	}
 
 	return *g
 }
 
-func Forfeit(gameID string) Game {
-	// forfeit / refuse game.
-}
-
+// Draw implements "single-party" draw (ie. not draw by agreement)
+// - Threefold repetition (§9.2)
+// - Fifty-move rule (§9.3)
+// - Insufficient material (§9.4)
+// Note: stalemate happens as a consequence of a Move, and thus is handled in that function.
 func Draw(gameID string) Game {
-	// "single-party" draw (ie. not draw by agreement)
-	// - Threefold repetition (§9.2)
-	// - Fifty-move rule (§9.3)
-	// - Insufficient material (§9.4)
-	// Note: stalemate happens as a consequence of a Move, and thus is handled in that function.
+	std.AssertOriginCall()
+
+	graw, ok := gameStore.Get(gameID)
+	if !ok {
+		panic("game not found: " + gameID)
+	}
+	g := graw.(*Game)
+
+	if g.State.IsFinished() {
+		panic("game is already finished")
+	}
+
+	caller := std.GetOrigCaller()
+	if caller != g.Black && caller != g.White {
+		panic("you are not involved in this game")
+	}
+
+	o := g.Position.IsFinished()
+	switch {
+	case o&Can50Move != 0:
+		g.Outcome = GameStateDrawn50Move
+	case o&Can3Fold != 0:
+		g.Outcome = GameStateDrawn3Fold
+	case o&CanInsufficient != 0:
+		g.Outcome = GameStateDrawnInsufficient
+	default:
+		panic("this game can't be automatically drawn")
+	}
+
+	return *g
 }
