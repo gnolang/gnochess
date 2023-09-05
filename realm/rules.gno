@@ -292,9 +292,23 @@ func (oldp Position) validateMove(m Move) (_ Position, ok bool) {
 	}
 
 	// perform board mutation
+	capture := p.B[m.To] != PieceEmpty
 	p.B[m.From], p.B[m.To] = PieceEmpty, p.B[m.From]
 	p.Flags = newFlags
 	p.Moves = append(p.Moves, m)
+
+	// halfmove clock + hashes logic
+	if piece.StripColor() == PiecePawn || capture {
+		// reset both
+		p.HalfMoveClock = 0
+		p.Hashes = p.Hashes[:0]
+	} else {
+		p.HalfMoveClock++
+		p.Hashes = append(
+			p.Hashes,
+			zobrist(p.B, bool(color), byte(p.Flags)>>4, byte(p.Flags&MaskEnPassant)),
+		)
+	}
 
 	// is our king in check, as a result of the current move?
 	if p.B.InCheck(color) {
