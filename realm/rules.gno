@@ -8,6 +8,7 @@ package chess
 
 import (
 	"errors"
+	"sort"
 )
 
 // PositionFlags. The lower 4 bits indicate an en passant column; the upper
@@ -40,6 +41,15 @@ type Position struct {
 	Hashes []uint64
 }
 
+// NewPosition returns a new Position, set up with the initial board position.
+func NewPosition() Position {
+	return Position{
+		B:      NewBoard(),
+		Moves:  make([]Move, 0, 80), // typical chess game is ~40 moves, 80 half-moves
+		Hashes: []uint64{hashInitialPosition},
+	}
+}
+
 func (p Position) clone() Position {
 	// from bugs:
 	// https://github.com/gnolang/gno/issues/1096
@@ -54,6 +64,37 @@ func (p Position) clone() Position {
 // Color of the "next" move after p.Moves. (White for even len(p.Moves),
 // Black otherwise)
 func (p Position) Color() Color { return Color(len(p.Moves)&1 == 1) }
+
+// uintSlice attaches the methods of sort.Interface to []uint64, sorting in increasing order.
+type uintSlice []uint64
+
+func (x uintSlice) Len() int           { return len(x) }
+func (x uintSlice) Less(i, j int) bool { return x[i] < x[j] }
+func (x uintSlice) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
+
+// maxHashCount counts the maximum number of repeating hashes in p.Hashes.
+func (p Position) maxHashCount() int {
+	if len(p.Hashes) == 0 {
+		return 0
+	}
+	sort.Sort(uintSlice(p.Hashes))
+	var last uint64
+	var cur, max int
+	for _, v := range p.Hashes {
+		if last != v {
+			last = v
+			if cur >= max {
+				max = cur
+			}
+			cur = 0
+		}
+		cur++
+	}
+	if cur >= max {
+		max = cur
+	}
+	return max
+}
 
 func sign(n int8) int8 {
 	switch {
@@ -301,14 +342,22 @@ func (oldp Position) validateMove(m Move) (_ Position, ok bool) {
 	if piece.StripColor() == PiecePawn || capture {
 		// reset both
 		p.HalfMoveClock = 0
-		p.Hashes = p.Hashes[:0]
+		p.Hashes = nil
 	} else {
 		p.HalfMoveClock++
-		p.Hashes = append(
-			p.Hashes,
-			zobrist(p.B, bool(color), byte(p.Flags)>>4, byte(p.Flags&MaskEnPassant)),
-		)
 	}
+	ep := byte(255)
+	if p.Flags&EnPassant != 0 {
+		ep = byte(p.Flags & MaskEnPassant)
+	}
+	// Not ideal, but avoids GenMoves potentially polluting "real moves" hashes.
+	p.Hashes = append([]uint64{}, p.Hashes...)
+	p.Hashes = append(
+		p.Hashes,
+		// color is inverted, because we consider the present move as already
+		// done (hence, it is the other player to move).
+		zobrist(p.B, bool(!color), byte(p.Flags)>>4, ep),
+	)
 
 	// is our king in check, as a result of the current move?
 	if p.B.InCheck(color) {
@@ -667,25 +716,52 @@ func deltaGenerator(p Piece, cb func(d Delta) byte) {
 	}
 }
 
-type MateResult byte
+// Outcome is returned by IsFinished, and indicates if the game has finished,
+// and additionally if either of the player can claim draw by the 50-move rule
+// or by 3-fold repetition.
+//
+// Either one of the sequential outcomes will be set (values 1-5), indicating
+// that the game is terminated, or the low 3 bits will be 0, and Can50Move/Can3Fold
+// may be set.
+type Outcome byte
 
 const (
-	NoMate MateResult = iota
+	NotFinished Outcome = iota
 	Checkmate
 	Stalemate
+	Drawn75Move
+	Drawn5Fold
+	DrawnInsufficient
+
+	Can50Move Outcome = 8
+	Can3Fold  Outcome = 16
 )
 
 var errFound = errors.New("found")
 
-// IsMate determines whether the game, at c's turn, is in either check-
-// or stalemate.
-func (p Position) IsMate() MateResult {
-	err := p.GenMoves(func(newp Position, m Move) error {
+// IsFinished determines if the game at the given position can be considered
+// "finished".
+func (p Position) IsFinished() Outcome {
+	err := p.GenMoves(func(Position, Move) error {
 		return errFound
 	})
 	// If there is any legal move, this is not any kind of mate.
 	if err != nil {
-		return NoMate
+		mhc := p.maxHashCount()
+		switch {
+		case mhc >= 5:
+			return Drawn5Fold
+		case p.HalfMoveClock >= 150:
+			return Drawn75Move
+		}
+		var o Outcome
+		if mhc >= 3 {
+			o |= Can3Fold
+		}
+		if p.HalfMoveClock >= 100 {
+			o |= Can50Move
+		}
+		return o
 	}
 
 	// No legal moves. Is the king in check?

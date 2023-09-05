@@ -112,7 +112,7 @@ func newGame(opponent std.Address) Game {
 		ID:        strconv.FormatUint(gameIDCounter, 10),
 		White:     std.GetOrigCaller(),
 		Black:     opponent,
-		Position:  Position{B: NewBoard()},
+		Position:  NewPosition(),
 		State:     GameStateOpen,
 		CreatedAt: time.Now(),
 	}
@@ -181,8 +181,8 @@ func MakeMove(gameID, from, to string, promote Piece) Game {
 	// add move and record new board
 	g.Position = newp
 
-	mate := newp.IsMate()
-	if mate == NoMate {
+	mate := newp.IsFinished()
+	if mate == NotFinished {
 		return *g
 	}
 

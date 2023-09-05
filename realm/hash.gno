@@ -3,6 +3,22 @@
 
 package chess
 
+/* to generate hashInitialPosition
+func init() {
+	println(
+		"initial position hash",
+		zobrist(
+			NewBoard(),
+			false,
+			0,
+			255,
+		),
+	)
+}
+*/
+
+const hashInitialPosition uint64 = 1957848132405881468
+
 func zobrist(b Board, isBlack bool, castling, epFile byte) uint64 {
 	var hash uint64
 	if isBlack {
@@ -22,7 +38,9 @@ func zobrist(b Board, isBlack bool, castling, epFile byte) uint64 {
 		hash ^= hashPieces[sq*12+int(p)]
 	}
 	hash ^= hashCastling[castling]
-	hash ^= hashEpFile[epFile]
+	if epFile < 8 {
+		hash ^= hashEpFile[epFile]
+	}
 	return hash
 }
 

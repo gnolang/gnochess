@@ -20,7 +20,7 @@ func TestCheckmate(t *testing.T) {
 	if !ok {
 		t.Fatal("ValidateMove returned false")
 	}
-	mr := newp.IsMate()
+	mr := newp.IsFinished()
 	if mr != Checkmate {
 		t.Fatalf("expected Checkmate (%d), got %d", Checkmate, mr)
 	}
@@ -28,7 +28,7 @@ func TestCheckmate(t *testing.T) {
 
 func TestCheckmateFromFEN(t *testing.T) {
 	fp := unsafeFEN("rn1qkbnr/pbpp1Qpp/1p6/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 1")
-	mr := fp.IsMate()
+	mr := fp.IsFinished()
 	if mr != Checkmate {
 		t.Fatalf("expected Checkmate (%d), got %d", Checkmate, mr)
 	}
@@ -41,7 +41,7 @@ func TestStalemate(t *testing.T) {
 	if !ok {
 		t.Fatal("ValidateMove rejected move")
 	}
-	mr := newp.IsMate()
+	mr := newp.IsFinished()
 	if mr != Stalemate {
 		t.Fatalf("expected Stalemate (%d), got %d", Stalemate, mr)
 	}
@@ -57,9 +57,115 @@ func TestNotMate(t *testing.T) {
 	if !ok {
 		t.Fatal("ValidateMove returned false")
 	}
-	mr := newp.IsMate()
-	if mr != NoMate {
-		t.Fatalf("expected NoMate (%d), got %d", NoMate, mr)
+	mr := newp.IsFinished()
+	if mr != NotFinished {
+		t.Fatalf("expected NotFinished (%d), got %d", NotFinished, mr)
+	}
+}
+
+func TestXFoldRepetition(t *testing.T) {
+	p := NewPosition()
+	loop := [...]Move{
+		move("g1", "f3"),
+		move("g8", "f6"),
+		move("f3", "g1"),
+		move("f6", "g8"),
+	}
+	var valid bool
+	for i := 0; i < 5; i++ {
+		for j, m := range loop {
+			p, valid = p.ValidateMove(m)
+			if !valid {
+				t.Fatalf("move %s not considered valid", m.String())
+			}
+			fini := p.IsFinished()
+			switch {
+			case (i == 3 && j == 3) || i == 4:
+				// after the fourth full iteration, it should be marked as "drawn" for 5-fold.
+				if fini != Drawn5Fold {
+					t.Errorf("i: %d j: %d; expect %d got %d", i, j, Drawn5Fold, fini)
+				}
+			case (i == 1 && j == 3) || i >= 2:
+				// After the second full iteration, IsFinished should mark this as "can 3 fold"
+				if fini != Can3Fold {
+					t.Errorf("i: %d j: %d; expect %d got %d", i, j, Can3Fold, fini)
+				}
+			default:
+				if fini != NotFinished {
+					t.Errorf("i: %d j: %d; expect %d got %d", i, j, NotFinished, fini)
+				}
+			}
+		}
+	}
+}
+
+func assertMoves(p Position, moves ...Move) Position {
+	var valid bool
+	for _, move := range moves {
+		p, valid = p.ValidateMove(move)
+		if !valid {
+			panic("invalid move")
+		}
+	}
+	return p
+}
+
+func TestXFoldRepetition2(t *testing.T) {
+	// Like TestXFoldRepetition, but starts after the initial position.
+
+	p := assertMoves(
+		NewPosition(),
+		move("f2", "f4"),
+		move("c7", "c5"),
+	)
+
+	loop := [...]Move{
+		move("g1", "f3"),
+		move("g8", "f6"),
+		move("f3", "g1"),
+		move("f6", "g8"),
+	}
+	var valid bool
+	for i := 0; i < 5; i++ {
+		for j, m := range loop {
+			p, valid = p.ValidateMove(m)
+			if !valid {
+				t.Fatalf("move %s not considered valid", m.String())
+			}
+			fini := p.IsFinished()
+			switch {
+			case i == 4:
+				if fini != Drawn5Fold {
+					t.Errorf("i: %d j: %d; expect %d got %d", i, j, Drawn5Fold, fini)
+				}
+			case i >= 2:
+				if fini != Can3Fold {
+					t.Errorf("i: %d j: %d; expect %d got %d", i, j, Can3Fold, fini)
+				}
+			default:
+				if fini != NotFinished {
+					t.Errorf("i: %d j: %d; expect %d got %d", i, j, NotFinished, fini)
+				}
+			}
+		}
+	}
+}
+
+func TestXMoveRule(t *testing.T) {
+	p := NewPosition()
+
+	p.HalfMoveClock = 99
+	newp := assertMoves(p, move("g1", "f3"))
+	fini := newp.IsFinished()
+	if fini != Can50Move {
+		t.Errorf("want %d got %d", Can50Move, fini)
+	}
+
+	p.HalfMoveClock = 149
+	newp = assertMoves(p, move("g1", "f3"))
+	fini = newp.IsFinished()
+	if fini != Drawn75Move {
+		t.Errorf("want %d got %d", Drawn75Move, fini)
 	}
 }
 
@@ -179,6 +285,8 @@ func decodeFEN(fen string) (p Position, err error) {
 		err = fmt.Errorf("chess: fen invalid notation %s must have 6 sections", fen)
 		return
 	}
+
+	p = NewPosition()
 
 	// fen board
 	var ok bool
