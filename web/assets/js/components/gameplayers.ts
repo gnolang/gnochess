@@ -32,7 +32,7 @@ const Gameplayers = class extends Component {
     gsap.to(this.DOM.el, { autoAlpha: 1, display: "flex" });
   }
   disappear() {
-    return gsap.to(this.DOM.el, { autoAlpha: 0, display: "none" });
+    return gsap.to(this.DOM.el, { autoAlpha: 0, display: "none", duration: 0.8 });
   }
 
   config(time, color, token = "") {

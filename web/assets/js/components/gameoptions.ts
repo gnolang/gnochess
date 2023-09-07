@@ -116,16 +116,18 @@ const Gameoptions = class extends Component {
     } else if (this.currentState === 2) {
       this.options.category = this._inputCategory();
       this.switchAnimation2.play();
-      console.log(this.options);
+
+      //   console.log(this.options); // -> to start game
 
       //todo to remove
+      //setup game
       setTimeout(() => {
         this.disappear().then((_) => {
           gsap.set("#js-background", { transformOrigin: "center" });
           gsap.to("#js-background", { scale: 1.1 });
           this.call("appear", "", "gameplayers", "me");
           this.call("appear", "", "gameplayers", "rival");
-          //   this.call("appear", "", "gamecontrols");
+          this.call("appear", "", "gamecontrols");
           // this.call("appear", "", "gamefen");
         });
       }, 2000);
@@ -176,6 +178,8 @@ const Gameoptions = class extends Component {
     for (const prop of Object.getOwnPropertyNames(this.options)) {
       delete this.options[prop];
     }
+    this.switchAnimation1.kill();
+    this.switchAnimation2.kill();
   }
 };
 

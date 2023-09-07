@@ -14,7 +14,7 @@ const homeTransition = (app: any) => {
     name: "play-transition",
     sync: true,
     leave() {
-      return app.call("disappear", "", "Gameoptions");
+      return Promise.all([app.call("disappear", "", "Gameoptions"), app.call("disappear", "", "Gameplayers", "me"), app.call("disappear", "", "Gameplayers", "rival")]);
     },
     enter() {
       DOM.titles = [...document.querySelectorAll(".js-title")];
