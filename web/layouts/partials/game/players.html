@@ -1,36 +1,22 @@
-<section id="js-gameplayers" class="col-span-3 row-span-2 hidden flex-col justify-between relative after:h-0.5 after:w-5/6 after:absolute after:top-1/2 after:bg-grey-50 after:left-0">
-  <div class="w-full flex items-start">
-    <div class="w-16 h-16 rounded-circle mt-1 bg-grey-50"></div>
-    <div class="flex flex-col ml-4 text-grey-50">
+<section id="js-gameplayers" class="col-span-3 row-span-2 flex flex-col justify-between relative">
+  <div data-component="gameplayers" data-component-id="rival" class="flex w-full items-start">
+    <div class="js-playeravatar | w-16 h-16 rounded-circle mt-1 bg-grey-50"></div>
+    <div class="js-playercontent | flex flex-col ml-4 text-grey-50">
       <div class="flex justify-between leading-none font-bold pl-1">
-        <div>rival</div>
-        <div>token</div>
+        <div class="js-playertype">rival</div>
+        <div class="js-playertoken">token</div>
       </div>
-      <time class="text-700 font-bold leading-none">04:22</time>
-
-      <div class="grid grid-cols-4 grid-rows-4 gap-1 mt-4">
-        <div class="w-full aspect-square bg-grey-400 rounded-circle"></div>
-        <div class="w-full aspect-square bg-grey-400 rounded-circle"></div>
-        <div class="w-full aspect-square bg-grey-400 rounded-circle"></div>
-        <div class="w-full aspect-square bg-grey-400 rounded-circle"></div>
-        <div class="w-full aspect-square bg-grey-400 rounded-circle"></div>
-        <div class="w-full aspect-square bg-grey-400 rounded-circle"></div>
-        <div class="w-full aspect-square bg-grey-400 rounded-circle"></div>
-        <div class="w-full aspect-square bg-grey-400 rounded-circle"></div>
-        <div class="w-full aspect-square bg-grey-400 rounded-circle"></div>
-        <div class="w-full aspect-square bg-grey-400 rounded-circle"></div>
-        <div class="w-full aspect-square bg-grey-400 rounded-circle"></div>
-        <div class="w-full aspect-square bg-grey-400 rounded-circle"></div>
-        <div class="w-full aspect-square bg-grey-400 rounded-circle"></div>
-        <div class="w-full aspect-square bg-grey-400 rounded-circle"></div>
-      </div>
+      <time class="js-playertime | text-700 font-bold leading-none w-[4.4ch]">00:00</time>
+      <button class="js-reset">stop</button>
+      <button class="js-resume">resume</button>
+      <div class="js-playercapturepawns | playercapturepawns grid grid-cols-4 grid-rows-4 gap-1 mt-4"></div>
     </div>
   </div>
-
-  <div class="w-full flex items-end">
-    <div class="w-16 h-16 bg-grey-600 rounded-circle mt-1"></div>
+  <!-- 
+  <div data-component="gameplayers" data-component-id="me" class="flex w-full items-end">
+    <div class="js-playeravatar | w-16 h-16 bg-grey-600 rounded-circle mt-1"></div>
     <div class="flex flex-col ml-4 text-grey-600">
-      <div class="grid grid-cols-4 grid-rows-4 gap-1 mb-4">
+      <div class="js-playercapturepawns | grid grid-cols-4 grid-rows-4 gap-1 mb-4">
         <div class="w-full aspect-square rounded-circle bg-grey-50"></div>
         <div class="w-full aspect-square rounded-circle bg-grey-50"></div>
         <div class="w-full aspect-square rounded-circle bg-grey-50"></div>
@@ -47,10 +33,10 @@
         <div class="w-full aspect-square rounded-circle bg-grey-50"></div>
       </div>
       <div class="flex justify-between leading-none font-bold pl-1">
-        <div>me</div>
-        <div>token</div>
+        <div class="js-playertype">me</div>
+        <div class="js-playertoken">token</div>
       </div>
-      <time class="text-700 font-bold leading-none">04:22</time>
+      <time class="js-playertime | text-700 font-bold leading-none">00:00</time>
     </div>
-  </div>
+  </div> -->
 </section>

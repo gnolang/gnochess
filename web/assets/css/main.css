@@ -108,3 +108,7 @@ body {
   display: block;
   transform: translate3d(0, 100%, 0);
 }
+
+.playercapturepawns > div {
+  @apply w-full aspect-square bg-grey-400 rounded-circle;
+}

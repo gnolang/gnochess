@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { Component } from "sevejs";
 import barba from "@barba/core";
-import { gsap } from "gsap";
 
 import { playView, playTransition } from "../routes/play.ts";
 import { homeTransition, homeView } from "../routes/home.ts";
@@ -13,10 +12,8 @@ const Router = class extends Component {
 
   init() {
     // automatically called at start
-    console.log("Router component init");
-
     this.loadedViews = [playView, homeView];
-    this.loadedTransition = [playTransition, homeTransition];
+    this.loadedTransition = [playTransition, homeTransition(this)];
     this.views = [];
     this.transitions = [];
 
@@ -28,6 +25,10 @@ const Router = class extends Component {
       views: this.views,
       transitions: this.transitions,
     });
+  }
+
+  goTo(href) {
+    barba.go(href);
   }
 
   /**
@@ -73,6 +74,7 @@ const Router = class extends Component {
   }
 
   destroy() {
+    console.log("barba");
     barba.destroy();
   }
 };

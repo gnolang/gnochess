@@ -21,7 +21,8 @@
   "dependencies": {
     "@barba/core": "^2.9.7",
     "gsap": "^3.12.2",
-    "sevejs": "^0.1.1",
+    "luxon": "^3.4.3",
+    "sevejs": "^0.1.2",
     "three": "^0.156.0"
   }
 }
