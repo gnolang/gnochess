@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { Component } from "sevejs";
 import { gsap } from "gsap";
+import { saveToLocalStorage, getFromLocalStorage } from "../utils/localstorage";
 
 type Options = {
   token: string;
@@ -111,6 +112,11 @@ const Gameoptions = class extends Component {
     //actions
     this.DOM.timerDisplay.innerHTML = this.options.timer[0];
     this.DOM.timerIncrement.innerHTML = this.options.timer[1];
+
+    //checkstep
+    if (getFromLocalStorage("token")) {
+      this._clickOnCtrl1(null, true);
+    }
     this.appear();
   }
 
@@ -123,13 +129,13 @@ const Gameoptions = class extends Component {
       this.call("goTo", ["/"], "Router");
     }
   }
-  _clickOnCtrl1() {
+  _clickOnCtrl1(e, immediate = false) {
     this.currentState++;
 
     if (this.currentState === 1) {
       this.options.token = this._inputToken();
       this.DOM.ctrl1.innerHTML = this.states[this.currentState].ctrls[1]; //todo: animation
-      this.switchAnimation1.play();
+      this.switchAnimation1[immediate ? "progress" : "play"](immediate ? 1 : 0);
     } else if (this.currentState === 2) {
       this.switchAnimation2.play();
 
@@ -152,7 +158,10 @@ const Gameoptions = class extends Component {
   }
 
   _inputToken() {
-    return this.DOM.el.querySelector("#id-gameoptions-token").value || "";
+    const token = this.DOM.el.querySelector("#id-gameoptions-token").value || "";
+    console.log(getFromLocalStorage("token"));
+    if (!getFromLocalStorage("token")) saveToLocalStorage(token, "token");
+    return token;
   }
 
   _inputCategory() {
