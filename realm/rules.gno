@@ -9,6 +9,8 @@ package chess
 import (
 	"errors"
 	"sort"
+	"strconv"
+	"strings"
 )
 
 // PositionFlags. The lower 4 bits indicate an en passant column; the upper
@@ -24,6 +26,28 @@ const (
 
 	MaskEnPassant = 7 // low 4 bits
 )
+
+// CastlingRights returns FEN castling rights.
+// https://www.chessprogramming.org/Forsyth-Edwards_Notation#Castling_ability
+func (p PositionFlags) CastlingRights() string {
+	s := ""
+	if p&NoCastleWK == 0 {
+		s += "K"
+	}
+	if p&NoCastleWQ == 0 {
+		s += "Q"
+	}
+	if p&NoCastleBK == 0 {
+		s += "k"
+	}
+	if p&NoCastleBQ == 0 {
+		s += "q"
+	}
+	if s == "" {
+		return "-"
+	}
+	return s
+}
 
 // Position contains the information about a chessboard, and surrounding
 // context: the previous moves, the castling rights and "en passant" column.
@@ -109,6 +133,64 @@ func sign(n int8) int8 {
 
 func abs(n int8) int8 {
 	return n * sign(n)
+}
+
+// EncodeFEN encodes p into FEN.
+// https://www.chessprogramming.org/Forsyth-Edwards_Notation
+func (p Position) EncodeFEN() string {
+	var s string
+	emptyCount := 0
+	// FEN has different ordering from us, as [0] is a black rook while for us
+	// is a white rook. So we need to invert the order of rows.
+	for i := 56; i >= 0; i++ {
+		v := p.B[i]
+		if v == PieceEmpty {
+			emptyCount++
+			if i%8 == 7 {
+				s += strconv.Itoa(emptyCount) + "/"
+				emptyCount = 0
+				i -= 16
+			}
+			continue
+		}
+		if emptyCount > 0 {
+			s += strconv.Itoa(emptyCount)
+			emptyCount = 0
+		}
+		s += v.String()
+		if i%8 == 7 {
+			s += "/"
+			i -= 16
+		}
+	}
+	// remove trailing slash
+	s = s[:len(s)-1]
+
+	strs := []string{
+		s,                        // 0: piece placement
+		"w",                      // 1: side to move
+		p.Flags.CastlingRights(), // 2: castling ability
+		"-",                      // 3: e.p. target square
+
+		strconv.Itoa(int(p.HalfMoveClock)), // 4: halfmove clock
+		strconv.Itoa(len(p.Moves)/2 + 1),   // 5: fullmove counter
+	}
+
+	var epFile byte
+	if p.Flags&EnPassant > 0 {
+		epFile = 'a' + byte(p.Flags&MaskEnPassant)
+	}
+
+	if p.Color() == Black {
+		strs[1] = "b"
+		if epFile != 0 {
+			strs[3] = string(epFile) + "3"
+		}
+	} else if epFile != 0 {
+		strs[3] = string(epFile) + "6"
+	}
+
+	return strings.Join(strs, " ")
 }
 
 // ValidateMove checks whether the given move is legal in Chess.
@@ -1063,6 +1145,9 @@ type Move struct {
 	Promotion Piece
 }
 
+// String returns a string representation of Move.
+// It is in the form of "Long Algebraic Notation".
+// https://backscattering.de/chess/uci/#move-lan
 func (m Move) String() string {
 	p := ""
 	if m.Promotion != 0 {

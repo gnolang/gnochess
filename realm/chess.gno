@@ -2,6 +2,8 @@
 package chess
 
 import (
+	"bytes"
+	"errors"
 	"std"
 	"strconv"
 	"time"
@@ -26,12 +28,71 @@ var (
 
 // Game represents a chess game.
 type Game struct {
-	ID        string
-	White     std.Address
-	Black     std.Address
-	Position  Position
-	State     GameState
-	CreatedAt time.Time
+	ID        string      `json:"id"`
+	White     std.Address `json:"white"`
+	Black     std.Address `json:"black"`
+	Position  Position    `json:"position"`
+	State     GameState   `json:"state"`
+	CreatedAt time.Time   `json:"created_at"`
+}
+
+func (g Game) json() string {
+	s, err := g.MarshalJSON()
+	if err != nil {
+		panic(err)
+	}
+	return string(s)
+}
+
+func (g Game) MarshalJSON() ([]byte, error) {
+	var b bytes.Buffer
+	b.WriteByte('{')
+
+	b.WriteString(`"id":"` + g.ID + `",`)
+	b.WriteString(`"white":"` + g.White.String() + `",`)
+	b.WriteString(`"black":"` + g.Black.String() + `",`)
+
+	b.WriteString(`"position":`)
+	pdata, err := g.Position.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	b.Write(pdata)
+	b.WriteString(`,`)
+
+	b.WriteString(`"state":`)
+	sdata, err := g.State.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	b.Write(sdata)
+	b.WriteString(`,`)
+
+	b.WriteString(`"created_at":"` + g.CreatedAt.Format(time.RFC3339) + `"`)
+
+	b.WriteByte('}')
+	return b.Bytes(), nil
+}
+
+func (p Position) MarshalJSON() ([]byte, error) {
+	var b bytes.Buffer
+	b.WriteByte('{')
+
+	bfen := p.EncodeFEN()
+	b.WriteString(`"fen":"` + bfen + `",`)
+
+	b.WriteString(`"moves":[`)
+
+	for idx, m := range p.Moves {
+		b.WriteString(`"` + m.String() + `"`)
+		if idx != len(p.Moves)-1 {
+			b.WriteByte(',')
+		}
+	}
+
+	b.WriteByte(']')
+	b.WriteByte('}')
+	return b.Bytes(), nil
 }
 
 // GameState represents the current game state.
@@ -54,10 +115,30 @@ const (
 	GameStateDrawn3Fold
 	GameStateDrawnInsufficient
 
-	// resign by either player
-	GameStateWhiteResign
-	GameStateBlackResign
+	// resignation by either player
+	GameStateResigned
 )
+
+var gameStatesSnake = [...]string{
+	GameStateInvalid:           "invalid",
+	GameStateOpen:              "open",
+	GameStateWhiteCheckmated:   "white_checkmated",
+	GameStateBlackCheckmated:   "black_checkmated",
+	GameStateStalemate:         "stalemate",
+	GameStateDrawn75Move:       "drawn_75_move",
+	GameStateDrawn5Fold:        "drawn_5_fold",
+	GameStateDrawn50Move:       "drawn_50_move",
+	GameStateDrawn3Fold:        "drawn_3_fold",
+	GameStateDrawnInsufficient: "drawn_insufficient",
+	GameStateResigned:          "resigned",
+}
+
+func (g GameState) MarshalJSON() ([]byte, error) {
+	if int(g) >= len(gameStatesSnake) {
+		return nil, errors.New("invalid game state")
+	}
+	return []byte(`"` + gameStatesSnake[g] + `"`), nil
+}
 
 // IsFinished returns whether the game is in a finished state.
 func (g GameState) IsFinished() bool {
@@ -65,7 +146,7 @@ func (g GameState) IsFinished() bool {
 }
 
 // NewGame initialized a new game with the given opponent.
-func NewGame(opponent std.Address) Game {
+func NewGame(opponent std.Address) string {
 	std.AssertOriginCall()
 
 	return newGame(opponent)
@@ -73,7 +154,7 @@ func NewGame(opponent std.Address) Game {
 
 // NewGameWithUsername starts a new game with a user identified by their
 // username, regularly registered at r/demo/users.
-func NewGameWithUsername(username string) Game {
+func NewGameWithUsername(username string) string {
 	std.AssertOriginCall()
 
 	u := users.GetUserByName(username)
@@ -83,7 +164,7 @@ func NewGameWithUsername(username string) Game {
 	return newGame(u.Address())
 }
 
-func newGame(opponent std.Address) Game {
+func newGame(opponent std.Address) string {
 	caller := std.GetOrigCaller()
 	val, exist := user2Games.Get(caller.String())
 	var games []*Game
@@ -129,7 +210,7 @@ func newGame(opponent std.Address) Game {
 
 	gameStore.Set(g.ID, &g)
 
-	return g
+	return g.json()
 }
 
 func hasOngoingGameWithPlayer(games []*Game, player std.Address) bool {
@@ -150,7 +231,7 @@ func hasOngoingGameWithPlayer(games []*Game, player std.Address) bool {
 // If the piece is a pawn which is moving to the last row, a promotion piece
 // must be specified.
 // Castling is specified by indicating the king's movement.
-func MakeMove(gameID, from, to string, promote Piece) Game {
+func MakeMove(gameID, from, to string, promote Piece) string {
 	std.AssertOriginCall()
 
 	graw, ok := gameStore.Get(gameID)
@@ -190,7 +271,7 @@ func MakeMove(gameID, from, to string, promote Piece) Game {
 
 	o := newp.IsFinished()
 	if o == NotFinished {
-		return *g
+		return g.json()
 	}
 
 	switch {
@@ -206,10 +287,10 @@ func MakeMove(gameID, from, to string, promote Piece) Game {
 	case o == Drawn5Fold:
 		g.State = GameStateDrawn5Fold
 	}
-	return *g
+	return g.json()
 }
 
-func Resign(gameID string) Game {
+func Resign(gameID string) string {
 	std.AssertOriginCall()
 
 	graw, ok := gameStore.Get(gameID)
@@ -225,14 +306,14 @@ func Resign(gameID string) Game {
 	caller := std.GetOrigCaller()
 	switch caller {
 	case g.Black:
-		g.State = GameStateBlackResign
+		g.State = GameStateResigned
 	case g.White:
-		g.State = GameStateWhiteResign
+		g.State = GameStateResigned
 	default:
 		panic("you are not involved in this game")
 	}
 
-	return *g
+	return g.json()
 }
 
 // Draw implements "single-party" draw (ie. not draw by agreement)
@@ -240,7 +321,7 @@ func Resign(gameID string) Game {
 // - Fifty-move rule (§9.3)
 // - Insufficient material (§9.4)
 // Note: stalemate happens as a consequence of a Move, and thus is handled in that function.
-func Draw(gameID string) Game {
+func Draw(gameID string) string {
 	std.AssertOriginCall()
 
 	graw, ok := gameStore.Get(gameID)
@@ -261,14 +342,14 @@ func Draw(gameID string) Game {
 	o := g.Position.IsFinished()
 	switch {
 	case o&Can50Move != 0:
-		g.Outcome = GameStateDrawn50Move
+		g.State = GameStateDrawn50Move
 	case o&Can3Fold != 0:
-		g.Outcome = GameStateDrawn3Fold
+		g.State = GameStateDrawn3Fold
 	case o&CanInsufficient != 0:
-		g.Outcome = GameStateDrawnInsufficient
+		g.State = GameStateDrawnInsufficient
 	default:
 		panic("this game can't be automatically drawn")
 	}
 
-	return *g
+	return g.json()
 }
