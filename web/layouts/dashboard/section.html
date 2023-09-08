@@ -1,0 +1,87 @@
+{{ define "meta" }} {{ partial "head/jsonld" (dict "context" . "content" "head/schema/schema-corporation.html") }} {{ partial "head/jsonld" (dict "context" . "content"
+"head/schema/schema-website.html") }} {{ end }} {{ define "main" }} {{ $data := index .Site.Data .Site.Language.Lang }} {{ partial "game/category.html" . }}
+<div class="container min-h-[calc(100vh_-_theme(space.28))] grid grid-cols-12 gap-16 pt-52">
+  <header>
+    <div>
+      <div>avatar</div>
+      <div>
+        <h1>Dashboard</h1>
+        <div>token</div>
+      </div>
+    </div>
+    <ul>
+      <li>social</li>
+      <li>social</li>
+      <li>social</li>
+    </ul>
+  </header>
+  <section>
+    <article Rapid>
+      <h2>rapid rating</h2>
+      <span><span>12</span>wins</span>
+      <div>
+        <div>
+          <div><span>ico</span>13 Loses</div>
+          <div><span>ico</span>8 Draws</div>
+        </div>
+        <div>30 Games</div>
+      </div>
+    </article>
+    <article Blitz>
+      <h2>blitz rating</h2>
+      <span><span>12</span>wins</span>
+      <div>
+        <div>
+          <div><span>ico</span>13 Loses</div>
+          <div><span>ico</span>8 Draws</div>
+        </div>
+        <div>30 Games</div>
+      </div>
+    </article>
+    <article Global>
+      <img src="#" />
+      <h2>Global rating</h2>
+      <div>chart</div>
+      <div>
+        <div>
+          <div><span>ico</span>13 Loses</div>
+          <div><span>ico</span>8 Draws</div>
+        </div>
+        <div>30 Games</div>
+      </div>
+    </article>
+    <article Leaderboard>
+      <h2>Leaderboard</h2>
+      <div>
+        <div>
+          <span>Rapid</span>
+          <ol>
+            <li>
+              <div><img src="#" /></div>
+              <div>glna...e558</div>
+            </li>
+            <li>
+              <div><img src="#" /></div>
+              <div>glna...e558</div>
+            </li>
+          </ol>
+        </div>
+        <div>
+          <span>Rapid</span>
+          <ol>
+            <li>
+              <div><img src="#" /></div>
+              <div>glna...e558</div>
+            </li>
+            <li>
+              <div><img src="#" /></div>
+              <div>glna...e558</div>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </article>
+  </section>
+</div>
+
+{{end}}

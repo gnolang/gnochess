@@ -1,6 +1,13 @@
-{{ define "main" }}
-    <div class="container lg:max-w-[70%] xl:max-w-[50%] pt-32 lg:pt-72 {{if eq .Params.align "center"}}text-center{{end}}">
-        <h1 class="heading-500 lg:heading-700 text-center pb-10 lg:pb-20">{{ .Title }}</h1>
-        <div class="aib-content">{{ .Content }}</div>
+{{ define "meta" }} {{ partial "head/jsonld" (dict "context" . "content" "head/schema/schema-corporation.html") }} {{ partial "head/jsonld" (dict "context" . "content"
+"head/schema/schema-website.html") }} {{ end }} {{ define "main" }} {{ $data := index .Site.Data .Site.Language.Lang }}
+
+<div class="container min-h-[calc(100vh_-_theme(space.24))] grid grid-cols-12 gap-4 pt-[70vmin]">
+  <div class="relative grid grid-cols-5 gap-4 col-span-5">
+    <h1 class="js-title opacity-0 col-span-4 font-bold text-800 leading-[.9] whitespace-break-spaces">{{.Title}}</h1>
+    <h2 class="js-subtitle font-bold mb-12 col-span-5 mt-2 opacity-0">{{.Params.subtitle}}</h2>
+    <div class="js-content col-span-4 pb-24 opacity-0">
+      <p>{{.Content}}</p>
     </div>
-{{ end }}
+  </div>
+</div>
+{{ block "footer" . }}{{ partial "footer/footer.html" .}}{{ end }} {{end}}

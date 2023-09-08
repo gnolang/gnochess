@@ -1,7 +1,7 @@
 import { gsap } from "gsap";
 import { charming } from "../utils/charming";
-const homeView = {
-  namespace: "home",
+const genericView = {
+  namespace: "about",
   beforeEnter() {},
   afterEnter() {},
 };
@@ -9,7 +9,7 @@ const homeView = {
 // DOM init
 const DOM: Record<string, any> = {};
 
-const homeTransition = (app: any) => {
+const genericTransition = (app: any) => {
   return {
     name: "play-transition",
     sync: true,
@@ -48,9 +48,9 @@ const homeTransition = (app: any) => {
       gsap.to(".js-content", { autoAlpha: 1, duration: 1, delay: 0.6 });
     },
     to: {
-      namespace: ["home"],
+      namespace: ["generic"],
     },
   };
 };
 
-export { homeView, homeTransition };
+export { genericView, genericTransition };

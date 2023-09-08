@@ -19,13 +19,6 @@ const Gameplayers = class extends Component {
     this.DOM.token = this.DOM.el.querySelector(".js-playertoken");
     this.DOM.avatar = this.DOM.el.querySelector(".js-playeravatar");
     this.DOM.content = this.DOM.el.querySelector(".js-playercontent");
-
-    // this.DOM.stop = this.DOM.el.querySelector(".js-reset");
-    // this.DOM.resume = this.DOM.el.querySelector(".js-resume");
-
-    // this.on({ e: "click", target: this.DOM.stop, cb: this.stopTimer.bind(this, 0) });
-    // this.on({ e: "click", target: this.DOM.resume, cb: this.startTimer.bind(this) });
-    this.config(60, "white", "glnaglnaglnaglnae558");
   }
 
   appear() {
@@ -41,54 +34,64 @@ const Gameplayers = class extends Component {
     this.DOM.token.innerHTML = truncateString(token, 4, 4);
 
     //config timer
-    this.timer = time;
-    // setTimeout(this.startTimer(), 2000); //mock timer
+    this.increment = time[1];
+    this.timer = time[0] * 60; //sec to min
+    this._createTime(this._dateTarget());
 
     //config pawn color
-    gsap.set(this.DOM.avatar, { backgroundColor: color === "black" ? "#777777" : "#FFFFFF" });
-    gsap.set(this.DOM.content, { color: color === "black" ? "#777777" : "#FFFFFF" });
+    gsap.set(this.DOM.avatar, { backgroundColor: color === "b" ? "#777777" : "#FFFFFF" });
+    gsap.set(this.DOM.content, { color: color === "b" ? "#777777" : "#FFFFFF" });
 
     //config avatar
   }
 
-  startTimer() {
-    this.timerActive = true;
-    let timeleft;
+  _createTime(datetarget) {
     const pad = (n) => (n < 10 ? "0" : "") + n;
-    const timer = (datetarget) => {
-      const dateNow = DateTime.now();
-      timeleft = Interval.fromDateTimes(dateNow, datetarget).length();
 
-      const minutes = Math.floor((timeleft % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((timeleft % (1000 * 60)) / 1000);
-      this.DOM.timer.innerHTML = `${pad(minutes)}:${pad(seconds)}`;
-    };
+    const dateNow = DateTime.now();
+    const timeleft = Interval.fromDateTimes(dateNow, datetarget).length();
 
+    const minutes = Math.floor((timeleft % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeleft % (1000 * 60)) / 1000);
+    this.DOM.timer.innerHTML = `${pad(minutes)}:${pad(seconds)}`;
+  }
+
+  _dateTarget() {
     const date = DateTime.now();
-    const datetarget = date.plus({ seconds: this.timer });
+    return date.plus({ seconds: this.timer });
+  }
+
+  startTimer() {
     clearInterval(this.clock);
 
-    timer(datetarget);
-    this.clock = setInterval(() => {
-      timer(datetarget);
+    this.timerActive = true;
+    const datetarget = this._dateTarget();
+
+    const clockAction = () => {
       this.timer--;
+
+      this._createTime(datetarget);
 
       if (this.timer <= 0) {
         clearInterval(this.clock);
         this.DOM.timer.innerHTML = `00:00`;
       }
-    }, 1000);
+    };
+
+    this.clock = setInterval(clockAction, 1000);
   }
-  stopTimer(increment = 0) {
+  stopTimer() {
     clearInterval(this.clock);
     if (this.timerActive) {
-      this.timer += increment;
+      this.timer += this.increment;
     }
     this.timerActive = false;
   }
 
   capturePawn(pawn: string) {
+    console.log("captureeee");
     const pawnEl = document.createElement("DIV");
+    pawnEl.innerHTML = pawn;
     this.DOM.pawns.appendChild(pawnEl);
   }
 

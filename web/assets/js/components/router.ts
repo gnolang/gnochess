@@ -4,6 +4,8 @@ import barba from "@barba/core";
 
 import { playView, playTransition } from "../routes/play.ts";
 import { homeTransition, homeView } from "../routes/home.ts";
+import { genericTransition, genericView } from "../routes/generic.ts";
+import { aboutTransition, aboutView } from "../routes/about.ts";
 
 const Router = class extends Component {
   constructor(opts: any) {
@@ -12,8 +14,8 @@ const Router = class extends Component {
 
   init() {
     // automatically called at start
-    this.loadedViews = [playView, homeView];
-    this.loadedTransition = [playTransition, homeTransition(this)];
+    this.loadedViews = [playView, homeView, aboutView, genericView];
+    this.loadedTransition = [playTransition, homeTransition(this), aboutTransition(this), genericTransition(this)];
     this.views = [];
     this.transitions = [];
 

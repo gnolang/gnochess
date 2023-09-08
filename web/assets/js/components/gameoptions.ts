@@ -5,7 +5,7 @@ import { gsap } from "gsap";
 type Options = {
   token: string;
   category: "rapid" | "blitz";
-  timer: number;
+  timer: number[];
 };
 type Events = Record<string, any>;
 
@@ -17,10 +17,25 @@ const Gameoptions = class extends Component {
       { name: "token", panels: ["game"], ctrls: ["arrow", "Play"] },
     ];
     this.currentState = 0;
+    this.timer = 0;
+    this.timers = {
+      rapid: [
+        [10, 0],
+        [10, 5],
+        [15, 10],
+      ],
+      blitz: [
+        [3, 0],
+        [3, 2],
+        [5, 0],
+        [5, 3],
+      ],
+    };
+
     this.options = {
       token: "",
       category: "rapid",
-      timer: 5,
+      timer: [10, 0],
     } as Options;
 
     this.events = {} as Events;
@@ -31,9 +46,9 @@ const Gameoptions = class extends Component {
     console.log("PlayControls component init");
 
     //Vars
-    this.timerCount = 1;
-    this.timerMin = 0;
-    this.timerMax = 60;
+    // this.timerCount = 1;
+    // this.timerMin = 0;
+    // this.timerMax = 60;
 
     //DOM
 
@@ -45,6 +60,7 @@ const Gameoptions = class extends Component {
     this.DOM.categorySwitch = this.DOM.el.querySelector("#js-categorySwitch");
     this.DOM.timerBtns = [...this.DOM.el.querySelectorAll(".js-timerUpdate")];
     this.DOM.timerDisplay = this.DOM.el.querySelector("#js-timerdisplay");
+    this.DOM.timerIncrement = this.DOM.el.querySelector("#js-timerincrement");
     this.DOM.ctrl0 = this.DOM.el.querySelector("#js-gameoptions-ctr0");
     this.DOM.ctrl1 = this.DOM.el.querySelector("#js-gameoptions-ctr1");
 
@@ -93,7 +109,8 @@ const Gameoptions = class extends Component {
       .to(this.DOM.paneLoader, { autoAlpha: 1, display: "flex", duration: 0.6 });
 
     //actions
-    this.DOM.timerDisplay.innerHTML = this.options.timer;
+    this.DOM.timerDisplay.innerHTML = this.options.timer[0];
+    this.DOM.timerIncrement.innerHTML = this.options.timer[1];
     this.appear();
   }
 
@@ -114,21 +131,21 @@ const Gameoptions = class extends Component {
       this.DOM.ctrl1.innerHTML = this.states[this.currentState].ctrls[1]; //todo: animation
       this.switchAnimation1.play();
     } else if (this.currentState === 2) {
-      this.options.category = this._inputCategory();
       this.switchAnimation2.play();
-
-      //   console.log(this.options); // -> to start game
 
       //todo to remove
       //setup game
       setTimeout(() => {
         this.disappear().then((_) => {
+          this.call("config", [this.options.timer, "w", "glnaglnaglnaglnae558"], "gameplayers", "me");
+          this.call("config", [this.options.timer, "b", "grbqszfoiqefouqiz254"], "gameplayers", "rival");
+
           gsap.set("#js-background", { transformOrigin: "center" });
           gsap.to("#js-background", { scale: 1.1 });
           this.call("appear", "", "gameplayers", "me");
           this.call("appear", "", "gameplayers", "rival");
           this.call("appear", "", "gamecontrols");
-          // this.call("appear", "", "gamefen");
+          this.call("startGame", ["w"], "gameboard");
         });
       }, 2000);
     }
@@ -142,13 +159,20 @@ const Gameoptions = class extends Component {
     return [...document.getElementsByName("category")].filter((el) => el.checked)[0].value;
   }
 
-  _updateTimer(e) {
-    this.options.timer = Math.min(this.timerMax, Math.max(this.timerMin, this.options.timer + parseInt(e.currentTarget.dataset.ctrl === "+" ? this.timerCount : -this.timerCount, 10)));
-    this.DOM.timerDisplay.innerHTML = this.options.timer;
+  _updateTimer(e, init?: Number) {
+    this.timer = init !== undefined || null ? init : Math.min(this.timers[this.options.category].length - 1, Math.max(0, this.timer + parseInt(e.currentTarget.dataset.ctrl === "+" ? 1 : -1, 10)));
+
+    this.options.timer = this.timers[this.options.category][this.timer];
+
+    this.DOM.timerDisplay.innerHTML = this.options.timer[0];
+    this.DOM.timerIncrement.innerHTML = this.options.timer[1];
   }
 
   _updateCategory(e) {
     const cat = e.currentTarget.value === "blitz";
+
+    this.options.category = this._inputCategory();
+    this._updateTimer("", 0);
     gsap.to(this.DOM.categorySwitch, { x: cat ? "100%" : "0" });
     gsap.to("#js-categoryWord", { x: cat ? "-60%" : "-15%" });
   }
