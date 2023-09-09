@@ -159,7 +159,6 @@ const Gameoptions = class extends Component {
 
   _inputToken() {
     const token = this.DOM.el.querySelector("#id-gameoptions-token").value || "";
-    console.log(getFromLocalStorage("token"));
     if (!getFromLocalStorage("token")) saveToLocalStorage(token, "token");
     return token;
   }

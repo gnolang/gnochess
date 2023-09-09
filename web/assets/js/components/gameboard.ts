@@ -1,7 +1,9 @@
 // @ts-nocheck
 import { Component } from "sevejs";
 import { gsap } from "gsap";
-import { Chess } from "chess.js";
+import { Chess, ChessInstance, SQUARES } from "chess.js";
+import { Chessground } from "chessground";
+// import Chessboard from "@chrisoakman/chessboardjs";
 
 type Colors = "w" | "b";
 const Gameboard = class extends Component {
@@ -16,7 +18,14 @@ const Gameboard = class extends Component {
     this.moves = [];
     this.allowedToMove = false;
 
-    this.DOM.cells = [...this.DOM.el.querySelectorAll("div")];
+    this.board = Chessboard(this.DOM.el, {
+      pieceTheme: `/img/images/pieces/staunton/basic/{piece}.png`,
+      onMoveEnd: this.onSnapEnd.bind(this),
+      moveSpeed: 1,
+    });
+    this.board.start();
+
+    this.DOM.cells = [...this.DOM.el.querySelectorAll(".square-55d63")];
     this.DOM.moves = [];
 
     this.DOM.cells.forEach((el) => {
@@ -24,6 +33,10 @@ const Gameboard = class extends Component {
     });
 
     this._parseCells(this.color);
+  }
+
+  onSnapEnd() {
+    this.board.position(this.chess.fen());
   }
 
   movePawn() {}
@@ -38,15 +51,24 @@ const Gameboard = class extends Component {
   engine() {
     if (this.chess.isGameOver()) {
       console.log("game over");
+      // todo check from server
+      this.call("stopTimer", "", "gameplayers", "me");
+      this.call("stopTimer", "", "gameplayers", "rival");
+
+      //call endgame
       return; // action
     }
     if (this.chess.isStalemate()) {
       console.log("isStalemate");
+      this.call("stopTimer", "", "gameplayers", "me");
+      this.call("stopTimer", "", "gameplayers", "rival");
 
       return; // action
     }
     if (this.chess.isDraw()) {
       console.log("isDraw");
+      this.call("stopTimer", "", "gameplayers", "me");
+      this.call("stopTimer", "", "gameplayers", "rival");
 
       return; // action
     }
@@ -80,62 +102,57 @@ const Gameboard = class extends Component {
   rivalMove() {}
 
   selectCell(e) {
-    const currentCell = e.currentTarget.dataset.cell;
+    const currentCell = e.currentTarget.dataset.square;
     if (this.moves.includes(currentCell)) {
       // if click on allowed cell (to move)
-      const move = this.chess.move({ from: this.selected, to: currentCell });
+      const move = this.chess.move({ from: this.selected, to: currentCell, promotion: "q" });
+      this.board.move(`${move.from}-${move.to}`);
       if (move.captured) {
         // capture
-        console.log(move.captured);
         this.call("capturePawn", [move.captured], "gameplayers", move.color === this.color ? "me" : "rival");
       }
-      console.log(move);
       // ------ WS emmit my move ------
       this.engine();
       //reset allowed position
-      gsap.set(this.DOM.moves, { color: "black" });
+      gsap.to(".chess-board [data-square]", { "--disp-opacity": 0 });
       this.DOM.moves = [];
-
-      console.log(this.chess.board());
     } else {
       // if click on disallow cell (new select)
       if (this.DOM.moves.length > 0) {
         // if new select on board -> reset allowed position
 
-        gsap.set(this.DOM.moves, { color: "black" });
+        gsap.to(".chess-board [data-square]", { "--disp-opacity": 0 });
         this.DOM.moves = [];
       }
 
       // get allowed position on board DOM then DOM
       this.selected = currentCell;
       this.moves = this.chess.moves({ square: currentCell, verbose: true }).map((pos) => pos.to);
-
       this.moves.forEach((cell) => {
-        this.DOM.moves.push(this.DOM.el.querySelector(`[data-cell="${cell}"]`));
+        this.DOM.moves.push(this.DOM.el.querySelector(`[data-square="${cell}"]`));
       });
 
       // highlight allowed position
-      gsap.set(this.DOM.moves, { color: "red" });
+      gsap.to(this.DOM.moves, { "--disp-opacity": 1 });
     }
   }
 
   _parseCells(color: "w" | "b" = "w") {
-    const alph = ["a", "b", "c", "d", "e", "f", "g", "h"];
-    const boardPositions = [];
-    let i = alph.length;
-    while (i > 0) {
-      alph.forEach((letter) => boardPositions.push(letter + i));
-      i--;
-    }
-
-    if (color === "black") {
-      boardPositions.reverse();
-    }
-
-    this.DOM.cells.forEach((el, i) => {
-      el.dataset.cell = boardPositions[i];
-      el.innerHTML = boardPositions[i];
-    });
+    // const alph = ["a", "b", "c", "d", "e", "f", "g", "h"];
+    // const boardPositions = [];
+    // let i = alph.length;
+    // while (i > 0) {
+    //   alph.forEach((letter) => boardPositions.push(letter + i));
+    //   i--;
+    // }
+    // if (color === "black") {
+    //   boardPositions.reverse();
+    // }
+    // this.DOM.cells.forEach((el, i) => {
+    //   el.dataset.cell = boardPositions[i];
+    //   el.innerHTML = boardPositions[i];
+    // });
+    // ----------------------
   }
 
   appear() {

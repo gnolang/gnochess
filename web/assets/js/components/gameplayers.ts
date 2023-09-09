@@ -32,7 +32,7 @@ const Gameplayers = class extends Component {
     //-- config game --
     //config token + type
     this.DOM.token.innerHTML = truncateString(token, 4, 4);
-
+    this.color = color;
     //config timer
     this.increment = time[1];
     this.timer = time[0] * 60; //sec to min
@@ -89,9 +89,9 @@ const Gameplayers = class extends Component {
   }
 
   capturePawn(pawn: string) {
-    console.log("captureeee");
+    console.log("captureeee " + pawn);
     const pawnEl = document.createElement("DIV");
-    pawnEl.innerHTML = pawn;
+    pawnEl.style.backgroundImage = `url('/img/images/pieces/staunton/basic/${(this.color === "b" ? "w" : "b") + pawn.toUpperCase()}.png')`;
     this.DOM.pawns.appendChild(pawnEl);
   }
 

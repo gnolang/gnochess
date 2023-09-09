@@ -112,9 +112,83 @@ body {
 }
 
 .playercapturepawns > div {
-  @apply w-full aspect-square bg-grey-400 rounded-circle;
+  background-size: 90%;
+  background-position: center 42%;
+  @apply w-full aspect-square;
+}
+
+[data-component-id="me"] .playercapturepawns > div {
+  @apply rotate-180 scale-x-[-1];
 }
 
 .chess-board > div {
   @apply flex justify-center items-center;
+}
+
+.chess-board > div > div > div > div:not(:last-child) {
+  position: relative;
+  width: calc(100% / 8 - 8px) !important;
+  height: 100% !important;
+  aspect-ratio: 1/1;
+  margin: 3px 4px;
+  border-radius: 1.5vw;
+  transition: box-shadow 0.1s ease;
+  box-shadow: rgba(0, 0, 0, 0.4) 0px 1px 2px, rgba(0, 0, 0, 0.3) 0px 3px 6px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
+}
+
+.chess-board [data-square] {
+  --disp-opacity: 0;
+}
+.chess-board > div > div > div > div:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  display: block;
+  top: 48%;
+  left: 50%;
+  width: 85%;
+  height: 75%;
+  border: 2px solid white;
+  border-radius: 1.2vw;
+  transform: translate3d(-50%, -50%, 0);
+  z-index: 0;
+  opacity: var(--disp-opacity);
+  box-shadow: rgba(255, 255, 255, 1) 0px -6px 8px inset, rgba(255, 255, 255, 1) 0px -6px 8px;
+}
+
+.chess-board > div > div > div > div:hover {
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 2px, rgba(0, 0, 0, 0.1) 0px 3px 6px -3px, rgba(0, 0, 0, 0.2) 0px -1px 0px inset;
+}
+
+.chess-board > div {
+  transform: scaleY(0.92);
+}
+
+.chess-board > div > div {
+  border: none;
+  background: white;
+  border-radius: 3rem;
+  padding: 2.4rem 1.8rem;
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 2px 15px, rgba(0, 0, 0, 0.1) 0px 7px 30px -13px, rgba(0, 0, 0, 0.2) 0px -6px 0px inset;
+}
+
+.chess-board img {
+  position: absolute;
+  height: calc(100% + 40px) !important;
+  transform: translateY(-40px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.numeric-fc462 {
+  @apply absolute !top-1/2 !-left-5 -translate-y-1/2 text-grey-600;
+}
+.alpha-d2270 {
+  @apply absolute !-bottom-6 !right-1/2 translate-x-1/2 text-grey-600;
+}
+
+.black-3c85d {
+  @apply !bg-grey-200;
+}
+.white-1e1d7 {
+  @apply !bg-grey-100;
 }
