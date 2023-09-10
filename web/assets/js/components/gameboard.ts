@@ -20,7 +20,7 @@ const Gameboard = class extends Component {
 
     this.board = Chessboard(this.DOM.el, {
       pieceTheme: `/img/images/pieces/staunton/basic/{piece}.png`,
-      onMoveEnd: this.onSnapEnd.bind(this),
+      onMoveEnd: this._onSnapEnd.bind(this),
       moveSpeed: 1,
     });
     this.board.start();
@@ -35,7 +35,7 @@ const Gameboard = class extends Component {
     this._parseCells(this.color);
   }
 
-  onSnapEnd() {
+  _onSnapEnd() {
     this.board.position(this.chess.fen());
   }
 
@@ -44,11 +44,9 @@ const Gameboard = class extends Component {
   startGame(color: Colors) {
     this.color = color;
     this.rivalColor = this.color === "w" ? "b" : "w";
-
-    this.engine();
   }
 
-  engine() {
+  engine(init = false) {
     if (this.chess.isGameOver()) {
       console.log("game over");
       // todo check from server
@@ -74,12 +72,12 @@ const Gameboard = class extends Component {
     }
 
     if (this.color === this.chess.turn()) {
-      this.call("stopTimer", "", "gameplayers", "rival");
-      this.call("startTimer", "", "gameplayers", "me");
+      this.call("stopTimer", [init], "gameplayers", "rival");
+      this.call("startTimer", [init], "gameplayers", "me");
       this.allowedToMove = true;
     } else {
-      this.call("stopTimer", "", "gameplayers", "me");
-      this.call("startTimer", "", "gameplayers", "rival");
+      this.call("stopTimer", [init], "gameplayers", "me");
+      this.call("startTimer", [init], "gameplayers", "rival");
       this.allowedToMove = false;
     }
     //1 blanc -> je commande
@@ -133,7 +131,7 @@ const Gameboard = class extends Component {
       });
 
       // highlight allowed position
-      gsap.to(this.DOM.moves, { "--disp-opacity": 1 });
+      if (this.DOM.moves.length > 0) gsap.to(this.DOM.moves, { "--disp-opacity": 1 });
     }
   }
 
@@ -157,6 +155,10 @@ const Gameboard = class extends Component {
 
   appear() {
     gsap.to(this.DOM.el, { autoAlpha: 1, display: "flex" });
+    gsap.from(".piece-417db", { y: "-65%", ease: "bounce.out", stagger: 0.03 });
+    gsap.from(".piece-417db", { autoAlpha: 0, stagger: 0.03 }).then(() => {
+      this.engine(true);
+    });
   }
   disappear() {}
 

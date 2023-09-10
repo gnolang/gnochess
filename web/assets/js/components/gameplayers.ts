@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { Component } from "sevejs";
 import { gsap } from "gsap";
-import { DateTime, Interval } from "luxon";
 import { truncateString } from "../utils/truncate";
 
 const Gameplayers = class extends Component {
@@ -35,8 +34,8 @@ const Gameplayers = class extends Component {
     this.color = color;
     //config timer
     this.increment = time[1];
-    this.timer = time[0] * 60; //sec to min
-    this._createTime(this._dateTarget());
+    this.timer = time[0] * 60; //min to sec
+    this._createTime(this.timer);
 
     //config pawn color
     gsap.set(this.DOM.avatar, { backgroundColor: color === "b" ? "#777777" : "#FFFFFF" });
@@ -48,29 +47,20 @@ const Gameplayers = class extends Component {
   _createTime(datetarget) {
     const pad = (n) => (n < 10 ? "0" : "") + n;
 
-    const dateNow = DateTime.now();
-    const timeleft = Interval.fromDateTimes(dateNow, datetarget).length();
-
-    const minutes = Math.floor((timeleft % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((timeleft % (1000 * 60)) / 1000);
+    const minutes = parseInt(datetarget / 60, 10);
+    const seconds = parseInt(datetarget % 60, 10);
     this.DOM.timer.innerHTML = `${pad(minutes)}:${pad(seconds)}`;
-  }
-
-  _dateTarget() {
-    const date = DateTime.now();
-    return date.plus({ seconds: this.timer });
   }
 
   startTimer() {
     clearInterval(this.clock);
 
     this.timerActive = true;
-    const datetarget = this._dateTarget();
 
     const clockAction = () => {
       this.timer--;
 
-      this._createTime(datetarget);
+      this._createTime(this.timer);
 
       if (this.timer <= 0) {
         clearInterval(this.clock);
@@ -84,6 +74,7 @@ const Gameplayers = class extends Component {
     clearInterval(this.clock);
     if (this.timerActive) {
       this.timer += this.increment;
+      this._createTime(this.timer);
     }
     this.timerActive = false;
   }
