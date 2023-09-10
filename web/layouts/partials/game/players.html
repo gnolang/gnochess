@@ -1,29 +1,59 @@
-<section id="js-gameplayers" class="absolute w-1/5 top-[55vh] -translate-y-1/2 left-8 xl:left-16 flex flex-col justify-between">
-  <div data-component="gameplayers" data-component-id="rival" class="hidden opacity-0 invisible w-full items-start">
-    <div class="js-playeravatar | w-20 h-20 rounded-circle mt-0.5 bg-grey-50 overflow-hidden">
-      <img src="/img/mini-gopher.png" alt="my avatar" class="object-contain object-bottom h-full w-full" />
-    </div>
-    <div class="js-playercontent | w-[62%] flex flex-col ml-4 text-grey-50">
-      <div class="flex justify-between leading-none font-bold pl-1">
-        <div class="js-playertype">rival</div>
-        <div class="js-playertoken">token</div>
+<section id="js-gameplayers" class="player-info absolute w-1/2 z-2 top-[55vh] -translate-y-1/2 left-8 xl:left-16 flex flex-col justify-between pointer-events-none">
+  <div data-component="gameplayers" data-component-id="rival" class="hidden opacity-0 invisible w-full items-start my-6">
+    <div class="w-2/5 flex items-start">
+      <div class="js-playeravatar | w-20 h-20 rounded-circle mt-0.5 bg-grey-50 overflow-hidden">
+        <img src="/img/mini-gopher.png" alt="my avatar" class="object-contain object-bottom h-full w-full" />
       </div>
-      <time class="js-playertime | text-[4vw] font-bold leading-none w-[4.4ch]">00:00</time>
-      <div class="js-playercapturepawns | playercapturepawns aspect-square grid grid-cols-4 grid-rows-4 gap-1 mt-4"></div>
+      <div class="js-playercontent | w-[62%] flex flex-col ml-4 text-grey-50">
+        <div class="flex justify-between leading-none font-bold pl-1">
+          <div class="js-playertype">rival</div>
+          <div class="js-playertoken">token</div>
+        </div>
+        <time class="js-playertime | text-[4vw] font-bold leading-none w-[4.4ch]">00:00</time>
+        <div class="js-playercapturepawns | playercapturepawns aspect-square grid grid-cols-4 grid-rows-4 gap-1 mt-4"></div>
+      </div>
+    </div>
+    <div class="w-2/5 flex flex-col items-center ml-[4vw] leading-[1.1] text-grey-600 self-center">
+      <div class="js-playerfinish | font-termina text-600 font-bold tracking-tight opacity-0 invisible">Match ended</div>
+      <div class="js-playerwinner | opacity-0 invisible">
+        <span class="font-termina text-750 font-black">Winner</span>
+        <div class="flex justify-between w-full leading-tight px-2">
+          <div class="js-playergametype">Blitz</div>
+          <div class="js-playerpoints">nb Pts</div>
+        </div>
+      </div>
+      <!-- <a href="/play/" class="flex shadow px-2 py-2 rounded-full font-bold items-center mr-auto mt-8 opacity-0 invisible"
+        ><span class="ml-4">Play the game</span><span class="inline-block w-10 h-10 rounded-full bg-grey-400 ml-6"></span
+      ></a> -->
     </div>
   </div>
 
-  <div data-component="gameplayers" data-component-id="me" class="hidden opacity-0 invisible w-full items-end">
-    <div class="js-playeravatar | w-20 h-20 bg-grey-600 rounded-circle mt-0.5 overflow-hidden">
-      <img src="/img/mini-gopher.png" alt="my avatar" class="object-contain object-bottom h-full w-full" />
-    </div>
-    <div class="js-playercontent | w-[62%] flex flex-col ml-4 text-grey-600">
-      <div class="js-playercapturepawns | playercapturepawns aspect-square grid grid-cols-4 grid-rows-4 gap-1 mb-4 scale-y-[-1]"></div>
-      <div class="flex justify-between leading-none font-bold pl-1">
-        <div class="js-playertype">me</div>
-        <div class="js-playertoken">token</div>
+  <div data-component="gameplayers" data-component-id="me" class="hidden opacity-0 invisible w-full items-end my-6">
+    <div class="w-2/5 flex items-end">
+      <div class="js-playeravatar | w-20 h-20 bg-grey-600 rounded-circle border border-grey-200 mt-0.5 overflow-hidden">
+        <img src="/img/mini-gopher.png" alt="my avatar" class="object-contain object-bottom h-full w-full" />
       </div>
-      <time class="js-playertime | text-[4vw] font-bold leading-none">00:00</time>
+      <div class="js-playercontent | w-[62%] flex flex-col ml-4 text-grey-600">
+        <div class="js-playercapturepawns | playercapturepawns aspect-square grid grid-cols-4 grid-rows-4 gap-1 mb-4 scale-y-[-1]"></div>
+        <div class="flex justify-between leading-none font-bold pl-1">
+          <div class="js-playertype">me</div>
+          <div class="js-playertoken">token</div>
+        </div>
+        <time class="js-playertime | text-[4vw] font-bold leading-none">00:00</time>
+      </div>
+    </div>
+    <div class="w-2/5 flex flex-col items-center ml-[4vw] leading-[1.1] text-grey-600 self-center mt-6">
+      <div class="js-playerfinish | font-termina text-600 font-bold tracking-tight opacity-0 invisible">Match ended</div>
+      <div class="js-playerwinner | opacity-0 invisible scale-50">
+        <div class="font-termina text-750 font-black">Winner</div>
+        <div class="flex justify-between w-full leading-tight px-2">
+          <div class="js-playergametype">Blitz</div>
+          <div class="js-playerpoints">nb Pts</div>
+        </div>
+      </div>
+      <!-- <a href="/play/" class="flex shadow px-2 py-2 rounded-full font-bold items-center mr-auto mt-8 opacity-0 invisible"
+        ><span class="ml-4">Play the game</span><span class="inline-block w-10 h-10 rounded-full bg-grey-400 ml-6"></span
+      ></a> -->
     </div>
   </div>
 </section>

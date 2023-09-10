@@ -139,12 +139,17 @@ const Gameoptions = class extends Component {
     } else if (this.currentState === 2) {
       this.switchAnimation2.play();
 
+      this.call("changeStatus", ["action"], "webgl");
+      this.call("moveScene", [""], "webgl");
+
       //todo to remove
       //setup game
       setTimeout(() => {
+        this.call("disappear", [], "webgl");
+
         this.disappear().then((_) => {
-          this.call("config", [this.options.timer, "w", "glnaglnaglnaglnae558"], "gameplayers", "me");
-          this.call("config", [this.options.timer, "b", "grbqszfoiqefouqiz254"], "gameplayers", "rival");
+          this.call("config", [this.options.timer, "w", "glnaglnaglnaglnae558", this.options.category], "gameplayers", "me");
+          this.call("config", [this.options.timer, "b", "grbqszfoiqefouqiz254", this.options.category], "gameplayers", "rival");
 
           gsap.set("#js-background", { transformOrigin: "center" });
           gsap.to("#js-background", { scale: 1.1 });

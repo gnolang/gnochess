@@ -31,43 +31,59 @@ const Gameboard = class extends Component {
     this.DOM.cells.forEach((el) => {
       this.on({ e: "click", target: el, cb: this.selectCell.bind(this) });
     });
-
-    this._parseCells(this.color);
   }
 
   _onSnapEnd() {
     this.board.position(this.chess.fen());
   }
 
-  movePawn() {}
-
   startGame(color: Colors) {
     this.color = color;
     this.rivalColor = this.color === "w" ? "b" : "w";
   }
 
+  showScoreBoard(winner) {
+    gsap.set(this.DOM.el, { willChange: "transform" });
+    gsap.to(this.DOM.el, { rotate: winner === "w" ? "-20deg" : "20deg", x: "60%", y: winner === "w" ? "0%" : "25%", scale: 0.8 });
+  }
+
+  getMoveNumber() {
+    return this.chess.moveNumber();
+  }
+
   engine(init = false) {
+    //TODO -> remove -> for test purpose -> to et in if statment bellow
+    setTimeout(() => {
+      this.call("finishGame", "gameover", "gameplayers", "me");
+      this.call("stopTimer", "", "gameplayers", "me");
+      this.call("stopTimer", "", "gameplayers", "rival");
+      this.call("disappear", "", "gamecontrols");
+      this.showScoreBoard("w");
+    }, 4000);
+
     if (this.chess.isGameOver()) {
       console.log("game over");
       // todo check from server
       this.call("stopTimer", "", "gameplayers", "me");
       this.call("stopTimer", "", "gameplayers", "rival");
 
+      if (this.chess.isStalemate()) {
+        console.log("isStalemate");
+      }
+      if (this.chess.isDraw()) {
+        console.log("isDraw");
+      }
+      if (this.chess.isThreefoldRepetition()) {
+        console.log("isThreefoldRepetition");
+      }
+      if (this.chess.isInsufficientMaterial()) {
+        console.log("isInsufficientMaterial");
+      }
+      if (this.chess.isCheckmate()) {
+        console.log("isCheckmate");
+      }
+
       //call endgame
-      return; // action
-    }
-    if (this.chess.isStalemate()) {
-      console.log("isStalemate");
-      this.call("stopTimer", "", "gameplayers", "me");
-      this.call("stopTimer", "", "gameplayers", "rival");
-
-      return; // action
-    }
-    if (this.chess.isDraw()) {
-      console.log("isDraw");
-      this.call("stopTimer", "", "gameplayers", "me");
-      this.call("stopTimer", "", "gameplayers", "rival");
-
       return; // action
     }
 
@@ -135,24 +151,6 @@ const Gameboard = class extends Component {
     }
   }
 
-  _parseCells(color: "w" | "b" = "w") {
-    // const alph = ["a", "b", "c", "d", "e", "f", "g", "h"];
-    // const boardPositions = [];
-    // let i = alph.length;
-    // while (i > 0) {
-    //   alph.forEach((letter) => boardPositions.push(letter + i));
-    //   i--;
-    // }
-    // if (color === "black") {
-    //   boardPositions.reverse();
-    // }
-    // this.DOM.cells.forEach((el, i) => {
-    //   el.dataset.cell = boardPositions[i];
-    //   el.innerHTML = boardPositions[i];
-    // });
-    // ----------------------
-  }
-
   appear() {
     gsap.to(this.DOM.el, { autoAlpha: 1, display: "flex" });
     gsap.from(".piece-417db", { y: "-65%", ease: "bounce.out", stagger: 0.03 });
@@ -160,9 +158,13 @@ const Gameboard = class extends Component {
       this.engine(true);
     });
   }
-  disappear() {}
+  disappear() {
+    gsap.to(this.DOM.el, { autoAlpha: 0 });
+  }
 
   destroy() {
+    this.chess.clear();
+    this.board.destroy();
     //wS deco
   }
 };

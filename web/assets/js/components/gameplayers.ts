@@ -13,6 +13,7 @@ const Gameplayers = class extends Component {
     // automatically called at start
     console.log("PlayPlay component init");
 
+    this.player = this.DOM.el.dataset.componentId;
     this.DOM.timer = this.DOM.el.querySelector(".js-playertime");
     this.DOM.pawns = this.DOM.el.querySelector(".js-playercapturepawns");
     this.DOM.token = this.DOM.el.querySelector(".js-playertoken");
@@ -24,14 +25,17 @@ const Gameplayers = class extends Component {
     gsap.to(this.DOM.el, { autoAlpha: 1, display: "flex" });
   }
   disappear() {
+    gsap.to(".player-info", { "--banner-x": "-100%" });
     return gsap.to(this.DOM.el, { autoAlpha: 0, display: "none", duration: 0.8 });
   }
 
-  config(time, color, token = "") {
+  config(time, color, token = "", category) {
     //-- config game --
     //config token + type
     this.DOM.token.innerHTML = truncateString(token, 4, 4);
     this.color = color;
+    this.category = category;
+
     //config timer
     this.increment = time[1];
     this.timer = time[0] * 60; //min to sec
@@ -80,10 +84,21 @@ const Gameplayers = class extends Component {
   }
 
   capturePawn(pawn: string) {
-    console.log("captureeee " + pawn);
     const pawnEl = document.createElement("DIV");
     pawnEl.style.backgroundImage = `url('/img/images/pieces/staunton/basic/${(this.color === "b" ? "w" : "b") + pawn.toUpperCase()}.png')`;
     this.DOM.pawns.appendChild(pawnEl);
+  }
+
+  finishGame(type: string) {
+    this.DOM.el.querySelector(".js-playergametype").innerHTML = this.category;
+    this.DOM.el.querySelector(".js-playerpoints").innerHTML = `${this.call("getMoveNumber", "", "gameboard")}moves`;
+    gsap
+      .timeline()
+      .set(".player-info", { "--banner-y": this.player === "rival" ? 0 : "57.5%" })
+      .to(".player-info", { "--banner-x": 0 })
+      .to(this.DOM.el.querySelector(".js-playercontent"), { color: "#777777" }, 0)
+      .to(this.DOM.el.querySelector(".js-playerfinish"), { autoAlpha: 1 }, 0.6)
+      .to(this.DOM.el.querySelector(".js-playerwinner"), { autoAlpha: 1, scale: 1 }, 0.8);
   }
 
   destroy() {

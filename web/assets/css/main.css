@@ -117,6 +117,25 @@ body {
   @apply w-full aspect-square;
 }
 
+.player-info {
+  --banner-y: 0;
+  --banner-x: -100%;
+}
+.player-info::after {
+  content: "";
+  position: absolute;
+  display: block;
+  width: calc(50vw + 4rem);
+  height: calc(50% + 3vw);
+  background-color: white;
+  right: 0;
+  top: calc(var(--banner-y) - 3vw);
+  z-index: -1;
+  padding: 2rem;
+  border-radius: 0 50vw 50vw 0;
+  transform: translate3d(var(--banner-x), 0, 0);
+}
+
 [data-component-id="me"] .playercapturepawns > div {
   @apply rotate-180 scale-x-[-1];
 }

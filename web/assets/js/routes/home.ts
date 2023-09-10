@@ -19,6 +19,7 @@ const homeTransition = (app: any) => {
         app.call("disappear", "", "Gameplayers", "me"),
         app.call("disappear", "", "Gameplayers", "rival"),
         app.call("disappear", "", "Gamecontrols"),
+        app.call("disappear", "", "Gameboard"),
       ]);
     },
     enter() {
@@ -33,6 +34,10 @@ const homeTransition = (app: any) => {
       gsap.to(".js-title > .char > span", { y: "0%", stagger: 0.04, duration: 0.4, delay: 0.7 });
       gsap.to(".js-subtitle", { autoAlpha: 1, duration: 1, delay: 0.8 });
       gsap.to(".js-content", { autoAlpha: 1, duration: 1, delay: 0.8 });
+
+      app.call("changeStatus", ["init"], "webgl");
+      app.call("moveScene", "", "webgl");
+      app.call("appear", "", "webgl");
     },
     once() {
       DOM.titles = [...document.querySelectorAll(".js-title")];
