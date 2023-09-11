@@ -4,6 +4,7 @@ package chess
 import (
 	"bytes"
 	"errors"
+	"sort"
 	"std"
 	"strconv"
 	"time"
@@ -20,9 +21,7 @@ var (
 	gameIDCounter uint64
 
 	// std.Address -> []*Game
-	// Value must be organized by sorting first by ongoing/finished games (=
-	// ongoing games at the beginning), then each reverse-chronologically.
-	// This helps perform some optimizations and save gas.
+	// Value must be sorted by game ID, descending
 	user2Games avl.Tree
 )
 
@@ -146,26 +145,13 @@ func (g GameState) IsFinished() bool {
 }
 
 // NewGame initialized a new game with the given opponent.
-func NewGame(opponent std.Address) string {
+// opponent may be a bech32 address or "@user" (r/demo/users).
+func NewGame(opponentRaw string) string {
 	std.AssertOriginCall()
 
-	return newGame(opponent)
-}
-
-// NewGameWithUsername starts a new game with a user identified by their
-// username, regularly registered at r/demo/users.
-func NewGameWithUsername(username string) string {
-	std.AssertOriginCall()
-
-	u := users.GetUserByName(username)
-	if u == nil {
-		panic("user not found: " + username)
-	}
-	return newGame(u.Address())
-}
-
-func newGame(opponent std.Address) string {
+	opponent := parsePlayer(opponentRaw)
 	caller := std.GetOrigCaller()
+
 	val, exist := user2Games.Get(caller.String())
 	var games []*Game
 	if exist {
@@ -176,29 +162,15 @@ func newGame(opponent std.Address) string {
 		panic("can't create a game with yourself")
 	}
 
-	var isBlack bool
-	if len(games) > 0 {
-		if hasOngoingGameWithPlayer(games, opponent) {
-			panic(ufmt.Sprintf("game with opponent '%s' (id: %s) is still ongoing", opponent))
-		}
+	isBlack := determineColor(games, caller, opponent)
 
-		// Determine colour of player. If the player has already played with
-		// opponent, invert from last game played among them.
-		// Otherwise invert from last game played by the player.
-		isBlack = games[0].White == caller
-		for _, game := range games {
-			if game.White == opponent || game.Black == opponent {
-				isBlack = game.White == caller
-				break
-			}
-		}
-	}
-
-	// 3. Set up Game struct. Save in gameStore and user2games.
+	// Set up Game struct. Save in gameStore and user2games.
 	gameIDCounter++
+	// id is zero-padded to work well with avl's alphabetic order.
+	id := zeroPad9(strconv.FormatUint(gameIDCounter, 10))
 	g := Game{
-		ID:        strconv.FormatUint(gameIDCounter, 10),
-		White:     std.GetOrigCaller(),
+		ID:        id,
+		White:     caller,
 		Black:     opponent,
 		Position:  NewPosition(),
 		State:     GameStateOpen,
@@ -209,18 +181,58 @@ func newGame(opponent std.Address) string {
 	}
 
 	gameStore.Set(g.ID, &g)
+	addToUser2Games(caller, &g)
+	addToUser2Games(opponent, &g)
 
 	return g.json()
 }
 
-func hasOngoingGameWithPlayer(games []*Game, player std.Address) bool {
+const zeroes = "000000000"
+
+// zeroPad9 pads s to the left with zeroes until it's at least 9 bytes long.
+func zeroPad9(s string) string {
+	n := 9 - len(s)
+	if n < 0 {
+		return s
+	}
+	return zeroes[:n] + s
+}
+
+func addToUser2Games(addr std.Address, game *Game) {
+	var games []*Game
+	v, ok := user2Games.Get(string(addr))
+	if ok {
+		games = v.([]*Game)
+	}
+	// game must be at top, because it is the latest ID
+	games = append([]*Game{game}, games...)
+	user2Games.Set(string(addr), games)
+}
+
+func determineColor(games []*Game, caller, opponent std.Address) (isBlack bool) {
+	// fast path for no games
+	if len(games) == 0 {
+		return false
+	}
+
+	// Determine color of player. If the player has already played with
+	// opponent, invert from last game played among them.
+	// Otherwise invert from last game played by the player.
+	isBlack = games[0].White == caller
+
+	// "try" to save gas if the user has really a lot of past games
+	if len(games) > 256 {
+		games = games[:256]
+	}
 	for _, game := range games {
-		// stop processing at start of finished games
-		if game.State.IsFinished() {
-			break
+		if game.White != opponent && game.Black != opponent {
+			continue
 		}
-		if game.White == player || game.Black == player {
-			return true
+		if !game.State.IsFinished() {
+			panic(ufmt.Sprintf("game with opponent '%s' (id: %s) is still ongoing", opponent, game.ID))
+		}
+		if game.White == opponent || game.Black == opponent {
+			return game.White == caller
 		}
 	}
 	return false
