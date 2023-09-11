@@ -138,6 +138,7 @@ const Gameoptions = class extends Component {
       this.call("moveScene", [""], "webgl");
 
       //TODO: to remove
+      //TODO: error system
       //setup game
       setTimeout(() => {
         this.call("disappear", [], "webgl");
@@ -154,7 +155,7 @@ const Gameoptions = class extends Component {
           this.call("appear", "", "gameboard");
           this.call("startGame", ["w"], "gameboard");
         });
-      }, 6000);
+      }, 4000);
     }
   }
 

@@ -135,38 +135,35 @@ body {
   }
 }
 
-/* 
-.marquee {
-  position: relative;
-  overflow: hidden;
-  --offset: 20vw;
-  --move-initial: calc(-25% + var(--offset));
-  --move-final: calc(-50% + var(--offset));
+.leaderboard-table {
+  counter-reset: listCounter;
 }
 
-.marquee__inner {
-  width: fit-content;
-  display: flex;
-  position: relative;
-  transform: translate3d(var(--move-initial), 0, 0);
-  animation: marquee 1s linear infinite;
+.dashboard-avatar {
+  counter-increment: listCounter;
 }
 
-.marquee span {
-  font-size: 10vw;
-  padding: 0 2vw;
+.leaderboard::-webkit-scrollbar {
+  display: none;
+}
+.leaderboard {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-@keyframes marquee {
-  0% {
-    transform: translate3d(var(--move-initial), 0, 0);
-  }
+.dashboard-avatar > div:last-child::before {
+  content: counter(listCounter);
+}
 
-  100% {
-    transform: translate3d(var(--move-final), 0, 0);
-  }
-} */
+.dashboard-avatar:first-child > div {
+  border-radius: 50% 50% 0 0;
+}
+.dashboard-avatar:last-child > div {
+  border-radius: 0 0 50% 50%;
+}
 
+/* Chess style */
+/*TODO: Tailwind apply style */
 .playercapturepawns > div {
   background-size: 90%;
   background-position: center 42%;
