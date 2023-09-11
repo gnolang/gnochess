@@ -1,8 +1,8 @@
 {{ define "meta" }} {{ partial "head/jsonld" (dict "context" . "content" "head/schema/schema-corporation.html") }} {{ partial "head/jsonld" (dict "context" . "content"
 "head/schema/schema-website.html") }} {{ end }} {{ define "main" }} {{ $data := index .Site.Data .Site.Language.Lang }} {{ partial "game/category.html" . }}
-<div class="container min-h-[calc(100vh_-_theme(space.28))] grid grid-cols-12 gap-16 pt-52">
-  <header>
-    <div>
+<div class="relative z-100 container min-h-[calc(100vh_-_theme(space.28))] grid grid-cols-12 gap-16 pt-52">
+  <header class="col-span-12 flex justify-between">
+    <div class="">
       <div>avatar</div>
       <div>
         <h1>Dashboard</h1>

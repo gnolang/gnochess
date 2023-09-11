@@ -69,6 +69,7 @@ const Gameplayers = class extends Component {
       if (this.timer <= 0) {
         clearInterval(this.clock);
         this.DOM.timer.innerHTML = `00:00`;
+        this.call("engine", [false, true], "gameboard"); // let engine know timer is finished
       }
     };
 
@@ -91,7 +92,7 @@ const Gameplayers = class extends Component {
 
   finishGame(type: string) {
     this.DOM.el.querySelector(".js-playergametype").innerHTML = this.category;
-    this.DOM.el.querySelector(".js-playerpoints").innerHTML = `${this.call("getMoveNumber", "", "gameboard")}moves`;
+    this.DOM.el.querySelector(".js-playerpoints").innerHTML = `${this.call("getMoveNumber", "", "gameboard")} moves`;
     gsap
       .timeline()
       .set(".player-info", { "--banner-y": this.player === "rival" ? 0 : "57.5%" })

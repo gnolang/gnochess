@@ -46,11 +46,6 @@ const Gameoptions = class extends Component {
     // automatically called at start
     console.log("PlayControls component init");
 
-    //Vars
-    // this.timerCount = 1;
-    // this.timerMin = 0;
-    // this.timerMax = 60;
-
     //DOM
 
     this.DOM.paneConnection = this.DOM.el.querySelector("#js-connection");
@@ -142,7 +137,7 @@ const Gameoptions = class extends Component {
       this.call("changeStatus", ["action"], "webgl");
       this.call("moveScene", [""], "webgl");
 
-      //todo to remove
+      //TODO: to remove
       //setup game
       setTimeout(() => {
         this.call("disappear", [], "webgl");
@@ -159,7 +154,7 @@ const Gameoptions = class extends Component {
           this.call("appear", "", "gameboard");
           this.call("startGame", ["w"], "gameboard");
         });
-      }, 2000);
+      }, 6000);
     }
   }
 

@@ -51,21 +51,32 @@ const Gameboard = class extends Component {
     return this.chess.moveNumber();
   }
 
-  engine(init = false) {
-    //TODO -> remove -> for test purpose -> to et in if statment bellow
+  engine(init = false, gameover = false) {
+    //TODO: -> remove -> for test purpose -> to et in if statment bellow
     setTimeout(() => {
       this.call("finishGame", "gameover", "gameplayers", "me");
       this.call("stopTimer", "", "gameplayers", "me");
       this.call("stopTimer", "", "gameplayers", "rival");
       this.call("disappear", "", "gamecontrols");
       this.showScoreBoard("w");
-    }, 4000);
+    }, 10000);
 
-    if (this.chess.isGameOver()) {
+    if (this.chess.isGameOver() || gameover) {
       console.log("game over");
       // todo check from server
       this.call("stopTimer", "", "gameplayers", "me");
       this.call("stopTimer", "", "gameplayers", "rival");
+      this.call("disappear", "", "gamecontrols");
+
+      // TODO: improve facto
+      if (gameover) {
+        // for timeout
+        if (this.color === this.chess.turn()) {
+          this.call("finishGame", "gameover", "gameplayers", "me");
+        } else {
+          this.call("finishGame", "gameover", "gameplayers", "rival");
+        }
+      }
 
       if (this.chess.isStalemate()) {
         console.log("isStalemate");
@@ -83,7 +94,7 @@ const Gameboard = class extends Component {
         console.log("isCheckmate");
       }
 
-      //call endgame
+      //TODO: -> call endgame
       return; // action
     }
 
