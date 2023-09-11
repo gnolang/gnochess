@@ -16,3 +16,8 @@ Instructions:
    call the realm.
 
 Need more help? Check out a [small video tutorial](https://www.youtube.com/watch?v=-1huuUG2yRc).
+
+If you're doing local development in the `realm` subdirectory, changes will
+synchronise automatically and the realm will be auto-published, however it will
+be at a new address. This is published in the `deployer` logs (see above
+command).
