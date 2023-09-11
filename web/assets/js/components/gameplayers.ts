@@ -46,6 +46,7 @@ const Gameplayers = class extends Component {
     gsap.set(this.DOM.content, { color: color === "b" ? "#777777" : "#FFFFFF" });
 
     //config avatar
+    //TODO: avatar custo (in utils)
   }
 
   _createTime(datetarget) {

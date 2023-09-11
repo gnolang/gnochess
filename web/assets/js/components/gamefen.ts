@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Component } from "sevejs";
 import { gsap } from "gsap";
 

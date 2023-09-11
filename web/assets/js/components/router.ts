@@ -6,6 +6,7 @@ import { playView, playTransition } from "../routes/play.ts";
 import { homeTransition, homeView } from "../routes/home.ts";
 import { genericTransition, genericView } from "../routes/generic.ts";
 import { aboutTransition, aboutView } from "../routes/about.ts";
+import { dashboardTransition, dashboardView } from "../routes/dashboard.ts";
 
 const Router = class extends Component {
   constructor(opts: any) {
@@ -14,8 +15,8 @@ const Router = class extends Component {
 
   init() {
     // automatically called at start
-    this.loadedViews = [playView, homeView, aboutView, genericView];
-    this.loadedTransition = [playTransition(this), homeTransition(this), aboutTransition(this), genericTransition(this)];
+    this.loadedViews = [playView, homeView, aboutView, genericView, dashboardView];
+    this.loadedTransition = [playTransition(this), homeTransition(this), aboutTransition(this), genericTransition(this), dashboardTransition(this)];
     this.views = [];
     this.transitions = [];
 

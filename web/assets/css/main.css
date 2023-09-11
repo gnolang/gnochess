@@ -2,10 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-/*
+:root {
+  font-size: clamp(12px, 1vw, 16px);
+}
+
+/**
    FONT FAMILY GROUPS
 */
-
 /* Inter */
 @font-face {
   font-family: "Inter";
@@ -86,12 +89,6 @@ html {
   text-rendering: optimizeLegibility;
 }
 
-/* @media screen(lg) {
-  html {
-    font-size: clamp(12px, 0.5vw + 55%, 16px);
-  }
-} */
-
 html,
 body {
   @apply overflow-x-hidden relative;
@@ -149,6 +146,12 @@ body {
 .leaderboard {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+.js-dashboard {
+  --sidepane: 100%;
+}
+.js-dashboard::after {
+  transform: translateY(var(--sidepane));
 }
 
 .dashboard-avatar > div:last-child::before {

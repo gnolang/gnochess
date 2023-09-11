@@ -23,7 +23,7 @@ const playTransition = (app: any) => {
     },
     enter() {
       gsap.to("#js-background", { scaleX: 1, duration: 1.2 });
-      gsap.to("#js-background", { x: 0 });
+      gsap.to("#js-background", { x: 0, autoAlpha: 1 });
       app.call("changeStatus", ["pending"], "webgl");
       app.call("moveScene", "", "webgl");
     },

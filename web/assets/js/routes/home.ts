@@ -13,13 +13,26 @@ const homeTransition = (app: any) => {
   return {
     name: "play-transition",
     sync: true,
-    leave() {
+    leave({ current }: { current: any }) {
+      const prom = new Promise<void>((resolve) => {
+        const dashboardheader = current.container.querySelector(".js-dashboardheader");
+        const dashboard = current.container.querySelector(".js-dashboard");
+        const dashboardArticle = current.container.querySelectorAll(".js-dashboard article");
+        if (dashboardheader) gsap.to(dashboardheader, { autoAlpha: 0, duration: 0.4 });
+        if (dashboard) {
+          gsap.to(dashboard, { "--sidepane": "100%" });
+          gsap.to(dashboardArticle, { autoAlpha: 0, duration: 0.4, onComplete: () => resolve() });
+        } else {
+          resolve();
+        }
+      });
       return Promise.all([
         app.call("disappear", "", "Gameoptions"),
         app.call("disappear", "", "Gameplayers", "me"),
         app.call("disappear", "", "Gameplayers", "rival"),
         app.call("disappear", "", "Gamecontrols"),
         app.call("disappear", "", "Gameboard"),
+        prom,
       ]);
     },
     enter() {
@@ -30,7 +43,7 @@ const homeTransition = (app: any) => {
       DOM.titles.forEach((title: Element) => {
         charming(title, { tagName: "span", type: "letter", nesting: 2, classPrefix: "char char" });
       });
-      gsap.to("#js-background", { x: "50%", scaleY: 1, scaleX: 1.1, duration: 1 });
+      gsap.to("#js-background", { x: "50%", scaleY: 1, autoAlpha: 1, scaleX: 1.1, duration: 1 });
       gsap.to(".js-title > .char > span", { y: "0%", stagger: 0.04, duration: 0.4, delay: 0.7 });
       gsap.to(".js-subtitle", { autoAlpha: 1, duration: 1, delay: 0.8 });
       gsap.to(".js-content", { autoAlpha: 1, duration: 1, delay: 0.8 });

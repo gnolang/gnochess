@@ -1,9 +1,6 @@
-// @ts-nocheck
 import { Component } from "sevejs";
 import { gsap } from "gsap";
-import { Chess, ChessInstance, SQUARES } from "chess.js";
-import { Chessground } from "chessground";
-// import Chessboard from "@chrisoakman/chessboardjs";
+import { Chess } from "chess.js";
 
 type Colors = "w" | "b";
 const Gameboard = class extends Component {
@@ -18,6 +15,7 @@ const Gameboard = class extends Component {
     this.moves = [];
     this.allowedToMove = false;
 
+    // @ts-ignore
     this.board = Chessboard(this.DOM.el, {
       pieceTheme: `/img/images/pieces/staunton/basic/{piece}.png`,
       onMoveEnd: this._onSnapEnd.bind(this),
@@ -28,7 +26,7 @@ const Gameboard = class extends Component {
     this.DOM.cells = [...this.DOM.el.querySelectorAll(".square-55d63")];
     this.DOM.moves = [];
 
-    this.DOM.cells.forEach((el) => {
+    this.DOM.cells.forEach((el: Element) => {
       this.on({ e: "click", target: el, cb: this.selectCell.bind(this) });
     });
   }
@@ -42,7 +40,7 @@ const Gameboard = class extends Component {
     this.rivalColor = this.color === "w" ? "b" : "w";
   }
 
-  showScoreBoard(winner) {
+  showScoreBoard(winner: Colors) {
     gsap.set(this.DOM.el, { willChange: "transform" });
     gsap.to(this.DOM.el, { rotate: winner === "w" ? "-20deg" : "20deg", x: "60%", y: winner === "w" ? "0%" : "25%", scale: 0.8 });
   }
@@ -124,9 +122,12 @@ const Gameboard = class extends Component {
     //checkmate / gameover / pad
   }
 
-  rivalMove() {}
+  rivalMove() {
+    //TODO: listen action from WS rival
+  }
 
-  selectCell(e) {
+  selectCell(e: any) {
+    //TODO: highlight selected pawn
     const currentCell = e.currentTarget.dataset.square;
     if (this.moves.includes(currentCell)) {
       // if click on allowed cell (to move)
@@ -152,8 +153,8 @@ const Gameboard = class extends Component {
 
       // get allowed position on board DOM then DOM
       this.selected = currentCell;
-      this.moves = this.chess.moves({ square: currentCell, verbose: true }).map((pos) => pos.to);
-      this.moves.forEach((cell) => {
+      this.moves = this.chess.moves({ square: currentCell, verbose: true }).map((pos: any) => pos.to);
+      this.moves.forEach((cell: Element) => {
         this.DOM.moves.push(this.DOM.el.querySelector(`[data-square="${cell}"]`));
       });
 

@@ -106,6 +106,7 @@ const Gamecontrols = class extends Component {
     this[this.action === "resign" ? "disableCtr1TL" : "disableCtr0TL"].reverse();
     this[this.action === "resign" ? "swithCtr0TL" : "swithCtr1TL"].reverse();
 
+    //TODO: link to game component to draw or quit
     this.action = "void";
   }
 

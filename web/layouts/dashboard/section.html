@@ -1,7 +1,7 @@
 {{ define "meta" }} {{ partial "head/jsonld" (dict "context" . "content" "head/schema/schema-corporation.html") }} {{ partial "head/jsonld" (dict "context" . "content"
 "head/schema/schema-website.html") }} {{ end }} {{ define "main" }} {{ $data := index .Site.Data .Site.Language.Lang }} {{ partial "game/category.html" . }}
-<div class="min-h-[calc(100vh_-_theme(space.28))] grid grid-cols-12 gap-16 pt-52">
-  <header class="container col-span-12 flex justify-between items-center">
+<div data-component="dashboard" class="min-h-[calc(100vh_-_theme(space.28))] grid grid-cols-12 gap-16 pt-52">
+  <header class="js-dashboardheader | opacity-0 container col-span-12 flex justify-between items-center">
     <div class="flex">
       <div class="js-playeravatar | w-20 h-20 bg-grey-600 rounded-circle border border-grey-200 mt-0.5 overflow-hidden">
         <img src="/img/mini-gopher.png" alt="my avatar" class="object-contain object-bottom h-full w-full" />
@@ -19,9 +19,9 @@
     </ul>
   </header>
 
-  <section class="relative py-20 col-span-12 after:bg-grey-200 after:w-full after:absolute after:left-0 after:z-min after:top-0 after:rounded-t after:h-full">
+  <section class="js-dashboard | relative py-20 col-span-12 after:bg-grey-200 after:w-full after:absolute after:left-0 after:z-min after:top-0 after:rounded-t after:h-full">
     <div class="container w-full grid grid-cols-4 grid-rows-2 gap-2">
-      <article class="col-span-1 bg-grey-50 rounded py-7 px-8 flex flex-col justify-between">
+      <article class="opacity-0 translate-y-20 col-span-1 bg-grey-50 rounded py-7 px-8 flex flex-col justify-between">
         <h2 class="mb-4 text-100 font-bold">Rapid rating</h2>
 
         <span class="text-600 font-bold text-grey-600"><span class="text-750">12</span>wins</span>
@@ -33,7 +33,7 @@
           <div>30 Games</div>
         </div>
       </article>
-      <article class="col-span-1 bg-grey-50 rounded py-7 px-8 flex flex-col justify-between">
+      <article class="opacity-0 translate-y-20 col-span-1 bg-grey-50 rounded py-7 px-8 flex flex-col justify-between">
         <h2 class="mb-4 text-100 font-bold">Blitz rating</h2>
 
         <span class="text-600 font-bold text-grey-600"><span class="text-750">8</span>wins</span>
@@ -45,7 +45,7 @@
           <div>28 Games</div>
         </div>
       </article>
-      <article class="relative overflow-hidden col-span-2 row-start-2 bg-grey-50 rounded py-7 px-8 flex flex-col justify-between">
+      <article class="opacity-0 translate-y-20 relative overflow-hidden col-span-2 row-start-2 bg-grey-50 rounded py-7 px-8 flex flex-col justify-between">
         <h2 class="mb-4 text-100 font-bold">Global rating</h2>
 
         <div class="flex justify-between items-end font-bold">
@@ -64,7 +64,7 @@
         </div>
         <img src="/img/images/trophy.png" class="absolute top-0 right-0 w-2/6" alt="" />
       </article>
-      <article class="leaderboard col-span-2 row-span-2 bg-grey-50 rounded min-h-[30vh] max-h-[60vh] overflow-scroll py-7 px-8">
+      <article class="leaderboard translate-y-20 opacity-0 col-span-2 row-span-2 bg-grey-50 rounded min-h-[30vh] max-h-[60vh] overflow-scroll py-7 px-8">
         <h2 class="mb-4 text-100 font-bold">Leaderboard</h2>
         <div class="flex w-full justify-between">
           <div class="w-1/2">

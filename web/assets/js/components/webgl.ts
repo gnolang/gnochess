@@ -16,6 +16,7 @@ const Webgl = class extends Component {
   init() {
     // automatically called at start
     console.log("Webgl component init");
+
     /**
      * Scene
      */
@@ -26,10 +27,11 @@ const Webgl = class extends Component {
     };
     // Canvas
     this.DOM.canvas = this.DOM.el.querySelector("#webgl-bg");
-    // Scene
     const scene = new THREE.Scene();
+
     // Start of the code
     THREE.ColorManagement.enabled = false;
+
     /**
      * Camera
      */
@@ -38,9 +40,7 @@ const Webgl = class extends Component {
     this.camera.position.z = 4.2;
     this.camera.position.y = 1.1;
     scene.add(this.camera);
-    // Controls
-    // const controls = new OrbitControls(camera, canvas);
-    // controls.enableDamping = true;
+
     /**
      * Renderer
      */
@@ -51,6 +51,7 @@ const Webgl = class extends Component {
     renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
     renderer.setSize(sizes.width, sizes.height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
     /**
      * Models
      */
@@ -113,9 +114,12 @@ const Webgl = class extends Component {
 
       this.move3TL = gsap.timeline({ paused: true }).to(this.model.rotation, { y: this.model.rotation.y + 1.4 });
 
-      this.appear();
-      this.moveScene();
+      if (this.status !== "none") {
+        this.appear();
+        this.moveScene();
+      }
     });
+
     /**
      * Lights
      */
@@ -131,20 +135,20 @@ const Webgl = class extends Component {
     directionalLight.shadow.camera.bottom = -7;
     directionalLight.position.set(-3, 6, 0);
     scene.add(directionalLight);
+
     /**
      * Animate
      */
     const clock = new THREE.Clock();
     const tick = () => {
       const elapsedTime = clock.getElapsedTime();
-      // Update controls
-      //   controls.update();
-      // Render
       renderer.render(scene, this.camera);
-      // Call tick again on the next frame
+
       window.requestAnimationFrame(tick);
     };
     tick();
+
+    //TODO: resize event
   }
 
   changeStatus(status) {
@@ -153,7 +157,6 @@ const Webgl = class extends Component {
 
   moveScene() {
     if (this.model) {
-      console.log(this.model);
       if (this.status === "init") {
         this.move1TL.reverse();
         this.move2TL.timeScale(2);
@@ -163,19 +166,19 @@ const Webgl = class extends Component {
       } else if (this.status === "action") {
         this.move2TL.timeScale(1);
         this.move2TL.play();
+      } else if (this.status === "none") {
+        return;
       }
     }
   }
-
-  actionScene() {}
 
   appear() {
     gsap.to(this.DOM.canvas, { autoAlpha: 1 });
     this.move1TL.reverse();
   }
-  disappear() {
-    if (this.model) gsap.to(this.model.rotation, { y: this.model.rotation.y + 1.4 });
-    gsap.to(this.DOM.canvas, { autoAlpha: 0 });
+  disappear(immediate = false) {
+    if (this.model && !immediate) this.move3TL.play();
+    return gsap.to(this.DOM.canvas, { autoAlpha: 0 });
   }
   destroy() {}
 };

@@ -5,3 +5,4 @@ export { Gamefen } from "./components/gamefen";
 export { Gamecontrols } from "./components/gamecontrols";
 export { Gameboard } from "./components/gameboard";
 export { Webgl } from "./components/webgl";
+export { Dashboard } from "./components/dashboard";
