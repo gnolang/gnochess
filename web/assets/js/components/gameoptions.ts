@@ -120,6 +120,8 @@ const Gameoptions = class extends Component {
 
     if (this.currentState === 1) {
       this.switchAnimation2.reverse();
+      //TODO: stop WS rival finding
+      clearTimeout(this.lookingForRival);
     } else {
       this.call("goTo", ["/"], "Router");
     }
@@ -137,10 +139,10 @@ const Gameoptions = class extends Component {
       this.call("changeStatus", ["action"], "webgl");
       this.call("moveScene", [""], "webgl");
 
-      //TODO: to remove
+      //TODO: mochk to remove -> WS rival finder
       //TODO: error system
       //setup game
-      setTimeout(() => {
+      this.lookingForRival = setTimeout(() => {
         this.call("disappear", [], "webgl");
 
         this.disappear().then((_) => {

@@ -53,8 +53,8 @@ const Gameboard = class extends Component {
     //TODO: -> remove -> for test purpose -> to et in if statment bellow
     setTimeout(() => {
       this.call("finishGame", "gameover", "gameplayers", "me");
-      this.call("stopTimer", "", "gameplayers", "me");
-      this.call("stopTimer", "", "gameplayers", "rival");
+      this.call("stopTimer", [true], "gameplayers", "me");
+      this.call("stopTimer", [true], "gameplayers", "rival");
       this.call("disappear", "", "gamecontrols");
       this.showScoreBoard("w");
     }, 10000);
@@ -62,8 +62,8 @@ const Gameboard = class extends Component {
     if (this.chess.isGameOver() || gameover) {
       console.log("game over");
       // todo check from server
-      this.call("stopTimer", "", "gameplayers", "me");
-      this.call("stopTimer", "", "gameplayers", "rival");
+      this.call("stopTimer", [true], "gameplayers", "me");
+      this.call("stopTimer", [true], "gameplayers", "rival");
       this.call("disappear", "", "gamecontrols");
 
       // TODO: improve facto

@@ -64,7 +64,6 @@ const Gameplayers = class extends Component {
 
     const clockAction = () => {
       this.timer--;
-
       this._createTime(this.timer);
 
       if (this.timer <= 0) {
@@ -76,10 +75,10 @@ const Gameplayers = class extends Component {
 
     this.clock = setInterval(clockAction, 1000);
   }
-  stopTimer() {
+  stopTimer(gameover = false) {
     clearInterval(this.clock);
     if (this.timerActive) {
-      this.timer += this.increment;
+      this.timer += !gameover ? this.increment : 0;
       this._createTime(this.timer);
     }
     this.timerActive = false;

@@ -14,6 +14,9 @@ const Webgl = class extends Component {
   }
 
   init() {
+    //TODO: GZIP ThreeJS
+    //TODO: parallax fx mousemove
+
     // automatically called at start
     console.log("Webgl component init");
 
@@ -44,13 +47,13 @@ const Webgl = class extends Component {
     /**
      * Renderer
      */
-    const renderer = new THREE.WebGLRenderer({
+    this.renderer = new THREE.WebGLRenderer({
       canvas: this.DOM.canvas,
       alpha: true,
     });
-    renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
-    renderer.setSize(sizes.width, sizes.height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+    this.renderer.setSize(sizes.width, sizes.height);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
     /**
      * Models
@@ -142,13 +145,11 @@ const Webgl = class extends Component {
     const clock = new THREE.Clock();
     const tick = () => {
       const elapsedTime = clock.getElapsedTime();
-      renderer.render(scene, this.camera);
+      this.renderer.render(scene, this.camera);
 
       window.requestAnimationFrame(tick);
     };
     tick();
-
-    //TODO: resize event
   }
 
   changeStatus(status) {
@@ -180,7 +181,25 @@ const Webgl = class extends Component {
     if (this.model && !immediate) this.move3TL.play();
     return gsap.to(this.DOM.canvas, { autoAlpha: 0 });
   }
-  destroy() {}
+
+  resize() {
+    const sizes = {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    };
+
+    this.camera.aspect = sizes.width / sizes.height;
+    this.camera.updateProjectionMatrix();
+
+    this.renderer.setSize(sizes.width, sizes.height);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  }
+
+  destroy() {
+    //TODO: dispose scene / materials / geometries
+    //TODO: stop animation
+    //TODO: remove objects
+  }
 };
 
 export { Webgl };
