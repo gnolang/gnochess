@@ -112,3 +112,6 @@ typings/
 #hugo ressources
 web/resources/_gen/assets
 web/public
+
+realm/*.go
+
