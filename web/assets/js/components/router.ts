@@ -79,7 +79,6 @@ const Router = class extends Component {
   }
 
   destroy() {
-    console.log("barba");
     barba.destroy();
   }
 };

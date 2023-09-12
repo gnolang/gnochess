@@ -1,4 +1,5 @@
 import { Component } from "sevejs";
+import Action from "../actions";
 
 const Dashboard = class extends Component {
   constructor(opts: any) {
@@ -8,6 +9,8 @@ const Dashboard = class extends Component {
   init() {
     // automatically called at start
     console.log("Dashboard component init");
+    //test
+    Action.getUserData(); //test getUserData Action from Gno-client
 
     //TODO: login/logout - redir
     //TODO: feed data contents - personal

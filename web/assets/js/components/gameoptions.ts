@@ -1,6 +1,6 @@
 import { Component } from "sevejs";
 import { gsap } from "gsap";
-import { saveToLocalStorage, getFromLocalStorage } from "../utils/localstorage";
+import Action from "../actions";
 
 type Options = {
   token: string;
@@ -60,6 +60,7 @@ const Gameoptions = class extends Component {
     this.DOM.ctrl1 = this.DOM.el.querySelector("#js-gameoptions-ctr1");
 
     //controls events
+    //TODO: keybord press events
     this.events.clickOnCtrl0 = this.on({
       e: "click",
       target: this.DOM.ctrl0,
@@ -108,7 +109,7 @@ const Gameoptions = class extends Component {
     this.DOM.timerIncrement.innerHTML = this.options.timer[1];
 
     //checkstep
-    if (getFromLocalStorage("token")) {
+    if (Action.getToken()) {
       this._clickOnCtrl1(null, true);
     }
     this.appear();
@@ -162,7 +163,9 @@ const Gameoptions = class extends Component {
 
   _inputToken() {
     const token = this.DOM.el.querySelector("#id-gameoptions-token").value || "";
-    if (!getFromLocalStorage("token")) saveToLocalStorage(token, "token");
+    if (!Action.getToken()) {
+      Action.setToken(token);
+    }
     return token;
   }
 
