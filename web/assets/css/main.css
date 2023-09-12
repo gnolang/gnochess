@@ -94,6 +94,11 @@ body {
   @apply overflow-x-hidden relative;
 }
 
+/* content */
+.content p {
+  margin-top: 2rem;
+}
+
 /* Animations */
 .word {
   white-space: pre;

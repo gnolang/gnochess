@@ -1,11 +1,10 @@
 ---
 namespace: "about"
-meta_title: "Open Technology for Social Evolution"
-meta_description: "All in Bits (AIB) creates open software and developer-friendly tools to lower the barrier to entry to blockchain and web3 and facilitate so cial coordination."
+meta_title: "About GnoChess: Showcasing Gno.land At GopherCon 2023"
+meta_description: "GnoChess shows web2 developers how easily they can port their apps to web3 or build new ones from scratch on Gno.land during GopherCon 2023."
 title: "About GnoChess"
-subtitle: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum pretium lobortis erat eget ultricies. Mauris commodo non enim nec fringilla. Aliquam sit amet dolor a risus porta sagittis."
 ---
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent at nisi velit. Fusce ac facilisis tellus, sodales maximus sapien. Donec lacinia ultrices eros et pellentesque. Praesent luctus iaculis mi et rutrum. Fusce venenatis dignissim diam, in molestie est interdum dignissim. Maecenas felis arcu, scelerisque pulvinar ex in, convallis euismod sem. Nunc venenatis pulvinar ante, ut aliquet elit blandit at. Vestibulum laoreet lectus at augue tincidunt laoreet. Phasellus nisi lorem, aliquet et massa sed, accumsan porttitor mauris. In eget turpis est. Etiam vel ligula dolor. Quisque et lobortis eros. Integer erat metus, aliquam sed pretium in, tincidunt non orci. Vestibulum scelerisque velit tellus, sed ullamcorper turpis pharetra ac. Phasellus condimentum efficitur euismod. Pellentesque lacinia convallis felis et dictum.
+GopherCon is the most hotly anticipated event on the gopher community’s calendar. A place where gophers from around the world get together to exchange ideas, share their work, and expand the Go network. What better place to spread the word about Gno.land and show web2 developers how easily they can port their apps to web3 or build new ones from scratch? And why not have a little fun while doing it?
 
-Maecenas consectetur tristique arcu nec rhoncus. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Nam vehicula sagittis justo, quis vestibulum sapien varius eu. Nam ornare sollicitudin elementum. Donec dignissim orci dolor, dapibus porta nulla pulvinar quis. Donec cursus gravida metus non mollis. In quis nisi ornare, rutrum justo nec, dignissim nulla. Sed tristique metus elit, ac scelerisque lectus congue at. Phasellus a sodales augue. Donec rutrum commodo ex, at placerat tortor faucibus eget. Donec finibus luctus sapien, vitae sodales libero aliquet id. Nullam aliquet laoreet
+As a gold sponsor at GC23, we wanted to spotlight Gno, not only through an interactive workshop where Go devs develop and deploy smart contracts but also through a little friendly competition! That’s how GnoChess was born. After building a web3 chess server, attendees play chess against other gophers for their chance to win the title – and scoop up some seriously cool prizes. Even the lowliest pawn can become a king or queen, as you don’t need any technical skills to play. Simply access the link from your personal device and get castling!
