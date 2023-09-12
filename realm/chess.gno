@@ -16,23 +16,26 @@ import (
 
 // realm state
 var (
-	// not "games" because that's too useful a variable name
+	// (not "games" because that's too useful a variable name)
 	gameStore     avl.Tree // string (game ID) -> *Game
 	gameIDCounter uint64
 
-	// std.Address -> []*Game
 	// Value must be sorted by game ID, descending
-	user2Games avl.Tree
+	user2Games avl.Tree // std.Address -> []*Game
 )
 
 // Game represents a chess game.
 type Game struct {
-	ID        string      `json:"id"`
-	White     std.Address `json:"white"`
-	Black     std.Address `json:"black"`
-	Position  Position    `json:"position"`
-	State     GameState   `json:"state"`
-	CreatedAt time.Time   `json:"created_at"`
+	ID string `json:"id"`
+
+	White    std.Address `json:"white"`
+	Black    std.Address `json:"black"`
+	Position Position    `json:"position"`
+	State    GameState   `json:"state"`
+
+	Creator   std.Address  `json:"creator"`
+	CreatedAt time.Time    `json:"created_at"`
+	Concluder *std.Address `json:"concluder"`
 }
 
 func (g Game) json() string {
@@ -65,9 +68,15 @@ func (g Game) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	b.Write(sdata)
-	b.WriteString(`,`)
+	b.WriteByte(',')
 
-	b.WriteString(`"created_at":"` + g.CreatedAt.Format(time.RFC3339) + `"`)
+	b.WriteString(`"creator":"` + g.Creator.String() + `",`)
+	b.WriteString(`"created_at":"` + g.CreatedAt.Format(time.RFC3339) + `",`)
+	if g.Concluder == nil {
+		b.WriteString(`"concluder":nil`)
+	} else {
+		b.WriteString(`"concluder":"` + g.Concluder.String() + `"`)
+	}
 
 	b.WriteByte('}')
 	return b.Bytes(), nil
@@ -174,6 +183,7 @@ func NewGame(opponentRaw string) string {
 		Black:     opponent,
 		Position:  NewPosition(),
 		State:     GameStateOpen,
+		Creator:   caller,
 		CreatedAt: time.Now(),
 	}
 	if isBlack {
@@ -238,6 +248,17 @@ func determineColor(games []*Game, caller, opponent std.Address) (isBlack bool) 
 	return false
 }
 
+// GetGame returns a game, knowing its ID.
+func GetGame(id string) string {
+	g, ok := gameStore.Get(id)
+	if !ok {
+		panic("game not found: " + id)
+	}
+	var gg *Game
+	gg = g.(*Game)
+	return gg.json()
+}
+
 // MakeMove specifies a move to be done on the given game, specifying in
 // algebraic notation the square where to move the piece.
 // If the piece is a pawn which is moving to the last row, a promotion piece
@@ -286,19 +307,32 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 		return g.json()
 	}
 
+	draw := func() {
+		reportPlayerScore(g.White, 0)
+		reportPlayerScore(g.Black, 0)
+	}
 	switch {
 	case o == Checkmate && isBlack:
 		g.State = GameStateWhiteCheckmated
+		reportPlayerScore(g.White, -1)
+		reportPlayerScore(g.Black, 1)
 	case o == Checkmate && !isBlack:
 		g.State = GameStateBlackCheckmated
+		reportPlayerScore(g.Black, -1)
+		reportPlayerScore(g.White, 1)
 	case o == Stalemate:
 		g.State = GameStateStalemate
+		draw()
 
 	case o == Drawn75Move:
 		g.State = GameStateDrawn75Move
+		draw()
 	case o == Drawn5Fold:
 		g.State = GameStateDrawn5Fold
+		draw()
 	}
+	g.Concluder = &caller
+
 	return g.json()
 }
 
@@ -319,11 +353,16 @@ func Resign(gameID string) string {
 	switch caller {
 	case g.Black:
 		g.State = GameStateResigned
+		reportPlayerScore(g.Black, -1)
+		reportPlayerScore(g.White, 1)
 	case g.White:
 		g.State = GameStateResigned
+		reportPlayerScore(g.White, 1)
+		reportPlayerScore(g.Black, -1)
 	default:
 		panic("you are not involved in this game")
 	}
+	g.Concluder = &caller
 
 	return g.json()
 }
@@ -362,6 +401,9 @@ func Draw(gameID string) string {
 	default:
 		panic("this game can't be automatically drawn")
 	}
+	g.Concluder = &caller
+	reportPlayerScore(g.Black, 0)
+	reportPlayerScore(g.White, 0)
 
 	return g.json()
 }
