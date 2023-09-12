@@ -9,10 +9,10 @@
 
       <div class="ml-5">
         <h1 class="font-termina text-400 font-bold">Dashboard</h1>
-        <div class="font-bold text-200">glna...e558</div>
+        <div id="js-dashtoken" class="font-bold text-200">identifier</div>
       </div>
     </div>
-    <ul class="flex">
+    <ul class="js-dashsocials | flex">
       <li>social</li>
       <li>social</li>
       <li>social</li>
@@ -24,25 +24,33 @@
       <article class="opacity-0 translate-y-20 col-span-1 bg-grey-50 rounded py-7 px-8 flex flex-col justify-between">
         <h2 class="mb-4 text-100 font-bold">Rapid rating</h2>
 
-        <span class="text-600 font-bold text-grey-600"><span class="text-750">12</span>wins</span>
+        <span class="text-600 font-bold text-grey-600"><span class="text-750" id="js-dashboardRapidWins">0</span>wins</span>
         <div class="flex justify-between items-end font-bold">
           <div>
-            <div class="flex items-center"><span class="inline-flex mr-2 w-6 justify-center items-center">{{- partial "icons/ico-lose.html" . -}}</span>13 Loses</div>
-            <div class="flex items-center"><span class="inline-flex mr-2 w-6 justify-center items-center">{{- partial "icons/ico-flag.html" . -}}</span>8 Draws</div>
+            <div class="flex items-center">
+              <span class="inline-flex mr-2 w-6 justify-center items-center">{{- partial "icons/ico-lose.html" . -}}</span><span id="js-dashboardRapidLoses">0</span> Loses
+            </div>
+            <div class="flex items-center">
+              <span class="inline-flex mr-2 w-6 justify-center items-center">{{- partial "icons/ico-flag.html" . -}}</span><span id="js-dashboardRapidDraws">0</span> Draws
+            </div>
           </div>
-          <div>30 Games</div>
+          <div><span id="js-dashboardRapidGames">0</span> Games</div>
         </div>
       </article>
       <article class="opacity-0 translate-y-20 col-span-1 bg-grey-50 rounded py-7 px-8 flex flex-col justify-between">
         <h2 class="mb-4 text-100 font-bold">Blitz rating</h2>
 
-        <span class="text-600 font-bold text-grey-600"><span class="text-750">8</span>wins</span>
+        <span class="text-600 font-bold text-grey-600"><span class="text-750" id="js-dashboardBlitzWins">0</span>wins</span>
         <div class="flex justify-between items-end font-bold">
           <div>
-            <div class="flex items-center"><span class="inline-flex mr-2 w-6 justify-center items-center">{{- partial "icons/ico-lose.html" . -}}</span>13 Loses</div>
-            <div class="flex items-center"><span class="inline-flex mr-2 w-6 justify-center items-center">{{- partial "icons/ico-flag.html" . -}}</span>8 Draws</div>
+            <div class="flex items-center">
+              <span class="inline-flex mr-2 w-6 justify-center items-center">{{- partial "icons/ico-lose.html" . -}}</span><span id="js-dashboardBlitzLoses">0</span> Loses
+            </div>
+            <div class="flex items-center">
+              <span class="inline-flex mr-2 w-6 justify-center items-center">{{- partial "icons/ico-flag.html" . -}}</span><span id="js-dashboardBlitzDraws">0</span> Draws
+            </div>
           </div>
-          <div>28 Games</div>
+          <div><span id="js-dashboardBlitzGames">0</span> Games</div>
         </div>
       </article>
       <article class="opacity-0 translate-y-20 relative overflow-hidden col-span-2 row-start-2 bg-grey-50 rounded py-7 px-8 flex flex-col justify-between">
@@ -51,16 +59,18 @@
         <div class="flex justify-between items-end font-bold">
           <div>
             <div class="flex items-center mt-2">
-              <span class="inline-flex mr-2 w-6 justify-center items-center"><span class="rounded-circle w-full aspect-square bg-grey-200"></span></span>13 Wins
+              <span class="inline-flex mr-2 w-6 justify-center items-center"><span class="rounded-circle w-full aspect-square bg-grey-200"></span></span><span id="js-dashboardGlobalWins">0</span> Wins
             </div>
             <div class="flex items-center mt-2">
-              <span class="inline-flex mr-2 w-6 justify-center items-center"><span class="rounded-circle w-full aspect-square bg-grey-400"></span></span>8 Loses
+              <span class="inline-flex mr-2 w-6 justify-center items-center"><span class="rounded-circle w-full aspect-square bg-grey-400"></span></span
+              ><span id="js-dashboardGlobalLoses">0</span> Loses
             </div>
             <div class="flex items-center mt-2">
-              <span class="inline-flex mr-2 w-6 justify-center items-center"><span class="rounded-circle w-full aspect-square bg-grey-600"></span></span>8 Draws
+              <span class="inline-flex mr-2 w-6 justify-center items-center"><span class="rounded-circle w-full aspect-square bg-grey-600"></span></span
+              ><span id="js-dashboardGlobalDraws">0</span> Draws
             </div>
           </div>
-          <div>28 Games</div>
+          <div><span id="js-dashboardGlobalGames">0</span> Games</div>
         </div>
         <img src="/img/images/trophy.png" class="absolute top-0 right-0 w-2/6" alt="" />
       </article>
@@ -69,77 +79,13 @@
         <div class="flex w-full justify-between">
           <div class="w-1/2">
             <div class="font-termina text-300 font-bold my-4">Rapid</div>
-            <ol class="leaderboard-table">
+            <ol id="js-dashrapidleaderboard" class="leaderboard-table">
               <li class="dashboard-avatar flex">
                 <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
                 <div
                   class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1"
                 >
-                  glna...e558
-                </div>
-              </li>
-              <li class="dashboard-avatar flex">
-                <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
-                <div
-                  class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1"
-                >
-                  glna...e558
-                </div>
-              </li>
-              <li class="dashboard-avatar flex">
-                <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
-                <div
-                  class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1"
-                >
-                  glna...e558
-                </div>
-              </li>
-              <li class="dashboard-avatar flex">
-                <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
-                <div
-                  class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1"
-                >
-                  glna...e558
-                </div>
-              </li>
-              <li class="dashboard-avatar flex">
-                <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
-                <div
-                  class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1"
-                >
-                  glna...e558
-                </div>
-              </li>
-              <li class="dashboard-avatar flex">
-                <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
-                <div
-                  class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1"
-                >
-                  glna...e558
-                </div>
-              </li>
-              <li class="dashboard-avatar flex">
-                <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
-                <div
-                  class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1"
-                >
-                  glna...e558
-                </div>
-              </li>
-              <li class="dashboard-avatar flex">
-                <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
-                <div
-                  class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1"
-                >
-                  glna...e558
-                </div>
-              </li>
-              <li class="dashboard-avatar flex">
-                <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
-                <div
-                  class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1"
-                >
-                  glna...e558
+                  000
                 </div>
               </li>
             </ol>
@@ -147,77 +93,13 @@
           <div class="w-1/2">
             <div class="font-termina text-300 font-bold my-4">Blitz</div>
 
-            <ol class="leaderboard-table">
+            <ol id="js-dashblitzleaderboard" class="leaderboard-table">
               <li class="dashboard-avatar flex">
                 <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
                 <div
                   class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1"
                 >
-                  glna...e558
-                </div>
-              </li>
-              <li class="dashboard-avatar flex">
-                <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
-                <div
-                  class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1"
-                >
-                  glna...e558
-                </div>
-              </li>
-              <li class="dashboard-avatar flex">
-                <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
-                <div
-                  class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1"
-                >
-                  glna...e558
-                </div>
-              </li>
-              <li class="dashboard-avatar flex">
-                <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
-                <div
-                  class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1"
-                >
-                  glna...e558
-                </div>
-              </li>
-              <li class="dashboard-avatar flex">
-                <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
-                <div
-                  class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1"
-                >
-                  glna...e558
-                </div>
-              </li>
-              <li class="dashboard-avatar flex">
-                <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
-                <div
-                  class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1"
-                >
-                  glna...e558
-                </div>
-              </li>
-              <li class="dashboard-avatar flex">
-                <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
-                <div
-                  class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1"
-                >
-                  glna...e558
-                </div>
-              </li>
-              <li class="dashboard-avatar flex">
-                <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
-                <div
-                  class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1"
-                >
-                  glna...e558
-                </div>
-              </li>
-              <li class="dashboard-avatar flex">
-                <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
-                <div
-                  class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1"
-                >
-                  glna...e558
+                  000
                 </div>
               </li>
             </ol>

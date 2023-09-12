@@ -7,6 +7,7 @@ export default new (class {
     //INFO: global class instantied once at load (IIFE) and accessible through the app
     //TODO: -> Should it be a seve component to communicate within the system (subpub etc)?
 
+    //TODO: remove mocked data
     console.log("Gno-Client actions init");
     console.log(io); //WS
   }
@@ -30,6 +31,92 @@ export default new (class {
   }
   getUserScore() {}
   getLeaderbord() {}
+
+  getBlitzRating() {
+    return {
+      lose: 13,
+      win: 0,
+      draws: 2,
+    };
+  }
+
+  getRapidRating() {
+    return {
+      lose: 2,
+      win: 13,
+      draws: 1,
+    };
+  }
+
+  getBlitzLeaders() {
+    return [
+      {
+        token: "azerty1234",
+      },
+      {
+        token: "qsdfgt765",
+      },
+      {
+        token: "UJHFGVC565",
+      },
+      {
+        token: "azerty1234",
+      },
+      {
+        token: "qsdfgt765",
+      },
+      {
+        token: "UJHFGVC565",
+      },
+      {
+        token: "azerty1234",
+      },
+      {
+        token: "qsdfgt765",
+      },
+      {
+        token: "UJHFGVC565",
+      },
+      {
+        token: "qsdfgt765",
+      },
+    ];
+  }
+
+  getRapidLeaders() {
+    return [
+      {
+        token: "azerty1234",
+      },
+      {
+        token: "qsdfgt765",
+      },
+      {
+        token: "UJHFGVC565",
+      },
+      {
+        token: "azerty1234",
+      },
+      {
+        token: "qsdfgt765",
+      },
+      {
+        token: "UJHFGVC565",
+      },
+      {
+        token: "azerty1234",
+      },
+      {
+        token: "qsdfgt765",
+      },
+      {
+        token: "UJHFGVC565",
+      },
+      {
+        token: "qsdfgt765",
+      },
+    ];
+  }
 
   //...
 
