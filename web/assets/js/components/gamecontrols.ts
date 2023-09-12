@@ -1,9 +1,8 @@
-// @ts-nocheck
 import { Component } from "sevejs";
 import { gsap } from "gsap";
 
 type Events = Record<string, any>;
-type Actions = "void" | "draw" | "resign";
+type Actions = "void" | "draw" | "resign" | "offer";
 const Gamecontrols = class extends Component {
   constructor(opts: any) {
     super(opts);
@@ -72,20 +71,20 @@ const Gamecontrols = class extends Component {
     // }, 3000);
   }
 
-  _disableBtn(btn) {
+  _disableBtn(btn: Element) {
     return gsap.timeline({ paused: true }).set(btn, { cursor: "auto" }).to(btn, { background: "#D9D9D9", color: "#FFFFFF", boxShadow: "0px 0px 0px 0px rgba(255,255,255,0)" });
   }
-  _switchIconBtn(btn) {
+  _switchIconBtn(btn: Element) {
     return gsap.timeline({ paused: true }).to(btn.querySelector(".js-icon"), { autoAlpha: 0 }).to(btn.querySelector(".js-cross"), { autoAlpha: 1 }, "<");
   }
 
-  _updateContent(action) {
+  _updateContent(action: Actions) {
     this.DOM.title.innerHTML = this.contents[action].title;
     this.DOM.content.innerHTML = this.contents[action].content;
     this.DOM.ctrConfirm.innerHTML = this.contents[action].btn;
   }
 
-  _clickOnCtr(action, direct) {
+  _clickOnCtr(action: Actions, direct: boolean) {
     if (this.action === "void") {
       this.action = action;
       this._updateContent(this.action);

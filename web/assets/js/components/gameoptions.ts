@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Component } from "sevejs";
 import { gsap } from "gsap";
 import { saveToLocalStorage, getFromLocalStorage } from "../utils/localstorage";
@@ -73,7 +72,7 @@ const Gameoptions = class extends Component {
     });
 
     //category events
-    this.DOM.categoryBtns.forEach((categoryBtn, i) => {
+    this.DOM.categoryBtns.forEach((categoryBtn: Element, i: number) => {
       this.events["clickOnCategory" + i] = this.on({
         e: "change",
         target: categoryBtn,
@@ -82,7 +81,7 @@ const Gameoptions = class extends Component {
     });
 
     //timer events
-    this.DOM.timerBtns.forEach((timerBtn, i) => {
+    this.DOM.timerBtns.forEach((timerBtn: Element, i: number) => {
       this.events["clickOnTimer" + i] = this.on({
         e: "click",
         target: timerBtn,
@@ -126,7 +125,7 @@ const Gameoptions = class extends Component {
       this.call("goTo", ["/"], "Router");
     }
   }
-  _clickOnCtrl1(e, immediate = false) {
+  _clickOnCtrl1(e: any, immediate = false) {
     this.currentState++;
 
     if (this.currentState === 1) {
@@ -168,11 +167,12 @@ const Gameoptions = class extends Component {
   }
 
   _inputCategory() {
-    return [...document.getElementsByName("category")].filter((el) => el.checked)[0].value;
+    const arry = [...document.getElementsByName("category")] as HTMLInputElement[];
+    return arry.filter((el) => el.checked)[0].value;
   }
 
-  _updateTimer(e, init?: Number) {
-    this.timer = init !== undefined || null ? init : Math.min(this.timers[this.options.category].length - 1, Math.max(0, this.timer + parseInt(e.currentTarget.dataset.ctrl === "+" ? 1 : -1, 10)));
+  _updateTimer(e: any, init?: Number) {
+    this.timer = init !== undefined || null ? init : Math.min(this.timers[this.options.category].length - 1, Math.max(0, this.timer + e.currentTarget.dataset.ctrl === "+" ? 1 : -1, 10));
 
     this.options.timer = this.timers[this.options.category][this.timer];
 
@@ -180,7 +180,7 @@ const Gameoptions = class extends Component {
     this.DOM.timerIncrement.innerHTML = this.options.timer[1];
   }
 
-  _updateCategory(e) {
+  _updateCategory(e: any) {
     const cat = e.currentTarget.value === "blitz";
 
     this.options.category = this._inputCategory();

@@ -1,7 +1,7 @@
-// @ts-nocheck
 import { Component } from "sevejs";
 import { gsap } from "gsap";
 import { truncateString } from "../utils/truncate";
+import { type Colors } from "../types/types";
 
 const Gameplayers = class extends Component {
   constructor(opts: any) {
@@ -29,7 +29,7 @@ const Gameplayers = class extends Component {
     return gsap.to(this.DOM.el, { autoAlpha: 0, display: "none", duration: 0.8 });
   }
 
-  config(time, color, token = "", category) {
+  config(time: number[], color: Colors, token = "", category: string) {
     //-- config game --
     //config token + type
     this.DOM.token.innerHTML = truncateString(token, 4, 4);
@@ -49,11 +49,11 @@ const Gameplayers = class extends Component {
     //TODO: avatar custo (in utils)
   }
 
-  _createTime(datetarget) {
-    const pad = (n) => (n < 10 ? "0" : "") + n;
+  _createTime(datetarget: number) {
+    const pad = (n: number) => (n < 10 ? "0" : "") + n;
 
-    const minutes = parseInt(datetarget / 60, 10);
-    const seconds = parseInt(datetarget % 60, 10);
+    const minutes = Math.floor(datetarget / 60);
+    const seconds = Math.floor(datetarget % 60);
     this.DOM.timer.innerHTML = `${pad(minutes)}:${pad(seconds)}`;
   }
 
@@ -90,7 +90,7 @@ const Gameplayers = class extends Component {
     this.DOM.pawns.appendChild(pawnEl);
   }
 
-  finishGame(type: string) {
+  finishGame() {
     this.DOM.el.querySelector(".js-playergametype").innerHTML = this.category;
     this.DOM.el.querySelector(".js-playerpoints").innerHTML = `${this.call("getMoveNumber", "", "gameboard")} moves`;
     gsap

@@ -1,8 +1,8 @@
 import { Component } from "sevejs";
 import { gsap } from "gsap";
 import { Chess } from "chess.js";
+import { type Colors } from "../types/types";
 
-type Colors = "w" | "b";
 const Gameboard = class extends Component {
   constructor(opts: any) {
     super(opts);

@@ -1,11 +1,10 @@
-// @ts-nocheck
 import { Component } from "sevejs";
 import { gsap } from "gsap";
 import * as THREE from "three";
-// import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
+type SceneAction = "init" | "pending" | "action" | "none";
 const Webgl = class extends Component {
   constructor(opts: any) {
     super(opts);
@@ -69,11 +68,11 @@ const Webgl = class extends Component {
       this.model.position.set(1.15, -0.4, 0);
       this.model.rotation.y = Math.PI * 1.63;
 
-      this.king = this.model.children.find((child) => child.name === "King_light");
-      this.queen = this.model.children.find((child) => child.name === "Queen_light");
-      this.rook = this.model.children.find((child) => child.name === "Rook_light_1");
-      this.knight = this.model.children.find((child) => child.name === "Knight_light_2");
-      this.bishop = this.model.children.find((child) => child.name === "Bishop_light_2");
+      this.king = this.model.children.find((child: { name: string }) => child.name === "King_light");
+      this.queen = this.model.children.find((child: { name: string }) => child.name === "Queen_light");
+      this.rook = this.model.children.find((child: { name: string }) => child.name === "Rook_light_1");
+      this.knight = this.model.children.find((child: { name: string }) => child.name === "Knight_light_2");
+      this.bishop = this.model.children.find((child: { name: string }) => child.name === "Bishop_light_2");
 
       this.king.position.set(this.king.position.x + 3.5, this.king.position.y + 2.5, this.king.position.z + 2.9);
       this.king.rotation.x = Math.PI * 0.35;
@@ -152,7 +151,7 @@ const Webgl = class extends Component {
     tick();
   }
 
-  changeStatus(status) {
+  changeStatus(status: SceneAction) {
     this.status = status;
   }
 
