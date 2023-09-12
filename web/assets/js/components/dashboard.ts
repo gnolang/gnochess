@@ -2,6 +2,7 @@ import { Component } from "sevejs";
 import { truncateString } from "../utils/truncate";
 
 import Actions from "../actions";
+type Categoy = "Blitz" | "Rapid" | "Global";
 
 const Dashboard = class extends Component {
   userToken: string | undefined | null;
@@ -16,7 +17,6 @@ const Dashboard = class extends Component {
     //TODO: login/logout - redir
     //TODO: feed data contents - personal
     //TODO: feed data contents - leaderboard (dedicated component ?)
-    //TODO: facto feed functions
 
     this.userToken = Actions.getToken() ?? null;
     this._feedUser(this.userToken);
@@ -34,51 +34,29 @@ const Dashboard = class extends Component {
     if (DOM && token) DOM.innerHTML = truncateString(token, 4, 4);
   }
 
-  _feedUserBlitzRating() {
-    const rating = Actions.getBlitzRating();
-    const DOM = {
-      wins: document.getElementById("js-dashboardBlitzWins"),
-      draws: document.getElementById("js-dashboardBlitzDraws"),
-      loses: document.getElementById("js-dashboardBlitzLoses"),
-      games: document.getElementById("js-dashboardBlitzGames"),
-    };
-    if (DOM.wins) DOM.wins.innerHTML = rating.win.toString();
-    if (DOM.draws) DOM.draws.innerHTML = rating.draws.toString();
-    if (DOM.loses) DOM.loses.innerHTML = rating.lose.toString();
-    if (DOM.games) DOM.games.innerHTML = (rating.lose + rating.draws + rating.win).toString();
+  _createDomFunc(category: Categoy, rating: any) {
+    const kinds = ["wins", "draws", "loses", "game"];
+    const games = document.getElementById(`js-dashboard${category}Games`);
+
+    kinds.forEach((kind) => {
+      const el = document.getElementById(`js-dashboard${category}${kind.charAt(0).toUpperCase() + kind.slice(1)}`);
+      if (el) el.innerHTML = rating[kind].toString();
+    });
+    if (games) games.innerHTML = (rating.loses + rating.draws + rating.wins).toString();
+
     return rating;
   }
 
-  _feedUserRapidRating() {
-    const rating = Actions.getRapidRating();
-    const DOM = {
-      wins: document.getElementById("js-dashboardRapidWins"),
-      draws: document.getElementById("js-dashboardRapidDraws"),
-      loses: document.getElementById("js-dashboardRapidLoses"),
-      games: document.getElementById("js-dashboardRapidGames"),
-    };
-    if (DOM.wins) DOM.wins.innerHTML = rating.win.toString();
-    if (DOM.draws) DOM.draws.innerHTML = rating.draws.toString();
-    if (DOM.loses) DOM.loses.innerHTML = rating.lose.toString();
-    if (DOM.games) DOM.games.innerHTML = (rating.lose + rating.draws + rating.win).toString();
-    return rating;
+  async _feedUserBlitzRating() {
+    const rating = await Actions.getBlitzRating();
+    return this._createDomFunc("Blitz", rating);
   }
-
+  async _feedUserRapidRating() {
+    const rating = await Actions.getRapidRating();
+    return this._createDomFunc("Rapid", rating);
+  }
   _feedUserGlobalRating(globalRating: any) {
-    console.log(globalRating);
-
-    const DOM = {
-      wins: document.getElementById("js-dashboardGlobalWins"),
-      draws: document.getElementById("js-dashboardGlobalDraws"),
-      loses: document.getElementById("js-dashboardGlobalLoses"),
-      games: document.getElementById("js-dashboardGlobalGames"),
-    };
-
-    if (DOM.wins) DOM.wins.innerHTML = globalRating.win.toString();
-    if (DOM.draws) DOM.draws.innerHTML = globalRating.draws.toString();
-    if (DOM.loses) DOM.loses.innerHTML = globalRating.lose.toString();
-    if (DOM.games) DOM.games.innerHTML = (globalRating.lose + globalRating.draws + globalRating.win).toString();
-    return globalRating;
+    return this._createDomFunc("Global", globalRating);
   }
 
   async _feedRatings() {

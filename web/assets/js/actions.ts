@@ -34,16 +34,16 @@ export default new (class {
 
   getBlitzRating() {
     return {
-      lose: 13,
-      win: 0,
+      loses: 13,
+      wins: 0,
       draws: 2,
     };
   }
 
   getRapidRating() {
     return {
-      lose: 2,
-      win: 13,
+      loses: 2,
+      wins: 13,
       draws: 1,
     };
   }
