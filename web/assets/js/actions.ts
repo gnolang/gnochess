@@ -16,6 +16,7 @@ export default new (class {
    */
   //tokens
   setToken(token: "string") {
+    console.log("blabla");
     saveToLocalStorage(token, "token");
   }
   getToken() {
