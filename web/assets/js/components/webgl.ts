@@ -141,9 +141,7 @@ const Webgl = class extends Component {
     /**
      * Animate
      */
-    const clock = new THREE.Clock();
     const tick = () => {
-      const elapsedTime = clock.getElapsedTime();
       this.renderer.render(scene, this.camera);
 
       window.requestAnimationFrame(tick);

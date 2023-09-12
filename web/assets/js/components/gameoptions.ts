@@ -125,7 +125,7 @@ const Gameoptions = class extends Component {
       this.call("goTo", ["/"], "Router");
     }
   }
-  _clickOnCtrl1(e: any, immediate = false) {
+  _clickOnCtrl1(_e: any, immediate = false) {
     this.currentState++;
 
     if (this.currentState === 1) {
