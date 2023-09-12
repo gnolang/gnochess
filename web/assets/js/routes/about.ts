@@ -6,53 +6,86 @@ const aboutView = {
   afterEnter() {},
 };
 
+const webglMove = function (app: any) {
+  app.call("changeStatus", ["init"], "webgl");
+  app.call("moveScene", "", "webgl");
+  app.call("appear", "", "webgl");
+};
+const onEnter = function (next?: any) {
+  const container = next?.container ?? document;
+  DOM.titles = [...container.querySelectorAll(".js-title")];
+  gsap.set(container.querySelectorAll(".js-title"), { autoAlpha: 1 });
+  gsap.set("#js-background", { transformOrigin: "left" });
+
+  DOM.titles.forEach((title: Element) => {
+    charming(title, { tagName: "span", type: "word", nesting: 1, classPrefix: "word word" });
+    charming(title, { tagName: "span", type: "letter", nesting: 2, classPrefix: "char char" });
+  });
+  gsap.to("#js-background", { x: "50%", scaleY: 1, scaleX: 1.1, duration: 1 });
+  gsap.to(container.querySelectorAll(".js-title .char > span"), { y: "0%", stagger: 0.04, duration: 0.4, delay: 0.7 });
+  gsap.to(container.querySelectorAll(".js-content"), { autoAlpha: 1, duration: 1, delay: 0.8 });
+};
+
 // DOM init
 const DOM: Record<string, any> = {};
 
 const aboutTransition = (app: any) => {
-  return {
-    name: "play-transition",
-    sync: true,
-    leave() {
-      return Promise.all([
-        app.call("disappear", "", "Gameoptions"),
-        app.call("disappear", "", "Gameplayers", "me"),
-        app.call("disappear", "", "Gameplayers", "rival"),
-        app.call("disappear", "", "Gamecontrols"),
-      ]);
+  return [
+    {
+      name: "about-transition-home",
+      to: {
+        namespace: ["about"],
+      },
+      from: {
+        namespace: ["home"],
+      },
+      leave({ current }: { current: any }) {
+        const prom = new Promise<void>((resolve) => {
+          const titles = current.container.querySelectorAll(".js-title .char > span");
+          const subtitles = current.container.querySelectorAll(".js-subtitle");
+          const content = current.container.querySelectorAll(".js-content");
+          if (titles) gsap.to(titles, { y: "100%", autoAlpha: 0, duration: 0.4 });
+          if (subtitles) gsap.to(subtitles, { autoAlpha: 0, duration: 0.4 });
+          if (content) gsap.to(content, { autoAlpha: 0, duration: 0.4, onComplete: () => resolve() });
+        });
+        return Promise.all([prom]);
+      },
+      enter({ next }: { next: any }) {
+        onEnter(next);
+      },
     },
-    enter({ next }: { next: any }) {
-      DOM.titles = [...next.container.querySelectorAll(".js-title")];
-      gsap.set(next.container.querySelectorAll(".js-title"), { autoAlpha: 1 });
-      gsap.set(next.container.querySelector("#js-background"), { transformOrigin: "left" });
+    {
+      name: "about-transition-play",
+      sync: true,
+      to: {
+        namespace: ["about"],
+      },
+      from: {
+        namespace: ["play"],
+      },
+      leave() {
+        return Promise.all([
+          app.call("disappear", "", "Gameoptions"),
+          app.call("disappear", "", "Gameplayers", "me"),
+          app.call("disappear", "", "Gameplayers", "rival"),
+          app.call("disappear", "", "Gamecontrols"),
+        ]);
+      },
+      enter({ next }: { next: any }) {
+        onEnter(next);
+        webglMove(app);
+      },
+    },
+    {
+      to: {
+        namespace: ["about"],
+      },
 
-      DOM.titles.forEach((title: Element) => {
-        charming(title, { tagName: "span", type: "word", nesting: 1, classPrefix: "word word" });
-        charming(title, { tagName: "span", type: "letter", nesting: 2, classPrefix: "char char" });
-      });
-      gsap.to(next.container.querySelector("#js-background"), { x: "50%", scaleY: 1, scaleX: 1.1, duration: 1 });
-      gsap.to(next.container.querySelectorAll(".js-title .char > span"), { y: "0%", stagger: 0.04, duration: 0.4, delay: 0.7 });
-      gsap.to(next.container.querySelectorAll(".js-subtitle"), { autoAlpha: 1, duration: 1, delay: 0.8 });
-      gsap.to(next.container.querySelectorAll(".js-content"), { autoAlpha: 1, duration: 1, delay: 0.8 });
+      once() {
+        onEnter();
+      },
     },
-    once() {
-      DOM.titles = [...document.querySelectorAll(".js-title")];
-
-      DOM.titles.forEach((title: Element) => {
-        charming(title, { tagName: "span", type: "word", nesting: 1, classPrefix: "word word" });
-        charming(title, { tagName: "span", type: "letter", nesting: 2, classPrefix: "char char" });
-      });
-
-      gsap.to("#js-background", { autoAlpha: 1, x: "50%" });
-      gsap.set(".js-title", { autoAlpha: 1 });
-      gsap.to(".js-title .char > span", { y: "0%", stagger: 0.04, duration: 0.4 });
-      gsap.to(".js-subtitle", { autoAlpha: 1, duration: 1, delay: 0.6 });
-      gsap.to(".js-content", { autoAlpha: 1, duration: 1, delay: 0.6 });
-    },
-    to: {
-      namespace: ["about"],
-    },
-  };
+  ];
 };
 
 export { aboutView, aboutTransition };

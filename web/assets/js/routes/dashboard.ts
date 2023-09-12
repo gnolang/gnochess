@@ -13,7 +13,7 @@ const dashboardTransition = (app: any) => {
     name: "play-transition",
     leave({ current }: { current: any }) {
       const prom = new Promise<void>((resolve) => {
-        const titles = current.container.querySelectorAll(".js-title > .char > span");
+        const titles = current.container.querySelectorAll(".js-title  .char > span");
         const subtitles = current.container.querySelectorAll(".js-subtitle");
         const content = current.container.querySelectorAll(".js-content");
         if (titles) gsap.to(titles, { y: "100%", autoAlpha: 0, duration: 0.4 });

@@ -13,7 +13,7 @@ const playTransition = (app: any) => {
     sync: true,
     leave({ current }: { current: any }) {
       return new Promise<void>((resolve) => {
-        const titles = current.container.querySelectorAll(".js-title > .char > span");
+        const titles = current.container.querySelectorAll(".js-title .char > span");
         const subtitles = current.container.querySelectorAll(".js-subtitle");
         const content = current.container.querySelectorAll(".js-content");
         gsap.to(titles, { y: "100%", autoAlpha: 0, duration: 0.4 });
