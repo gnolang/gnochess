@@ -1,0 +1,23 @@
+baseURL = "https://gnochess.com/"
+DefaultContentLanguage = "en"
+title = "GnoChess"
+enableGitInfo = true
+enableRobotsTXT = true
+disableKinds = ["taxonomy"]
+[params]
+    themeColor = "#363636"
+    cover =  "/img/og.png"
+
+[languages]
+    [languages.en]
+        weight = 1
+        contentDir = "content/english"
+        languageName = "English"
+        [languages.en.params]
+            personTitle = "All in Bits (AIB)"
+            personDescription = "We build secure networks and decentralized applications for web3 that enable social coordination and community building"
+            siteTitle = "Official website of All In Bits"
+            siteDescription = "Social evolution through open technology"
+            twitter = "https://twitter.com/Allinbits_inc"
+            github = "https://github.com/allinbits"
+            description = "Social evolution through open technology"

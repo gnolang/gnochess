@@ -1,0 +1,65 @@
+<section id="js-gameplayers" class="player-info col-span-12 md:absolute md:w-1/2 z-2 md:top-[55vh] md:-translate-y-1/2 left-8 xl:left-16 flex md:flex-col justify-between pointer-events-none">
+  <div data-component="gameplayers" data-component-id="rival" class="hidden opacity-0 invisible w-1/2 md:w-full items-start my-6">
+    <div class="md:w-2/5 w-full flex flex-row md:flex-row items-start">
+      <div class="js-playeravatar | w-20 h-20 rounded-circle mt-0.5 bg-grey-50 overflow-hidden">
+        <img src="/img/mini-gopher.png" alt="my avatar" class="object-contain object-bottom h-full w-full" />
+      </div>
+      <div class="js-playercontent | md:w-[62%] w-[50%] flex flex-col mx-4 text-grey-50">
+        <div>
+          <div class="flex justify-between leading-none font-bold pl-1">
+            <div class="js-playertype">rival</div>
+            <div class="js-playertoken">token</div>
+          </div>
+          <time class="js-playertime | md:text-[4vw] text-[8vw] font-bold leading-none w-[4.4ch]">00:00</time>
+          <div class="js-playercapturepawns | playercapturepawns aspect-[2/1] md:aspect-square grid md:grid-cols-4 md:grid-rows-4 grid-cols-8 grid-rows-2 gap-1 mt-4"></div>
+        </div>
+      </div>
+    </div>
+    <div class="hidden w-2/5 md:flex flex-col items-center ml-[4vw] leading-[1.1] text-grey-600 self-center">
+      <div class="js-playerfinish | font-termina text-600 font-bold tracking-tight opacity-0 invisible">Match ended</div>
+      <div class="js-playerwinner | opacity-0 invisible">
+        <span class="font-termina text-750 font-black">Winner</span>
+        <div class="flex justify-between w-full leading-tight px-2">
+          <div class="js-playergametype">Blitz</div>
+          <div class="js-playerpoints">nb Pts</div>
+        </div>
+      </div>
+      <!-- <a href="/play/" class="flex shadow px-2 py-2 rounded-full font-bold items-center mr-auto mt-8 opacity-0 invisible"
+        ><span class="ml-4">Play the game</span><span class="inline-block w-10 h-10 rounded-full bg-grey-400 ml-6"></span
+      ></a> -->
+    </div>
+  </div>
+
+  <div data-component="gameplayers" data-component-id="me" class="hidden opacity-0 invisible w-1/2 md:w-full md:items-end my-6 flex-row-reverse md:flex-row">
+    <div class="md:w-2/5 w-full flex flex-row-reverse md:flex-row md:items-end">
+      <div class="js-playeravatar | w-20 h-20 bg-grey-600 rounded-circle border border-grey-200 mt-0.5 overflow-hidden">
+        <img src="/img/mini-gopher.png" alt="my avatar" class="object-contain object-bottom h-full w-full" />
+      </div>
+      <div class="js-playercontent | md:w-[62%] w-[50%] flex md:flex-col-reverse flex-col mx-4 text-grey-600">
+        <div>
+          <div class="flex justify-between leading-none font-bold pl-1">
+            <div class="js-playertype">me</div>
+            <div class="js-playertoken">token</div>
+          </div>
+          <time class="js-playertime | md:text-[4vw] text-[8vw] font-bold leading-none">00:00</time>
+        </div>
+        <div
+          class="js-playercapturepawns | playercapturepawns aspect-[2/1] md:aspect-square grid md:grid-cols-4 md:grid-rows-4 grid-cols-8 grid-rows-2 gap-1 mb-4 scale-x-[-1] md:scale-x-0 md:scale-y-[-1]"
+        ></div>
+      </div>
+    </div>
+    <div class="hidden w-2/5 md:flex flex-col items-center ml-[4vw] leading-[1.1] text-grey-600 self-center mt-6">
+      <div class="js-playerfinish | font-termina text-600 font-bold tracking-tight opacity-0 invisible">Match ended</div>
+      <div class="js-playerwinner | opacity-0 invisible scale-50">
+        <div class="font-termina text-750 font-black">Winner</div>
+        <div class="flex justify-between w-full leading-tight px-2">
+          <div class="js-playergametype">Blitz</div>
+          <div class="js-playerpoints">nb Pts</div>
+        </div>
+      </div>
+      <!-- <a href="/play/" class="flex shadow px-2 py-2 rounded-full font-bold items-center mr-auto mt-8 opacity-0 invisible"
+        ><span class="ml-4">Play the game</span><span class="inline-block w-10 h-10 rounded-full bg-grey-400 ml-6"></span
+      ></a> -->
+    </div>
+  </div>
+</section>

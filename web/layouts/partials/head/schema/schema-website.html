@@ -1,0 +1,14 @@
+{{ $url := urls.Parse (.URL | absLangURL)  }}
+{
+  "@context": "http://schema.org",
+  "@type": "WebSite",
+  "@id": "{{ $url.Scheme }}://official.{{ $url.Host }}{{ $url.Path }}",
+	"name": "{{ .context.Site.Params.siteTitle}}",
+  "description": "{{ .context.Site.Params.siteDescription}}",
+  "url": "{{ .URL | absLangURL }}",
+  "inLanguage": "{{ .context.Lang }}",
+  "image":{
+		"@type":"ImageObject",
+		"url":"https://res.cloudinary.com/dgzqhksfz/image/upload/v1611074330/Image_balise_OG_Twitter_bmrzyn.png"
+	}
+} {{/*  ".context" -> hack for HUGO & JSONDLD -> safeJS doesnt work : https://discourse.gohugo.io/t/how-to-pass-variables-to-a-partial-template/7321/11 */}}

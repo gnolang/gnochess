@@ -1,0 +1,16 @@
+<!-- TITLE -->
+<title>{{ .Site.Title }}{{ if .Params.meta_title }} | {{ .Params.meta_title }}{{ end }}</title>
+
+<!-- DESCRIPTION -->
+{{ with .Params.meta_description -}}
+    <meta name="description" content="{{ . }}">
+{{ else -}}
+    <meta name="description" content="{{ .Site.Params.description }}">
+{{ end -}}
+
+<!-- KEYWORDS -->
+{{ if .Keywords }}
+    <meta name="keywords" content="{{ delimit .Keywords ", " }}">
+{{ else if .Params.meta.keywords }}
+    <meta name="keywords" content="{{ delimit .Params.meta.keywords ", " }}">
+{{ end }}

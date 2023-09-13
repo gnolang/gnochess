@@ -1,0 +1,18 @@
+<section data-component="gamecontrols" id="js-gamecontrols" class="absolute right-0 min-w-full flex-col col-span-3 col-start-10 self-end rounded-lg bg-grey-50 p-4 z-max hidden opacity-0 invisible">
+  <div id="js-validation" class="relative hidden opacity-0 invisible flex-col p-5 pt-7 rounded bg-grey-200 mb-2">
+    <div class="js-gamecontrols-title | mb-4 text-100 font-bold">Connection</div>
+    <p class="js-gamecontrols-content | font-medium text-200 text-grey-600">Do you really want to Resign the Match?</p>
+    <button id="js-gamecontrols-confirm" class="relative w-full bg-grey-50 rounded-full mt-4 p-3 shadow font-bold text-center">Confirm</button>
+  </div>
+  <nav class="flex justify-between">
+    <button id="js-gamecontrols-ctr0" class="relative w-[35%] h-full aspect-square rounded-circle shadow bg-grey-50 mr-4">
+      <span id="js-gamecontrols-icon-resign" class="js-icon | absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">{{- partial "icons/ico-flag.html" . -}}</span>
+      <span id="js-gamecontrols-icon-resign-cross" class="js-cross | absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0">{{- partial "icons/ico-cross.html" . -}}</span>
+    </button>
+    <button id="js-gamecontrols-ctr1" class="relative w-[35%] h-full aspect-square rounded-circle shadow bg-grey-50">
+      <span id="js-gamecontrols-icon-draw" class="js-icon | absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">{{- partial "icons/ico-draw.html" . -}}</span>
+      <span id="js-gamecontrols-icon-draw-cross" class="js-cross | absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0">{{- partial "icons/ico-cross.html" . -}}</span>
+    </button>
+    <!-- <button id="js-gameoptions-ctr1" class="rounded-full shadow px-6 w-full bg-grey-50 font-bold">Connection</button> -->
+  </nav>
+</section>

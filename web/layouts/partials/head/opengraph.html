@@ -1,0 +1,72 @@
+<!-- SOCIALS -->
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ if .Params.meta_title }}{{ .Params.meta_title }}{{ if not .IsHome }} | {{ .Site.Title }}{{ end }}{{ else }}{{ .Site.Title }}{{ end }}">
+
+{{ if .Params.meta_cover -}}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="{{ .Params.meta_cover | absURL }}">
+{{ else -}}
+    <meta name="twitter:card" content="summary">
+{{ end -}}
+
+{{ with .Site.Social.twitter -}}
+    <meta name="twitter:site" content="@{{ . }}">
+{{ end -}}
+
+<!-- Facebook -->
+<meta property="og:title" content="{{ if .Params.meta_title }}{{ .Params.meta_title }}{{ if not .IsHome }} | {{ .Site.Title }}{{ end }}{{ else }}{{ .Site.Title }}{{ end }}">
+<meta property="og:description" content="{{ if .Params.meta_description }}{{ .Params.meta_description }}{{ end }}">
+<meta property="og:url" content="{{ .Permalink | absURL }}">
+<meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
+
+{{ if .Params.meta_cover -}}
+    <meta property="og:image" content="{{ .Params.meta_cover | absURL}}">
+{{ else -}}
+    <meta property="og:image" content="{{ .Site.Params.cover | absURL}}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+{{ end -}}
+
+{{ $iso8601 := "2006-01-02T15:04:05-07:00" -}}
+{{ if .IsPage -}}
+  {{ if not .PublishDate.IsZero -}}
+    <meta property="article:published_time" {{ .PublishDate.Format $iso8601 | printf "content=%q" | safeHTMLAttr }}>
+  {{ else if not .Date.IsZero -}}
+    <meta property="article:published_time" {{ .Date.Format $iso8601 | printf "content=%q" | safeHTMLAttr }}>
+  {{ end -}}
+  {{ if not .Lastmod.IsZero -}}
+    <meta property="article:modified_time" {{ .Lastmod.Format $iso8601 | printf "content=%q" | safeHTMLAttr }}>
+  {{ end -}}
+{{ else -}}
+  {{ if not .Date.IsZero -}}
+    <meta property="og:updated_time" {{ .Lastmod.Format $iso8601 | printf "content=%q" | safeHTMLAttr }}>
+  {{ end -}}
+{{ end -}}
+
+{{ with .Params.audio -}}
+  <meta property="og:audio" content="{{ . }}">
+{{ end -}}
+{{ with .Params.locale -}}
+  <meta property="og:locale" content="{{ .Site.LanguageCode }}">
+{{ end -}}
+{{ with .Site.Params.title -}}
+  <meta property="og:site_name" content="{{ . }}">
+{{ end -}}
+{{ with .Params.videos -}}
+  {{ range . -}}
+    <meta property="og:video" content="{{ . | absURL }}">
+  {{ end -}}
+{{ end -}}
+
+{{ if .IsPage -}}
+    {{ with .Params.tags -}}
+        {{ range first 6 . -}}
+            <meta property="article:tag" content="{{ . }}">
+        {{ end -}}
+    {{ end -}}
+{{ end -}}
+
+<!-- Pinterest -->
+<meta name="pinterest" content="nohover">
