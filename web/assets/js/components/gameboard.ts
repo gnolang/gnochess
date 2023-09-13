@@ -51,13 +51,13 @@ const Gameboard = class extends Component {
 
   engine(init = false, gameover = false) {
     //TODO: -> remove -> for test purpose -> to et in if statment bellow
-    setTimeout(() => {
-      this.call("finishGame", "gameover", "gameplayers", "me");
-      this.call("stopTimer", [true], "gameplayers", "me");
-      this.call("stopTimer", [true], "gameplayers", "rival");
-      this.call("disappear", "", "gamecontrols");
-      this.showScoreBoard("w");
-    }, 10000);
+    // setTimeout(() => {
+    //   this.call("finishGame", "gameover", "gameplayers", "me");
+    //   this.call("stopTimer", [true], "gameplayers", "me");
+    //   this.call("stopTimer", [true], "gameplayers", "rival");
+    //   this.call("disappear", "", "gamecontrols");
+    //   this.showScoreBoard("w");
+    // }, 10000);
 
     if (this.chess.isGameOver() || gameover) {
       console.log("game over");

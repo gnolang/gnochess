@@ -157,7 +157,7 @@ const Gameoptions = class extends Component {
           this.call("appear", "", "gameboard");
           this.call("startGame", ["w"], "gameboard");
         });
-      }, 4000);
+      }, 1000);
     }
   }
 

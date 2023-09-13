@@ -10,8 +10,8 @@ export default {
   content: ["./layouts/**/*.html", "./assets/**/*.{js,ts,jsx}", "./hugo_stats.json"],
   theme: {
     screens: {
-      sm: `${pxToRem(360)}rem`,
-      md: `${pxToRem(720)}rem`,
+      sm: `${pxToRem(400)}rem`,
+      md: `${pxToRem(780)}rem`,
       lg: `${pxToRem(1080)}rem`,
       xl: `${pxToRem(1320)}rem`,
       xxl: `${pxToRem(1540)}rem`,

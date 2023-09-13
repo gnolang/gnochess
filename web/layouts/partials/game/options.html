@@ -1,7 +1,7 @@
 <section
   data-component="gameoptions"
   id="js-gameoptions"
-  class="absolute right-0 min-w-full opacity-0 invisible flex-col col-span-4 col-start-9 self-end rounded-lg bg-grey-50 p-4 z-max overflow-hidden"
+  class="relative sm:absolute right-0 min-w-full opacity-0 invisible flex-col lg:col-span-4 md:col-span-5 sm:col-span-8 col-span-12 lg:col-start-9 md:col-start-7 sm:col-start-3 col-start-1 self-end rounded-lg bg-grey-50 p-4 z-max overflow-hidden"
 >
   <div id="js-connection" class="js-pane | relative flex flex-col p-7 rounded bg-grey-200 mb-2 min-h-[17rem]">
     <div class="mb-4 text-100 font-bold">Connection</div>
@@ -49,7 +49,7 @@
   </div>
 
   <nav id="gameoptions-actions" class="mt-6 xxl:mt-8 flex">
-    <button id="js-gameoptions-ctr0" class="relative w-[65%] lg:w-[50%] xxl:w-[28%] h-full grow-[1] aspect-square rounded-circle shadow bg-grey-50 mr-4">
+    <button id="js-gameoptions-ctr0" class="relative w-[25%] sm:w-[30%] md:w-[35%] lg:w-[40%] xxl:w-[28%] h-full grow-[1] aspect-square rounded-circle shadow bg-grey-50 mr-4">
       <span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">{{- partial "icons/ico-cross.html" . -}}</span>
     </button>
     <button id="js-gameoptions-ctr1" class="rounded-full shadow px-6 w-full bg-grey-50 font-bold">Connection</button>
