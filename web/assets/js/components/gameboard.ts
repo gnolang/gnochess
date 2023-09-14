@@ -108,7 +108,9 @@ const Gameboard = class extends Component {
       this.call("stopTimer", [init], "gameplayers", "me");
       this.call("startTimer", [init], "gameplayers", "rival");
       this.allowedToMove = false;
+      this.rivalMove();
     }
+
     //1 blanc -> je commande
     // call timer
     // je select
@@ -127,7 +129,18 @@ const Gameboard = class extends Component {
   }
 
   rivalMove() {
-    //TODO: listen action from WS rival
+    //TODO: listen action from WS rival - fake random IA now
+    setTimeout(() => {
+      const possibleMoves = this.chess.moves();
+      const randomIdx = Math.floor(Math.random() * possibleMoves.length);
+      const move = this.chess.move(possibleMoves[randomIdx]);
+      this.board.position(this.chess.fen());
+
+      if (move.captured) {
+        this.call("capturePawn", [move.captured], "gameplayers", move.color === this.color ? "me" : "rival");
+      }
+      this.engine();
+    }, 1000);
   }
 
   async promote() {
@@ -162,11 +175,17 @@ const Gameboard = class extends Component {
 
   async selectCell(e: any) {
     //TODO: highlight selected pawn
+
+    //only if player turn
+    if (!this.allowedToMove) return;
+
     const currentCell = e.currentTarget.dataset.square;
 
     if (this.moves.includes(currentCell)) {
       this.moves = [];
       let promoted;
+
+      //if promotion, wwait for user choice
       if (this.promotion.length > 0) {
         this.DOM.board.style.pointerEvents = "none";
         promoted = await this.promote();
@@ -197,7 +216,7 @@ const Gameboard = class extends Component {
       // get allowed position on board DOM then DOM
       this.selected = currentCell;
       const moves = this.chess.moves({ square: currentCell, verbose: true });
-      this.moves = [...new Set(moves.map((pos: any) => pos.to))]; //remove diplicate of "to" (promotion ones)
+      this.moves = [...new Set(moves.map((pos: any) => pos.to))]; //remove duplicate of "to" (promotion ones)
       this.promotion = [...new Set(moves.filter((move: any) => move.promotion).map((move: any) => move.to))];
 
       this.moves.forEach((cell: Element) => {
