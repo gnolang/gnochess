@@ -13,10 +13,17 @@ const Gameboard = class extends Component {
 
     this.chess = new Chess();
     this.moves = [];
+    this.promotion = [];
     this.allowedToMove = false;
+    this.pomotionEvents = [];
+
+    this.DOM.board = this.DOM.el.querySelector("#js-game");
+    this.DOM.promotionBtns = [...this.DOM.el.querySelectorAll(".js-topromote")];
+    this.DOM.moves = [];
+    this.DOM.promoteModal = this.DOM.el.querySelector("#js-promote-modal");
 
     // @ts-ignore
-    this.board = Chessboard(this.DOM.el, {
+    this.board = Chessboard(this.DOM.board, {
       pieceTheme: `/img/images/pieces/staunton/basic/{piece}.png`,
       onMoveEnd: this._onSnapEnd.bind(this),
       moveSpeed: 1,
@@ -24,8 +31,6 @@ const Gameboard = class extends Component {
     this.board.start();
 
     this.DOM.cells = [...this.DOM.el.querySelectorAll(".square-55d63")];
-    this.DOM.moves = [];
-
     this.DOM.cells.forEach((el: Element) => {
       this.on({ e: "click", target: el, cb: this.selectCell.bind(this) });
     });
@@ -49,7 +54,7 @@ const Gameboard = class extends Component {
     return this.chess.moveNumber();
   }
 
-  engine(init = false, gameover = false) {
+  engine(init = false, gameover?: "me" | "rival") {
     //TODO: -> remove -> for test purpose -> to et in if statment bellow
     // setTimeout(() => {
     //   this.call("finishGame", "gameover", "gameplayers", "me");
@@ -70,9 +75,9 @@ const Gameboard = class extends Component {
       if (gameover) {
         // for timeout
         if (this.color === this.chess.turn()) {
-          this.call("finishGame", "gameover", "gameplayers", "me");
+          this.call("finishGame", [], "gameplayers", "rival");
         } else {
-          this.call("finishGame", "gameover", "gameplayers", "rival");
+          this.call("finishGame", [], "gameplayers", "me");
         }
       }
 
@@ -126,12 +131,51 @@ const Gameboard = class extends Component {
     //TODO: listen action from WS rival
   }
 
-  selectCell(e: any) {
+  async promote() {
+    // make popup appear
+    gsap.to(this.DOM.promoteModal, { autoAlpha: 1 });
+
+    // wait for user promote selection
+    return new Promise((resolve) => {
+      this.DOM.promotionBtns.forEach((el: Element) => {
+        const cb = (e: any) => {
+          this.pomotionEvents.forEach((event: any) => {
+            this.off(event, evOpts);
+          });
+
+          gsap.to(this.DOM.promoteModal, { autoAlpha: 0 });
+
+          // Return selection, remove event and close popup
+          resolve(e.currentTarget.dataset.topromote);
+        };
+
+        const evOpts = {
+          e: "click",
+          target: el,
+          cb: cb.bind(this),
+        };
+
+        const ev = this.on(evOpts);
+        this.pomotionEvents.push(ev);
+      });
+    });
+  }
+
+  async selectCell(e: any) {
     //TODO: highlight selected pawn
     const currentCell = e.currentTarget.dataset.square;
+
     if (this.moves.includes(currentCell)) {
+      this.moves = [];
+      let promoted;
+      if (this.promotion.length > 0) {
+        this.DOM.board.style.pointerEvents = "none";
+        promoted = await this.promote();
+        this.DOM.board.style.pointerEvents = "auto";
+      }
+
       // if click on allowed cell (to move)
-      const move = this.chess.move({ from: this.selected, to: currentCell, promotion: "q" });
+      const move = this.chess.move({ from: this.selected, to: currentCell, promotion: promoted });
       this.board.move(`${move.from}-${move.to}`);
       if (move.captured) {
         // capture
@@ -153,11 +197,13 @@ const Gameboard = class extends Component {
 
       // get allowed position on board DOM then DOM
       this.selected = currentCell;
-      this.moves = this.chess.moves({ square: currentCell, verbose: true }).map((pos: any) => pos.to);
+      const moves = this.chess.moves({ square: currentCell, verbose: true });
+      this.moves = [...new Set(moves.map((pos: any) => pos.to))]; //remove diplicate of "to" (promotion ones)
+      this.promotion = [...new Set(moves.filter((move: any) => move.promotion).map((move: any) => move.to))];
+
       this.moves.forEach((cell: Element) => {
         this.DOM.moves.push(this.DOM.el.querySelector(`[data-square="${cell}"]`));
       });
-
       // highlight allowed position
       if (this.DOM.moves.length > 0) gsap.to(this.DOM.moves, { "--disp-opacity": 1 });
     }
