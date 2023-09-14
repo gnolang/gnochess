@@ -55,7 +55,7 @@ const Gameboard = class extends Component {
   }
 
   engine(init = false, gameover?: "me" | "rival") {
-    //TODO: -> remove -> for test purpose -> to et in if statment bellow
+    //for test purpose -> to et in if statment bellow
     // setTimeout(() => {
     //   this.call("finishGame", "gameover", "gameplayers", "me");
     //   this.call("stopTimer", [true], "gameplayers", "me");
@@ -97,7 +97,6 @@ const Gameboard = class extends Component {
         console.log("isCheckmate");
       }
 
-      //TODO: -> call endgame
       return; // action
     }
 

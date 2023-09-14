@@ -174,8 +174,14 @@ const Gameoptions = class extends Component {
     return arry.filter((el) => el.checked)[0].value;
   }
 
-  _updateTimer(e: any, init?: Number) {
-    this.timer = init !== undefined || null ? init : Math.min(this.timers[this.options.category].length - 1, Math.max(0, this.timer + e.currentTarget.dataset.ctrl === "+" ? 1 : -1, 10));
+  _updateTimer(e: any, init?: number) {
+    if (init !== undefined || null) {
+      const index = init ?? 0;
+      this.timer = index;
+    } else {
+      const dir: number = e ? (e.currentTarget.dataset.ctrl === "+" ? 1 : -1) : 0;
+      this.timer = Math.min(this.timers[this.options.category].length - 1, Math.max(0, this.timer + dir));
+    }
 
     this.options.timer = this.timers[this.options.category][this.timer];
 
@@ -188,7 +194,6 @@ const Gameoptions = class extends Component {
 
     this.options.category = this._inputCategory();
     this._updateTimer("", 0);
-    // method 1 ( div background position ) :
     gsap.to(".gameoptions-sprite", { backgroundPosition: cat ? "100%" : "0", ease: "steps(9)", duration: 0.4 });
     gsap.to(this.DOM.categorySwitch, { x: cat ? "100%" : "0" });
     gsap.to("#js-categoryWord", { x: cat ? "-60%" : "-15%" });
