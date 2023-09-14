@@ -188,6 +188,8 @@ const Gameoptions = class extends Component {
 
     this.options.category = this._inputCategory();
     this._updateTimer("", 0);
+    // method 1 ( div background position ) :
+    gsap.to(".gameoptions-sprite", { backgroundPosition: cat ? "100%" : "0", ease: "steps(9)", duration: 0.4 });
     gsap.to(this.DOM.categorySwitch, { x: cat ? "100%" : "0" });
     gsap.to("#js-categoryWord", { x: cat ? "-60%" : "-15%" });
   }
