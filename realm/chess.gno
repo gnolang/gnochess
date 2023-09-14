@@ -33,9 +33,10 @@ type Game struct {
 	Position Position    `json:"position"`
 	State    GameState   `json:"state"`
 
-	Creator   std.Address  `json:"creator"`
-	CreatedAt time.Time    `json:"created_at"`
-	Concluder *std.Address `json:"concluder"`
+	Creator     std.Address  `json:"creator"`
+	CreatedAt   time.Time    `json:"created_at"`
+	Concluder   *std.Address `json:"concluder"`
+	DrawOfferer *std.Address `json:"draw_offerer"`
 }
 
 func (g Game) json() string {
@@ -49,6 +50,13 @@ func (g Game) json() string {
 func (g Game) MarshalJSON() ([]byte, error) {
 	var b bytes.Buffer
 	b.WriteByte('{')
+
+	nilAddr := func(na *std.Address) string {
+		if na == nil {
+			return `nil`
+		}
+		return `"` + na.String() + `"`
+	}
 
 	b.WriteString(`"id":"` + g.ID + `",`)
 	b.WriteString(`"white":"` + g.White.String() + `",`)
@@ -72,11 +80,8 @@ func (g Game) MarshalJSON() ([]byte, error) {
 
 	b.WriteString(`"creator":"` + g.Creator.String() + `",`)
 	b.WriteString(`"created_at":"` + g.CreatedAt.Format(time.RFC3339) + `",`)
-	if g.Concluder == nil {
-		b.WriteString(`"concluder":nil`)
-	} else {
-		b.WriteString(`"concluder":"` + g.Concluder.String() + `"`)
-	}
+	b.WriteString(`"concluder":` + nilAddr(g.Concluder) + ",")
+	b.WriteString(`"draw_offerer":` + nilAddr(g.DrawOfferer))
 
 	b.WriteByte('}')
 	return b.Bytes(), nil
@@ -125,6 +130,8 @@ const (
 
 	// resignation by either player
 	GameStateResigned
+	// draw by agreement
+	GameStateDrawnByAgreement
 )
 
 var gameStatesSnake = [...]string{
@@ -139,6 +146,7 @@ var gameStatesSnake = [...]string{
 	GameStateDrawn3Fold:        "drawn_3_fold",
 	GameStateDrawnInsufficient: "drawn_insufficient",
 	GameStateResigned:          "resigned",
+	GameStateDrawnByAgreement:  "drawn_by_agreement",
 }
 
 func (g GameState) MarshalJSON() ([]byte, error) {
@@ -250,13 +258,19 @@ func determineColor(games []*Game, caller, opponent std.Address) (isBlack bool) 
 
 // GetGame returns a game, knowing its ID.
 func GetGame(id string) string {
-	g, ok := gameStore.Get(id)
+	return getGame(id, false).json()
+}
+
+func getGame(id string, wantOpen bool) *Game {
+	graw, ok := gameStore.Get(id)
 	if !ok {
-		panic("game not found: " + id)
+		panic("game not found")
 	}
-	var gg *Game
-	gg = g.(*Game)
-	return gg.json()
+	g := graw.(*Game)
+	if wantOpen && g.State.IsFinished() {
+		panic("game is already finished")
+	}
+	return g
 }
 
 // MakeMove specifies a move to be done on the given game, specifying in
@@ -267,11 +281,7 @@ func GetGame(id string) string {
 func MakeMove(gameID, from, to string, promote Piece) string {
 	std.AssertOriginCall()
 
-	graw, ok := gameStore.Get(gameID)
-	if !ok {
-		panic("game not found: " + gameID)
-	}
-	g := graw.(*Game)
+	g := getGame(gameID, true)
 
 	// determine if this is a black move
 	isBlack := len(g.Position.Moves)%2 == 1
@@ -304,6 +314,11 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 
 	o := newp.IsFinished()
 	if o == NotFinished {
+		// opponent of draw offerer has made a move. take as implicit rejection of draw.
+		if g.DrawOfferer != nil && *g.DrawOfferer != caller {
+			g.DrawOfferer = nil
+		}
+
 		return g.json()
 	}
 
@@ -332,6 +347,7 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 		draw()
 	}
 	g.Concluder = &caller
+	g.DrawOfferer = nil
 
 	return g.json()
 }
@@ -339,15 +355,7 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 func Resign(gameID string) string {
 	std.AssertOriginCall()
 
-	graw, ok := gameStore.Get(gameID)
-	if !ok {
-		panic("game not found: " + gameID)
-	}
-	g := graw.(*Game)
-
-	if g.State.IsFinished() {
-		panic("game is already finished")
-	}
+	g := getGame(gameID, true)
 
 	caller := std.GetOrigCaller()
 	switch caller {
@@ -363,11 +371,51 @@ func Resign(gameID string) string {
 		panic("you are not involved in this game")
 	}
 	g.Concluder = &caller
+	g.DrawOfferer = nil
 
 	return g.json()
 }
 
-// Draw implements "single-party" draw (ie. not draw by agreement)
+// DrawOffer creates a draw offer in the current game, if one doesn't already
+// exist.
+func DrawOffer(gameID string) string {
+	std.AssertOriginCall()
+
+	g := getGame(gameID, true)
+	caller := std.GetOrigCaller()
+
+	switch {
+	case caller != g.Black && caller != g.White:
+		panic("you are not involved in this game")
+	case g.DrawOfferer != nil:
+		panic("a draw offer in this game already exists")
+	}
+
+	g.DrawOfferer = &caller
+	return g.json()
+}
+
+// DrawRefuse refuse a draw offer in the given game.
+func DrawRefuse(gameID string) string {
+	std.AssertOriginCall()
+
+	g := getGame(gameID, true)
+	caller := std.GetOrigCaller()
+
+	switch {
+	case caller != g.Black && caller != g.White:
+		panic("you are not involved in this game")
+	case g.DrawOfferer == nil:
+		panic("no draw offer present")
+	case *g.DrawOfferer == caller:
+		panic("can't refuse an offer you sent yourself")
+	}
+
+	g.DrawOfferer = nil
+	return g.json()
+}
+
+// Draw implements draw by agreement, as well as "single-party" draw:
 // - Threefold repetition (§9.2)
 // - Fifty-move rule (§9.3)
 // - Insufficient material (§9.4)
@@ -375,19 +423,22 @@ func Resign(gameID string) string {
 func Draw(gameID string) string {
 	std.AssertOriginCall()
 
-	graw, ok := gameStore.Get(gameID)
-	if !ok {
-		panic("game not found: " + gameID)
-	}
-	g := graw.(*Game)
-
-	if g.State.IsFinished() {
-		panic("game is already finished")
-	}
+	g := getGame(gameID, true)
 
 	caller := std.GetOrigCaller()
 	if caller != g.Black && caller != g.White {
 		panic("you are not involved in this game")
+	}
+
+	// accepted draw offer (do early to avoid gas for g.Position.IsFinished())
+	if g.DrawOfferer != nil && *g.DrawOfferer != caller {
+		g.Concluder = &caller
+		g.State = GameStateDrawnByAgreement
+
+		reportPlayerScore(g.Black, 0)
+		reportPlayerScore(g.White, 0)
+
+		return g.json()
 	}
 
 	o := g.Position.IsFinished()
@@ -402,6 +453,7 @@ func Draw(gameID string) string {
 		panic("this game can't be automatically drawn")
 	}
 	g.Concluder = &caller
+	g.DrawOfferer = nil
 	reportPlayerScore(g.Black, 0)
 	reportPlayerScore(g.White, 0)
 
