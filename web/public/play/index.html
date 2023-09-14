@@ -60,7 +60,9 @@
 
 
  
+
        <link href="/css/main.min.d184dd0c172cbb68605984c8359273ad4d69d814d677aba7c6929bba41eff43f.css" rel="stylesheet" />
+
 
 <link
   rel="stylesheet"
@@ -233,7 +235,7 @@
           <time class="js-playertime | md:text-[4vw] text-[8vw] font-bold leading-none">00:00</time>
         </div>
         <div
-          class="js-playercapturepawns | playercapturepawns aspect-[2/1] md:aspect-square grid md:grid-cols-4 md:grid-rows-4 grid-cols-8 grid-rows-2 gap-1 mb-4 scale-x-[-1] md:scale-x-0 md:scale-y-[-1]"
+          class="js-playercapturepawns | playercapturepawns aspect-[2/1] md:aspect-square grid md:grid-cols-4 md:grid-rows-4 grid-cols-8 grid-rows-2 gap-1 mb-4 scale-x-[-1] md:scale-x- md:scale-y-[-1]"
         ></div>
       </div>
     </div>
@@ -252,10 +254,18 @@
 </section>
 
   
-  <section
-  data-component="gameboard"
-  class="opacity-0 invisible chess-board col-span-12 sm:col-span-10 sm:col-start-2 relative md:absolute md:top-[55vh] md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[40vw] w-full md:h-[40vw] h-full"
-></section>
+  <section data-component="gameboard" class="opacity-0 invisible col-span-12 sm:col-span-10 sm:col-start-2">
+  <div id="js-game" class="chess-board relative md:absolute md:top-[55vh] md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[40vw] w-full md:h-[40vw] h-full"></div>
+  <div id="js-promote-modal" class="absolute opacity-0 invisible">
+    <h2>Promotion</h2>
+    <ul>
+      <li class="js-topromote" data-topromote="q">Queen</li>
+      <li class="js-topromote" data-topromote="n">Knight</li>
+      <li class="js-topromote" data-topromote="r">Rook</li>
+      <li class="js-topromote" data-topromote="b">Bishop</li>
+    </ul>
+  </div>
+</section>
  <section data-component="gamefen" id="js-gamefen" class="hidden col-span-3 col-start-10 z-2">
   <ul>
     <li class="flex font-bold text-100 bg-grey-50 pr-6 mb-1 rounded-full w-full justify-between">

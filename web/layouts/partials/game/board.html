@@ -1,4 +1,12 @@
-<section
-  data-component="gameboard"
-  class="opacity-0 invisible chess-board col-span-12 sm:col-span-10 sm:col-start-2 relative md:absolute md:top-[55vh] md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[40vw] w-full md:h-[40vw] h-full"
-></section>
+<section data-component="gameboard" class="opacity-0 invisible col-span-12 sm:col-span-10 sm:col-start-2">
+  <div id="js-game" class="chess-board relative md:absolute md:top-[55vh] md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[40vw] w-full md:h-[40vw] h-full"></div>
+  <div id="js-promote-modal" class="absolute opacity-0 invisible">
+    <h2>Promotion</h2>
+    <ul>
+      <li class="js-topromote" data-topromote="q">Queen</li>
+      <li class="js-topromote" data-topromote="n">Knight</li>
+      <li class="js-topromote" data-topromote="r">Rook</li>
+      <li class="js-topromote" data-topromote="b">Bishop</li>
+    </ul>
+  </div>
+</section>
