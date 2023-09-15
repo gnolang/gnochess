@@ -139,10 +139,10 @@ const Gamecontrols = class extends Component {
     this.action = "void";
   }
 
-  offerDraw() {
-    this._clickOnCtr("draw", false);
-    this._updateContent("offer");
-  }
+  //   offerDraw() {
+  //     this._clickOnCtr("draw", false);
+  //     this._updateContent("offer");
+  //   }
 
   _declineOffer() {
     Action.declineDraw();

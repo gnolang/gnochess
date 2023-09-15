@@ -45,7 +45,7 @@ export default new (class {
       };
 
       setTimeout(() => resolve(mockedSettings), 1000);
-      this.listenDraw(); //TODO: remove this drawPoposition mockup call as well
+      //   this.listenDraw(); //TODO: remove this drawPoposition mockup call as well
     });
   }
 
@@ -86,7 +86,7 @@ export default new (class {
   requestDraw() {
     //TODO: error handling
     return new Promise<boolean>((resolve) => {
-      setTimeout(() => resolve(true), 2000);
+      setTimeout(() => resolve(false), 9000); //if not accepted --> may need a cleartimeout
     });
   }
   requestResign() {
