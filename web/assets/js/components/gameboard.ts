@@ -103,23 +103,22 @@ const Gameboard = class extends Component {
       this.call("stopTimer", [init], "gameplayers", "me");
       this.call("startTimer", [init], "gameplayers", "rival");
       this.allowedToMove = false;
+      await // ------ Action - emmit my move ------
+
       this.rivalMove();
     }
   }
 
-  rivalMove() {
-    //TODO: listen action from WS rival - fake random IA now
-    setTimeout(() => {
-      const possibleMoves = this.chess.moves();
-      const randomIdx = Math.floor(Math.random() * possibleMoves.length);
-      const move = this.chess.move(possibleMoves[randomIdx]);
-      this.board.position(this.chess.fen());
+  async rivalMove() {
+    //TODO: error handling try
+    const rivalMove = await Action.getRivalMove(this.chess, true);
+    const move = this.chess.move(rivalMove);
+    this.board.position(this.chess.fen());
 
-      if (move.captured) {
-        this.call("capturePawn", [move.captured], "gameplayers", move.color === this.color ? "me" : "rival");
-      }
-      this.engine();
-    }, 1000);
+    if (move.captured) {
+      this.call("capturePawn", [move.captured], "gameplayers", move.color === this.color ? "me" : "rival");
+    }
+    this.engine();
   }
 
   async promote(): Promise<string | number> {

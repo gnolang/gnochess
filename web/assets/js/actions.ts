@@ -28,6 +28,21 @@ export default new (class {
    * GAME ENGINE
    ****************/
 
+  getRivalMove(chess: any, ia = false) {
+    //TODO: error handling && check if chess types
+
+    return new Promise<string>((resolve) => {
+      if (ia) {
+        const possibleMoves = chess.moves();
+        const randomIdx = Math.floor(Math.random() * possibleMoves.length);
+        setTimeout(() => resolve(possibleMoves[randomIdx]), 200);
+      } else {
+        //-- replace random IA above by WS function here
+        resolve("INSERT_MOVE_HERE"); // `${from}-${to}` or `C3d2` notations
+      }
+    });
+  }
+
   makeMove(from: string, to: string, promotion: string | number = 0) {
     //TODO: error handling
     // -- insert function here (eg. MakeMove(from, to, promotion))
