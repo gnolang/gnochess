@@ -91,6 +91,7 @@ export default new (class {
     });
   }
   requestResign() {
+    console.log("resign");
     // -- insert function here (eg. Resign(gameid))
     return true;
   }
@@ -101,6 +102,14 @@ export default new (class {
       //Could be a shared Symbol() id
       Events.emit("drawPropal");
     }, 8000);
+  }
+  refuseDraw() {
+    // -- insert function here
+    console.log("draw refused");
+  }
+  acceptDraw() {
+    // -- insert function here
+    console.log("draw accepted");
   }
 
   /****************

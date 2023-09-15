@@ -17,6 +17,8 @@ const Gamecontrols = class extends Component {
 
     //Vars
     this.action = "void" as Actions;
+    this.pendingDraw = false;
+
     this.contents = {
       resign: {
         title: "Resign",
@@ -91,12 +93,18 @@ const Gamecontrols = class extends Component {
 
   _clickOnCtr(action: Actions, direct: boolean) {
     if (this.action === "void") {
-      this.action = action;
-      this._updateContent(this.action);
+      this._updateContent(action);
+      this.action = action === "offer" ? "draw" : action;
+
       this[action === "resign" ? "disableCtr1TL" : "disableCtr0TL"].play();
       this[action === "resign" ? "swithCtr0TL" : "swithCtr1TL"].play();
       this.validationTL.play();
     } else if (this.action === action && direct) {
+      if (this.pendingDraw) {
+        // if pending draw refused
+        Action.refuseDraw();
+        this.pendingDraw = false;
+      }
       this.action = "void";
       this[action === "resign" ? "disableCtr1TL" : "disableCtr0TL"].reverse();
       this[action === "resign" ? "swithCtr0TL" : "swithCtr1TL"].reverse();
@@ -112,9 +120,14 @@ const Gamecontrols = class extends Component {
     }
     if (this.action === "draw") {
       //TODO: wait screen
-      const isAccepted = await Action.requestDraw();
-      if (isAccepted) {
-        this.call("engine", [false, "draw"], "gameboard");
+      if (this.pendingDraw) {
+        Action.acceptDraw();
+        this.pendingDraw = false;
+      } else {
+        const isAccepted = await Action.requestDraw();
+        if (isAccepted) {
+          this.call("engine", [false, "draw"], "gameboard");
+        }
       }
     }
 
@@ -133,6 +146,8 @@ const Gamecontrols = class extends Component {
   }
 
   _getDrawProposition() {
+    this.pendingDraw = true;
+    this._clickOnCtr("offer", false);
     console.log("propal received");
   }
 
