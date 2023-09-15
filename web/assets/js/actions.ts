@@ -17,7 +17,6 @@ export default new (class {
    * TOKEN
    ****************/
   setToken(token: "string") {
-    console.log("blabla");
     saveToLocalStorage(token, "token");
   }
   getToken() {
@@ -103,7 +102,7 @@ export default new (class {
       Events.emit("drawPropal");
     }, 8000);
   }
-  refuseDraw() {
+  declineDraw() {
     // -- insert function here
     console.log("draw refused");
   }

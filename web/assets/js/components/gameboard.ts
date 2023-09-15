@@ -8,6 +8,7 @@ import Action from "../actions";
 const Gameboard = class extends Component {
   constructor(opts: any) {
     super(opts);
+    this.events = {};
   }
 
   init() {
@@ -43,8 +44,8 @@ const Gameboard = class extends Component {
     this.rivalColor = this.color === "w" ? "b" : "w";
 
     this.DOM.cells = [...this.DOM.el.querySelectorAll(".square-55d63")];
-    this.DOM.cells.forEach((el: Element) => {
-      this.on({ e: "click", target: el, cb: this.selectCell.bind(this) });
+    this.DOM.cells.forEach((el: Element, i: number) => {
+      this.events[`cell-${i}`] = this.on({ e: "click", target: el, cb: this.selectCell.bind(this) });
     });
   }
 

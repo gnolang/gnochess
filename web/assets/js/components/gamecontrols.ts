@@ -102,8 +102,7 @@ const Gamecontrols = class extends Component {
     } else if (this.action === action && direct) {
       if (this.pendingDraw) {
         // if pending draw refused
-        Action.refuseDraw();
-        this.pendingDraw = false;
+        this._declineOffer();
       }
       this.action = "void";
       this[action === "resign" ? "disableCtr1TL" : "disableCtr0TL"].reverse();
@@ -121,8 +120,8 @@ const Gamecontrols = class extends Component {
     if (this.action === "draw") {
       //TODO: wait screen
       if (this.pendingDraw) {
-        Action.acceptDraw();
-        this.pendingDraw = false;
+        clearTimeout(this.pendingDraw);
+        this.pendingDraw = null;
       } else {
         const isAccepted = await Action.requestDraw();
         if (isAccepted) {
@@ -145,8 +144,16 @@ const Gamecontrols = class extends Component {
     this._updateContent("offer");
   }
 
+  _declineOffer() {
+    Action.declineDraw();
+    clearTimeout(this.pendingDraw);
+    this.pendingDraw = null;
+  }
+
   _getDrawProposition() {
-    this.pendingDraw = true;
+    this.pendingDraw = setTimeout(() => {
+      this._clickOnCtr("draw", true);
+    }, 2000);
     this._clickOnCtr("offer", false);
     console.log("propal received");
   }
@@ -160,6 +167,7 @@ const Gamecontrols = class extends Component {
 
   destroy() {
     Events.off("drawPropal");
+    clearTimeout(this.pendingDraw);
     this.validationTL.kill();
     this.disableCtr0TL.kill();
     this.disableCtr1TL.kill();
