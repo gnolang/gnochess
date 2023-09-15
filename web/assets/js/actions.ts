@@ -1,5 +1,6 @@
 import { io } from "socket.io-client";
 import { saveToLocalStorage, getFromLocalStorage } from "./utils/localstorage";
+import { type GameoverType } from "./types/types";
 
 export default new (class {
   constructor() {
@@ -12,10 +13,9 @@ export default new (class {
     console.log(io); //WS
   }
 
-  /**
-   * Metods ex (public)
-   */
-  //tokens
+  /****************
+   * TOKEN
+   ****************/
   setToken(token: "string") {
     console.log("blabla");
     saveToLocalStorage(token, "token");
@@ -24,7 +24,32 @@ export default new (class {
     return getFromLocalStorage("token");
   }
 
-  //dashboard
+  /****************
+   * GAME ENGINE
+   ****************/
+
+  makeMove(from: string, to: string, promotion: string | number = 0) {
+    //TODO: error handling
+    // -- insert function here (eg. MakeMove(from, to, promotion))
+    return new Promise<boolean>((resolve) => {
+      console.log(from + " - " + to + " - " + promotion);
+      setTimeout(() => resolve(true), 200);
+    });
+  }
+
+  isGameover(type: GameoverType) {
+    //check if gameover by type and return result
+    //TODO: error handling
+    // -- insert function here (eg. ClaimTimeout())
+    return new Promise<boolean>((resolve) => {
+      console.log(type);
+      setTimeout(() => resolve(true), 200);
+    });
+  }
+
+  /****************
+   * DASHBOARD
+   ****************/
   getUserData() {
     // example
     console.log("getUserData");
