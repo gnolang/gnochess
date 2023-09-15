@@ -30,11 +30,6 @@ const Gameboard = class extends Component {
       moveSpeed: 1,
     });
     this.board.start();
-
-    this.DOM.cells = [...this.DOM.el.querySelectorAll(".square-55d63")];
-    this.DOM.cells.forEach((el: Element) => {
-      this.on({ e: "click", target: el, cb: this.selectCell.bind(this) });
-    });
   }
 
   _onSnapEnd() {
@@ -43,7 +38,13 @@ const Gameboard = class extends Component {
 
   startGame(color: Colors) {
     this.color = color;
+    if (this.color === "b") this.board.flip();
     this.rivalColor = this.color === "w" ? "b" : "w";
+
+    this.DOM.cells = [...this.DOM.el.querySelectorAll(".square-55d63")];
+    this.DOM.cells.forEach((el: Element) => {
+      this.on({ e: "click", target: el, cb: this.selectCell.bind(this) });
+    });
   }
 
   showScoreBoard(winner: Colors) {
@@ -103,8 +104,6 @@ const Gameboard = class extends Component {
       this.call("stopTimer", [init], "gameplayers", "me");
       this.call("startTimer", [init], "gameplayers", "rival");
       this.allowedToMove = false;
-      await // ------ Action - emmit my move ------
-
       this.rivalMove();
     }
   }
@@ -154,6 +153,7 @@ const Gameboard = class extends Component {
   async selectCell(e: any) {
     //TODO: highlight selected pawn
 
+    console.log(this.allowedToMove);
     //only if player turn
     if (!this.allowedToMove) return;
 

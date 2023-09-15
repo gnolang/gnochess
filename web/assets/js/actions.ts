@@ -34,7 +34,7 @@ export default new (class {
     //-- use for tx NewGame(tx NewGame(opponent, timing[0], timing[1]))
     return new Promise<GameSettings>((resolve) => {
       console.log(timing);
-      const mockedColor = ["w", "b"][Math.floor(Math.random() * 1)];
+      const mockedColor = ["w", "b"][Math.round(Math.random())];
       const mockedSettings: GameSettings = {
         me: {
           color: mockedColor as Colors,
@@ -57,7 +57,7 @@ export default new (class {
       if (ia) {
         const possibleMoves = chess.moves();
         const randomIdx = Math.floor(Math.random() * possibleMoves.length);
-        setTimeout(() => resolve(possibleMoves[randomIdx]), 600);
+        setTimeout(() => resolve(possibleMoves[randomIdx]), 1000);
       } else {
         //-- replace random IA above by WS function here
         resolve("INSERT_MOVE_HERE"); // `${from}-${to}` or `C3d2` notations
