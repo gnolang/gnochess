@@ -1,6 +1,7 @@
 import { Component } from "sevejs";
 import { gsap } from "gsap";
 import Action from "../actions";
+import Events from "../utils/events";
 
 type Events = Record<string, any>;
 type Actions = "void" | "draw" | "resign" | "offer";
@@ -59,6 +60,9 @@ const Gamecontrols = class extends Component {
       cb: this._clickOnConfirm.bind(this),
     });
 
+    //async events
+    Events.on("drawPropal", this._getDrawProposition.bind(this));
+
     //tl
     this.validationTL = gsap.timeline({ paused: true }).to(this.DOM.paneValidation, { autoAlpha: 1, display: "flex", duration: 0.6 });
     this.disableCtr0TL = this._disableBtn(this.DOM.ctr0);
@@ -112,7 +116,6 @@ const Gamecontrols = class extends Component {
       if (isAccepted) {
         this.call("engine", [false, "draw"], "gameboard");
       }
-      //call gameover daw in gamebord class
     }
 
     this.validationTL.reverse();
@@ -129,6 +132,10 @@ const Gamecontrols = class extends Component {
     this._updateContent("offer");
   }
 
+  _getDrawProposition() {
+    console.log("propal received");
+  }
+
   appear() {
     gsap.to(this.DOM.el, { autoAlpha: 1, display: "flex" });
   }
@@ -137,6 +144,7 @@ const Gamecontrols = class extends Component {
   }
 
   destroy() {
+    Events.off("drawPropal");
     this.validationTL.kill();
     this.disableCtr0TL.kill();
     this.disableCtr1TL.kill();

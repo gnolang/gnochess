@@ -1,5 +1,6 @@
 import { io } from "socket.io-client";
 import { saveToLocalStorage, getFromLocalStorage } from "./utils/localstorage";
+import Events from "./utils/events";
 import { type GameoverType, type GameSettings, type Colors } from "./types/types";
 
 export default new (class {
@@ -7,7 +8,6 @@ export default new (class {
     //INFO: MVP -> May not be the best way to handle the gno-ts
     //INFO: global class instantied once at load (IIFE) and accessible through the app
     //TODO: -> Should it be a seve component to communicate within the system (subpub etc)?
-
     //TODO: remove mocked data
     console.log("Gno-Client actions init");
     console.log(io); //WS
@@ -46,6 +46,7 @@ export default new (class {
       };
 
       setTimeout(() => resolve(mockedSettings), 1000);
+      this.listenDraw(); //TODO: remove this drawPoposition mockup call as well
     });
   }
 
@@ -92,6 +93,14 @@ export default new (class {
   requestResign() {
     // -- insert function here (eg. Resign(gameid))
     return true;
+  }
+
+  listenDraw() {
+    setTimeout(() => {
+      console.log("Draw proposition");
+      //Could be a shared Symbol() id
+      Events.emit("drawPropal");
+    }, 8000);
   }
 
   /****************

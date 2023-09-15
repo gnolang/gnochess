@@ -2,6 +2,7 @@ import { Component } from "sevejs";
 import { gsap } from "gsap";
 import { Chess } from "chess.js";
 import { type Colors, type GameoverType } from "../types/types";
+
 import Action from "../actions";
 
 const Gameboard = class extends Component {
