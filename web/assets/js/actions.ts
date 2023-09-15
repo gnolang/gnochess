@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 import { saveToLocalStorage, getFromLocalStorage } from "./utils/localstorage";
-import { type GameoverType } from "./types/types";
+import { type GameoverType, type GameSettings, type Colors } from "./types/types";
 
 export default new (class {
   constructor() {
@@ -28,6 +28,28 @@ export default new (class {
    * GAME ENGINE
    ****************/
 
+  createGame(timing: number[]) {
+    //TODO: error handling
+    //TODO: what if user quit game before creation?
+    //-- use for tx NewGame(tx NewGame(opponent, timing[0], timing[1]))
+    return new Promise<GameSettings>((resolve) => {
+      console.log(timing);
+      const mockedColor = ["w", "b"][Math.floor(Math.random() * 1)];
+      const mockedSettings: GameSettings = {
+        me: {
+          color: mockedColor as Colors,
+          id: "glnaglnaglnaglnae558",
+        },
+        rival: {
+          color: mockedColor === "w" ? "b" : "w",
+          id: "grbqszfoiqefouqiz254",
+        },
+      };
+
+      setTimeout(() => resolve(mockedSettings), 1000);
+    });
+  }
+
   getRivalMove(chess: any, ia = false) {
     //TODO: error handling && check if chess types
 
@@ -35,7 +57,7 @@ export default new (class {
       if (ia) {
         const possibleMoves = chess.moves();
         const randomIdx = Math.floor(Math.random() * possibleMoves.length);
-        setTimeout(() => resolve(possibleMoves[randomIdx]), 200);
+        setTimeout(() => resolve(possibleMoves[randomIdx]), 600);
       } else {
         //-- replace random IA above by WS function here
         resolve("INSERT_MOVE_HERE"); // `${from}-${to}` or `C3d2` notations

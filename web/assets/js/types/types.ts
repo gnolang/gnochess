@@ -5,3 +5,11 @@ export type Move = {
   to: string;
   promotion: string | number;
 };
+export type UserSettings = {
+  color: Colors;
+  id: string;
+};
+export type GameSettings = {
+  me: UserSettings;
+  rival: UserSettings;
+};
