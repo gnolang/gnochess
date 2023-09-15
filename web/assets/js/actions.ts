@@ -27,7 +27,6 @@ export default new (class {
   /****************
    * GAME ENGINE
    ****************/
-
   createGame(timing: number[]) {
     //TODO: error handling
     //TODO: what if user quit game before creation?
@@ -82,6 +81,17 @@ export default new (class {
       console.log(type);
       setTimeout(() => resolve(true), 200);
     });
+  }
+
+  requestDraw() {
+    //TODO: error handling
+    return new Promise<boolean>((resolve) => {
+      setTimeout(() => resolve(true), 2000);
+    });
+  }
+  requestResign() {
+    // -- insert function here (eg. Resign(gameid))
+    return true;
   }
 
   /****************

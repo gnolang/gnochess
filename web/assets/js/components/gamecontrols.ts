@@ -1,5 +1,6 @@
 import { Component } from "sevejs";
 import { gsap } from "gsap";
+import Action from "../actions";
 
 type Events = Record<string, any>;
 type Actions = "void" | "draw" | "resign" | "offer";
@@ -100,8 +101,22 @@ const Gamecontrols = class extends Component {
     }
   }
 
-  _clickOnConfirm() {
+  async _clickOnConfirm() {
+    if (this.action === "resign") {
+      Action.requestResign();
+      this.call("goTo", ["/"], "router");
+    }
+    if (this.action === "draw") {
+      //TODO: wait screen
+      const isAccepted = await Action.requestDraw();
+      if (isAccepted) {
+        this.call("engine", [false, "draw"], "gameboard");
+      }
+      //call gameover daw in gamebord class
+    }
+
     this.validationTL.reverse();
+
     this[this.action === "resign" ? "disableCtr1TL" : "disableCtr0TL"].reverse();
     this[this.action === "resign" ? "swithCtr0TL" : "swithCtr1TL"].reverse();
 

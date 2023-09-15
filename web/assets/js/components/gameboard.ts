@@ -66,6 +66,8 @@ const Gameboard = class extends Component {
     //   this.showScoreBoard("w");
     // }, 10000);
 
+    //TODO: win cause rival resign
+    //TODO: draw screen in players
     if (this.chess.isGameOver() || gameover) {
       console.log("GAME OVER!");
       let status: GameoverType = "checkmate";
@@ -153,7 +155,6 @@ const Gameboard = class extends Component {
   async selectCell(e: any) {
     //TODO: highlight selected pawn
 
-    console.log(this.allowedToMove);
     //only if player turn
     if (!this.allowedToMove) return;
 
