@@ -32,11 +32,14 @@ type Game struct {
 	Black    std.Address `json:"black"`
 	Position Position    `json:"position"`
 	State    GameState   `json:"state"`
+	Winner   Winner      `json:"winner"`
 
 	Creator     std.Address  `json:"creator"`
 	CreatedAt   time.Time    `json:"created_at"`
-	Concluder   *std.Address `json:"concluder"`
-	DrawOfferer *std.Address `json:"draw_offerer"`
+	DrawOfferer *std.Address `json:"draw_offerer"` // set on draw offers
+	Concluder   *std.Address `json:"concluder"`    // set on single-party draws, and aborts
+
+	Time *TimeControl `json:"time"`
 }
 
 func (g Game) json() string {
@@ -47,41 +50,51 @@ func (g Game) json() string {
 	return string(s)
 }
 
-func (g Game) MarshalJSON() ([]byte, error) {
+func (g Game) MarshalJSON() (_ []byte, err error) {
 	var b bytes.Buffer
 	b.WriteByte('{')
 
 	nilAddr := func(na *std.Address) string {
 		if na == nil {
-			return `nil`
+			return `null`
 		}
 		return `"` + na.String() + `"`
+	}
+	mjson := func(s string, val interface{ MarshalJSON() ([]byte, error) }, comma bool) {
+		if err != nil {
+			return
+		}
+		var res []byte
+		res, err = val.MarshalJSON()
+		if err != nil {
+			return
+		}
+		b.WriteString(`"` + s + `":`)
+		b.Write(res)
+		if comma {
+			b.WriteByte(',')
+		}
 	}
 
 	b.WriteString(`"id":"` + g.ID + `",`)
 	b.WriteString(`"white":"` + g.White.String() + `",`)
 	b.WriteString(`"black":"` + g.Black.String() + `",`)
 
-	b.WriteString(`"position":`)
-	pdata, err := g.Position.MarshalJSON()
+	mjson("position", g.Position, true)
+	mjson("state", g.State, true)
+	mjson("winner", g.Winner, true)
 	if err != nil {
-		return nil, err
+		return
 	}
-	b.Write(pdata)
-	b.WriteString(`,`)
-
-	b.WriteString(`"state":`)
-	sdata, err := g.State.MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	b.Write(sdata)
-	b.WriteByte(',')
 
 	b.WriteString(`"creator":"` + g.Creator.String() + `",`)
 	b.WriteString(`"created_at":"` + g.CreatedAt.Format(time.RFC3339) + `",`)
-	b.WriteString(`"concluder":` + nilAddr(g.Concluder) + ",")
-	b.WriteString(`"draw_offerer":` + nilAddr(g.DrawOfferer))
+	b.WriteString(`"draw_offerer":` + nilAddr(g.DrawOfferer) + ",")
+
+	mjson("time", g.Time, false)
+	if err != nil {
+		return
+	}
 
 	b.WriteByte('}')
 	return b.Bytes(), nil
@@ -108,6 +121,41 @@ func (p Position) MarshalJSON() ([]byte, error) {
 	return b.Bytes(), nil
 }
 
+// Winner represents the "direct" outcome of a game
+// (white, black or draw?)
+type Winner byte
+
+const (
+	WinnerNone Winner = iota
+	WinnerWhite
+	WinnerBlack
+	WinnerDraw
+)
+
+var winnerString = [...]string{
+	WinnerNone:  "none",
+	WinnerWhite: "white",
+	WinnerBlack: "black",
+	WinnerDraw:  "draw",
+}
+
+func (w Winner) MarshalJSON() ([]byte, error) {
+	if n := int(w); n < len(winnerString) {
+		return []byte(`"` + winnerString[n] + `"`), nil
+	}
+	return nil, errors.New("invalid winner value")
+}
+
+func (w Winner) Scores() (wscore, bscore int) {
+	switch w {
+	case WinnerWhite:
+		return 1, -1
+	case WinnerBlack:
+		return -1, 1
+	}
+	return
+}
+
 // GameState represents the current game state.
 type GameState byte
 
@@ -117,8 +165,7 @@ const (
 	GameStateOpen
 
 	// "automatic" endgames following moves
-	GameStateWhiteCheckmated
-	GameStateBlackCheckmated
+	GameStateCheckmated
 	GameStateStalemate
 	GameStateDrawn75Move
 	GameStateDrawn5Fold
@@ -128,6 +175,10 @@ const (
 	GameStateDrawn3Fold
 	GameStateDrawnInsufficient
 
+	// timeout by either player
+	GameStateTimeout
+	// aborted within first two moves
+	GameStateAborted
 	// resignation by either player
 	GameStateResigned
 	// draw by agreement
@@ -137,14 +188,15 @@ const (
 var gameStatesSnake = [...]string{
 	GameStateInvalid:           "invalid",
 	GameStateOpen:              "open",
-	GameStateWhiteCheckmated:   "white_checkmated",
-	GameStateBlackCheckmated:   "black_checkmated",
+	GameStateCheckmated:        "checkmated",
 	GameStateStalemate:         "stalemate",
 	GameStateDrawn75Move:       "drawn_75_move",
 	GameStateDrawn5Fold:        "drawn_5_fold",
 	GameStateDrawn50Move:       "drawn_50_move",
 	GameStateDrawn3Fold:        "drawn_3_fold",
 	GameStateDrawnInsufficient: "drawn_insufficient",
+	GameStateTimeout:           "timeout",
+	GameStateAborted:           "aborted",
 	GameStateResigned:          "resigned",
 	GameStateDrawnByAgreement:  "drawn_by_agreement",
 }
@@ -163,8 +215,17 @@ func (g GameState) IsFinished() bool {
 
 // NewGame initialized a new game with the given opponent.
 // opponent may be a bech32 address or "@user" (r/demo/users).
-func NewGame(opponentRaw string) string {
+//
+// seconds and increment specifies the time control for the given game.
+// seconds is the amount of time given to play to each player; increment
+// is by how many seconds the player's time should be increased when they make a move.
+// seconds <= 0 means no time control (correspondence).
+func NewGame(opponentRaw string, seconds, increment int) string {
 	std.AssertOriginCall()
+
+	if seconds >= 0 && increment < 0 {
+		panic("negative increment invalid")
+	}
 
 	opponent := parsePlayer(opponentRaw)
 	caller := std.GetOrigCaller()
@@ -193,6 +254,7 @@ func NewGame(opponentRaw string) string {
 		State:     GameStateOpen,
 		Creator:   caller,
 		CreatedAt: time.Now(),
+		Time:      NewTimeControl(seconds, increment),
 	}
 	if isBlack {
 		g.White, g.Black = g.Black, g.White
@@ -293,6 +355,29 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 		panic("you are not allowed to make a move at this time")
 	}
 
+	// game is time controlled? add move to time control
+	if g.Time != nil {
+		valid := g.Time.AddMove()
+		if !valid && len(g.Position.Moves) < 2 {
+			g.State = GameStateAborted
+			g.Concluder = &caller
+			g.Winner = WinnerNone
+			return g.json()
+		}
+		if !valid {
+			g.State = GameStateTimeout
+			if caller == g.White {
+				g.Winner = WinnerBlack
+			} else {
+				g.Winner = WinnerWhite
+			}
+			wscore, bscore := g.Winner.Scores()
+			reportPlayerScore(g.White, wscore)
+			reportPlayerScore(g.Black, bscore)
+			return g.json()
+		}
+	}
+
 	// validate move
 	m := Move{
 		From: SquareFromString(from),
@@ -322,32 +407,91 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 		return g.json()
 	}
 
-	draw := func() {
-		reportPlayerScore(g.White, 0)
-		reportPlayerScore(g.Black, 0)
-	}
 	switch {
 	case o == Checkmate && isBlack:
-		g.State = GameStateWhiteCheckmated
-		reportPlayerScore(g.White, -1)
-		reportPlayerScore(g.Black, 1)
+		g.State = GameStateCheckmated
+		g.Winner = WinnerBlack
 	case o == Checkmate && !isBlack:
-		g.State = GameStateBlackCheckmated
-		reportPlayerScore(g.Black, -1)
-		reportPlayerScore(g.White, 1)
+		g.State = GameStateCheckmated
+		g.Winner = WinnerWhite
 	case o == Stalemate:
 		g.State = GameStateStalemate
-		draw()
+		g.Winner = WinnerDraw
 
 	case o == Drawn75Move:
 		g.State = GameStateDrawn75Move
-		draw()
+		g.Winner = WinnerDraw
 	case o == Drawn5Fold:
 		g.State = GameStateDrawn5Fold
-		draw()
+		g.Winner = WinnerDraw
+	}
+	g.DrawOfferer = nil
+	wscore, bscore := g.Winner.Scores()
+	reportPlayerScore(g.White, wscore)
+	reportPlayerScore(g.Black, bscore)
+
+	return g.json()
+}
+
+// ClaimTimeout should be caller when the caller believes the game has resulted
+// in a timeout.
+func ClaimTimeout(gameID string) string {
+	// no assert origin call or caller check: anyone can claim a game to have
+	// finished in timeout.
+
+	g := getGame(gameID, true)
+
+	if g.Time == nil {
+		panic("game is not time controlled")
+	}
+
+	// game is time controlled? add move to time control
+	to := g.Time.TimedOut()
+	if !to {
+		panic("game is not timed out")
+	}
+
+	if nmov := len(g.Position.Moves); nmov < 2 {
+		g.State = GameStateAborted
+		if nmov == 1 {
+			g.Concluder = &g.Black
+		} else {
+			g.Concluder = &g.White
+		}
+		g.Winner = WinnerNone
+		return g.json()
+	}
+
+	g.State = GameStateTimeout
+	if len(g.Position.Moves)&1 == 0 {
+		g.Winner = WinnerBlack
+	} else {
+		g.Winner = WinnerWhite
+	}
+	g.DrawOfferer = nil
+	wscore, bscore := g.Winner.Scores()
+	reportPlayerScore(g.White, wscore)
+	reportPlayerScore(g.Black, bscore)
+
+	return g.json()
+}
+
+func Abort(gameID string) string {
+	std.AssertOriginCall()
+
+	g := getGame(gameID, true)
+
+	if len(g.Position.Moves) >= 2 {
+		panic("game can no longer be aborted; if you wish to quit, resign")
+	}
+
+	caller := std.GetOrigCaller()
+	if caller != g.White && caller != g.Black {
+		panic("you are not involved in this game")
 	}
 	g.Concluder = &caller
 	g.DrawOfferer = nil
+	g.Winner = WinnerNone
 
 	return g.json()
 }
@@ -361,17 +505,17 @@ func Resign(gameID string) string {
 	switch caller {
 	case g.Black:
 		g.State = GameStateResigned
-		reportPlayerScore(g.Black, -1)
-		reportPlayerScore(g.White, 1)
+		g.Winner = WinnerWhite
 	case g.White:
 		g.State = GameStateResigned
-		reportPlayerScore(g.White, 1)
-		reportPlayerScore(g.Black, -1)
+		g.Winner = WinnerBlack
 	default:
 		panic("you are not involved in this game")
 	}
-	g.Concluder = &caller
 	g.DrawOfferer = nil
+	wscore, bscore := g.Winner.Scores()
+	reportPlayerScore(g.White, wscore)
+	reportPlayerScore(g.Black, bscore)
 
 	return g.json()
 }
@@ -432,7 +576,6 @@ func Draw(gameID string) string {
 
 	// accepted draw offer (do early to avoid gas for g.Position.IsFinished())
 	if g.DrawOfferer != nil && *g.DrawOfferer != caller {
-		g.Concluder = &caller
 		g.State = GameStateDrawnByAgreement
 
 		reportPlayerScore(g.Black, 0)
@@ -453,6 +596,7 @@ func Draw(gameID string) string {
 		panic("this game can't be automatically drawn")
 	}
 	g.Concluder = &caller
+	g.Winner = WinnerDraw
 	g.DrawOfferer = nil
 	reportPlayerScore(g.Black, 0)
 	reportPlayerScore(g.White, 0)
