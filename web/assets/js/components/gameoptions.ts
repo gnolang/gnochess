@@ -1,7 +1,6 @@
 import { Component } from "sevejs";
 import { gsap } from "gsap";
 import Action from "../actions";
-import { GameSettings } from "../types/types";
 
 type Options = {
   token: string;

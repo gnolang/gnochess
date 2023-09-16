@@ -45,7 +45,7 @@ export default new (class {
       };
 
       setTimeout(() => resolve(mockedSettings), 1000);
-      //   this.listenDraw(); //TODO: remove this drawPoposition mockup call as well
+      this.listenDraw(); //TODO: remove this drawPoposition mockup call as well
     });
   }
 

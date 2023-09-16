@@ -18,6 +18,7 @@ const Gamecontrols = class extends Component {
     //Vars
     this.action = "void" as Actions;
     this.pendingDraw = false;
+    this.timer = 9;
 
     this.contents = {
       resign: {
@@ -44,6 +45,8 @@ const Gamecontrols = class extends Component {
     this.DOM.paneValidation = this.DOM.el.querySelector("#js-validation");
     this.DOM.title = this.DOM.el.querySelector(".js-gamecontrols-title");
     this.DOM.content = this.DOM.el.querySelector(".js-gamecontrols-content");
+    this.DOM.timer = this.DOM.el.querySelector("#js-gamecontrols-confirm-timer");
+    this.DOM.ctrConfirmContent = this.DOM.el.querySelector("#js-gamecontrols-confirm-content");
 
     //controls events
     this.events.clickOnCtr0 = this.on({
@@ -71,11 +74,6 @@ const Gamecontrols = class extends Component {
     this.disableCtr1TL = this._disableBtn(this.DOM.ctr1);
     this.swithCtr0TL = this._switchIconBtn(this.DOM.ctr0);
     this.swithCtr1TL = this._switchIconBtn(this.DOM.ctr1);
-
-    //mock draw offer
-    // setTimeout(() => {
-    //   this.offerDraw();
-    // }, 3000);
   }
 
   _disableBtn(btn: Element) {
@@ -88,7 +86,7 @@ const Gamecontrols = class extends Component {
   _updateContent(action: Actions) {
     this.DOM.title.innerHTML = this.contents[action].title;
     this.DOM.content.innerHTML = this.contents[action].content;
-    this.DOM.ctrConfirm.innerHTML = this.contents[action].btn;
+    this.DOM.ctrConfirmContent.innerHTML = this.contents[action].btn;
   }
 
   _clickOnCtr(action: Actions, direct: boolean) {
@@ -108,7 +106,10 @@ const Gamecontrols = class extends Component {
       this[action === "resign" ? "disableCtr1TL" : "disableCtr0TL"].reverse();
       this[action === "resign" ? "swithCtr0TL" : "swithCtr1TL"].reverse();
 
-      this.validationTL.reverse();
+      this.validationTL.reverse().then(() => {
+        this.DOM.timer.innerHTML = this.timer;
+        gsap.set(this.DOM.timer, { autoAlpha: 0, display: "none" });
+      });
     }
   }
 
@@ -118,11 +119,12 @@ const Gamecontrols = class extends Component {
       this.call("goTo", ["/"], "router");
     }
     if (this.action === "draw") {
-      //TODO: wait screen
       if (this.pendingDraw) {
-        clearTimeout(this.pendingDraw);
+        clearInterval(this.pendingDraw);
+        this.timer = 9;
         this.pendingDraw = null;
       } else {
+        //TODO: wait screen
         const isAccepted = await Action.requestDraw();
         if (isAccepted) {
           this.call("engine", [false, "draw"], "gameboard");
@@ -139,21 +141,25 @@ const Gamecontrols = class extends Component {
     this.action = "void";
   }
 
-  //   offerDraw() {
-  //     this._clickOnCtr("draw", false);
-  //     this._updateContent("offer");
-  //   }
-
   _declineOffer() {
     Action.declineDraw();
-    clearTimeout(this.pendingDraw);
+    clearInterval(this.pendingDraw);
+    this.timer = 9;
     this.pendingDraw = null;
   }
 
   _getDrawProposition() {
-    this.pendingDraw = setTimeout(() => {
-      this._clickOnCtr("draw", true);
-    }, 2000);
+    gsap.set(this.DOM.timer, { autoAlpha: 1, display: "inline-block" });
+
+    this.pendingDraw = setInterval(() => {
+      this.timer--;
+      this.DOM.timer.innerHTML = this.timer;
+
+      if (this.timer <= 0) {
+        this._clickOnCtr("draw", true);
+        this.timer = 9;
+      }
+    }, 1000);
     this._clickOnCtr("offer", false);
     console.log("propal received");
   }
@@ -167,7 +173,7 @@ const Gamecontrols = class extends Component {
 
   destroy() {
     Events.off("drawPropal");
-    clearTimeout(this.pendingDraw);
+    clearInterval(this.pendingDraw);
     this.validationTL.kill();
     this.disableCtr0TL.kill();
     this.disableCtr1TL.kill();
