@@ -3,7 +3,7 @@ module github.com/gnolang/gnochess-faucet
 go 1.20
 
 require (
-	github.com/gnolang/faucet v0.0.0-20230916174617-db1c05254c05
+	github.com/gnolang/faucet v0.0.0-20230916181707-934303e1b40d
 	github.com/gnolang/gno v0.0.0-20230914214026-ef6a55bf9db2
 	github.com/pelletier/go-toml v1.9.5
 	github.com/peterbourgon/ff/v3 v3.4.0

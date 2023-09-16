@@ -44,8 +44,8 @@ github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4 h1:7HZCaLC5+BZpm
 github.com/fortytw2/leaktest v1.3.0 h1:u8491cBMTQ8ft8aeV+adlcytMZylmA5nnwwkRZjI8vw=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
-github.com/gnolang/faucet v0.0.0-20230916174617-db1c05254c05 h1:R8hQPpoxrlrESNz4WyIesYRrxVfTT0GXyHxjPu6Gyw4=
-github.com/gnolang/faucet v0.0.0-20230916174617-db1c05254c05/go.mod h1:LEZJ9cCyK7PCb63RB543pTU/lbchePJPmz74MymilO0=
+github.com/gnolang/faucet v0.0.0-20230916181707-934303e1b40d h1:BNpijDc+VMZrw9DYbtwC94TBKEyMW/Dn3fv/h0gsfPA=
+github.com/gnolang/faucet v0.0.0-20230916181707-934303e1b40d/go.mod h1:LEZJ9cCyK7PCb63RB543pTU/lbchePJPmz74MymilO0=
 github.com/gnolang/gno v0.0.0-20230914214026-ef6a55bf9db2 h1:/j3GhCiNnE04Yc+zF+ouY7sZuopGwYx6R9NPipSVVLE=
 github.com/gnolang/gno v0.0.0-20230914214026-ef6a55bf9db2/go.mod h1:dtwSoPiPCcGxACg4y2iJVWZ/vuU133n4kwF28mx6Krg=
 github.com/gnolang/goleveldb v0.0.9 h1:Q7rGko9oXMKtQA+Apeeed5a3sjba/mcDhzJGoTVLCKE=
