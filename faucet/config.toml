@@ -1,0 +1,10 @@
+chain_id = "dev"
+listen_address = "0.0.0.0:0"
+mnemonic = "source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast"
+num_accounts = 1
+send_amount = "1000000ugnot"
+
+[cors_config]
+  cors_allowed_headers = ["Origin", "Accept", "Content-Type", "X-Requested-With", "X-Server-Time"]
+  cors_allowed_methods = ["HEAD", "GET", "POST", "OPTIONS"]
+  cors_allowed_origins = ["*"]
