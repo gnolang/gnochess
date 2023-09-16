@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/signal"
@@ -286,7 +288,26 @@ func prepareMiddleware(client client.Client, fundLimit std.Coins) faucet.Middlew
 			// Parse the request to extract the address
 			var request faucet.Request
 
-			if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				http.Error(w, "Error reading request body", http.StatusInternalServerError)
+
+				return
+			}
+
+			// Close the original body
+			if err := r.Body.Close(); err != nil {
+				http.Error(w, "Error closing request body", http.StatusInternalServerError)
+
+				return
+			}
+
+			// Create a new ReadCloser from the read bytes
+			// so that future middleware will be able to read
+			r.Body = io.NopCloser(bytes.NewReader(body))
+
+			// Decode the original request
+			if err := json.NewDecoder(bytes.NewBuffer(body)).Decode(&request); err != nil {
 				http.Error(w, "Invalid request", http.StatusBadRequest)
 
 				return
@@ -307,7 +328,7 @@ func prepareMiddleware(client client.Client, fundLimit std.Coins) faucet.Middlew
 			}
 
 			accountBalance := account.GetCoins()
-			if accountBalance.IsAllGTE(fundLimit) {
+			if accountBalance != nil && accountBalance.IsAllGTE(fundLimit) {
 				// User has enough funds already, block the request
 				http.Error(w, "User is funded", http.StatusForbidden)
 
