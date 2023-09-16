@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"regexp"
@@ -12,9 +14,11 @@ import (
 	"syscall"
 
 	"github.com/gnolang/faucet"
+	"github.com/gnolang/faucet/client"
 	tm2Client "github.com/gnolang/faucet/client/http"
 	"github.com/gnolang/faucet/config"
 	"github.com/gnolang/faucet/estimate/static"
+	"github.com/gnolang/gno/tm2/pkg/crypto"
 	"github.com/gnolang/gno/tm2/pkg/std"
 	"github.com/pelletier/go-toml"
 	"go.uber.org/zap"
@@ -26,6 +30,7 @@ import (
 const (
 	defaultGasFee    = "1000000ugnot"
 	defaultGasWanted = "100000"
+	defaultFundLimit = "100ugnot"
 	defaultRemote    = "http://127.0.0.1:26657"
 )
 
@@ -34,6 +39,7 @@ var remoteRegex = regexp.MustCompile(`^https?://[a-z\d.-]+(:\d+)?(?:/[a-z\d]+)*$
 type rootCfg struct {
 	configPath string
 	remote     string
+	fundLimit  string
 }
 
 func main() {
@@ -76,6 +82,13 @@ func registerFlags(fs *flag.FlagSet, c *rootCfg) {
 		defaultRemote,
 		"the JSON-RPC URL of the Gno chain",
 	)
+
+	fs.StringVar(
+		&c.fundLimit,
+		"fund-limit",
+		defaultFundLimit,
+		"the minimum amount of ugnot the account needs to have",
+	)
 }
 
 // execMain starts the GnoChess faucet
@@ -105,6 +118,12 @@ func execMain(cfg *rootCfg) error {
 		return fmt.Errorf("invalid gas wanted, %w", err)
 	}
 
+	// Parse the fund limit
+	fundLimit, err := std.ParseCoins(cfg.fundLimit)
+	if err != nil {
+		return fmt.Errorf("invalid fund limit, %w", err)
+	}
+
 	// Validate the remote address
 	if !remoteRegex.MatchString(cfg.remote) {
 		return errors.New("invalid remote address")
@@ -116,13 +135,20 @@ func execMain(cfg *rootCfg) error {
 		return err
 	}
 
+	// Create the client (HTTP)
+	cli := tm2Client.NewClient(cfg.remote)
+
+	// Prepare the middleware
+	middleware := prepareMiddleware(cli, fundLimit)
+
 	// Create a new faucet with
 	// static gas estimation
 	f, err := faucet.NewFaucet(
 		static.New(gasFee, gasWanted),
-		tm2Client.NewClient(cfg.remote),
+		cli,
 		faucet.WithLogger(newCommandLogger(logger)),
 		faucet.WithConfig(faucetConfig),
+		faucet.WithMiddlewares([]faucet.Middleware{middleware}),
 	)
 	if err != nil {
 		return fmt.Errorf("unable to create faucet, %w", err)
@@ -251,4 +277,45 @@ func (w *waiter) wait() error {
 	}
 
 	return g.Wait()
+}
+
+// prepareMiddleware prepares the fund validation middleware
+func prepareMiddleware(client client.Client, fundLimit std.Coins) faucet.Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Parse the request to extract the address
+			var request faucet.Request
+
+			if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+				http.Error(w, "Invalid request", http.StatusBadRequest)
+
+				return
+			}
+
+			// Extract the beneficiary address
+			beneficiary, err := crypto.AddressFromBech32(request.To)
+			if err != nil {
+				http.Error(w, "Invalid request", http.StatusBadRequest)
+
+				return
+			}
+
+			// Validate the user does not have >x ugnot already
+			account, err := client.GetAccount(beneficiary)
+			if err != nil {
+				http.Error(w, "Unable to fetch user", http.StatusInternalServerError)
+			}
+
+			accountBalance := account.GetCoins()
+			if accountBalance.IsAllGTE(fundLimit) {
+				// User has enough funds already, block the request
+				http.Error(w, "User is funded", http.StatusForbidden)
+
+				return
+			}
+
+			// Continue with serving the faucet request
+			next.ServeHTTP(w, r)
+		})
+	}
 }
