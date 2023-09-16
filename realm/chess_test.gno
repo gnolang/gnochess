@@ -101,8 +101,8 @@ var commandTests = [...]string{
 		move auto d7d6
 		move auto f3f7
 		copy moveres
-		game # equal moveres
-		# contains "state":"checkmated" "concluder":"g1white"
+		game # equal #moveres
+		# contains "state":"checkmated" "winner":"white"
 		# containssp r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4
 		player white
 		# contains "address":"g1white" "position":0 "wins":1 "losses":0 "draws":0 "score":1
@@ -110,15 +110,16 @@ var commandTests = [...]string{
 		# contains "address":"g1black" "position":1 "wins":0 "losses":1 "draws":0 "score":-1
 	`,
 	`	name DrawByAgreement
+		newgame
 		move auto e2e4
 		move auto e7e5
 		move auto f1c4
 		move auto b8c6
 		copy moveres
-		game # equal moveres
-		# contains "open" "concluder":nil "draw_offerer":nil
+		game # equal #moveres
+		# contains "open" "concluder":null "draw_offerer":null
 		drawoffer white
-		# contains "open" "concluder":nil "draw_offerer":"g1white"
+		# contains "open" "concluder":null "draw_offerer":"g1white"
 		draw black
 		# contains "drawn_by_agreement" "concluder":"g1black" "draw_offerer":"g1white"
 	`,
@@ -130,9 +131,124 @@ func TestCommands(t *testing.T) {
 	}
 }
 
+// testCommandRunner is used to represent the single testCommand types below.
+// the Run function is used to execute the actual command, after parsing.
+//
+// This could have been implemented with simple closures generated within the
+// parser, however it's not because of this issue:
+// https://github.com/gnolang/gno/issues/1135
+type testCommandRunner interface {
+	Run(t *testing.T, bufs map[string]string)
+}
+
+// testCommandChecker is a wrapper for a runner which is performing a check.
+// This is marked in order not to wrap the calls to them as a panic.
+type testCommandChecker struct{ testCommandRunner }
+
+func (testCommandChecker) Checker() {}
+
+type testCommandFunc func(t *testing.T, bufs map[string]string)
+
+func (tc testCommandFunc) Run(t *testing.T, bufs map[string]string) { tc(t, bufs) }
+
+// testCommandColorID represents a testCommand, which uses a function of the
+// form func(gameID string) string (hence ID), and that takes as the first
+// parameter the values <white|black|auto>.
+type testCommandColorID struct {
+	fn   func(string) string
+	addr std.Address
+}
+
+func newTestCommandColorID(fn func(string) string, s string, addr std.Address) testCommandRunner {
+	return &testCommandColorID{fn, addr}
+}
+
+func (tc *testCommandColorID) Run(t *testing.T, bufs map[string]string) {
+	std.TestSetOrigCaller(tc.addr)
+	bufs["result"] = tc.fn(bufs["id"])
+}
+
+type testCommandNewGame struct {
+	seconds, incr int
+}
+
+func (tc *testCommandNewGame) Run(t *testing.T, bufs map[string]string) {
+	std.TestSetOrigCaller(white)
+	res := NewGame(black, tc.seconds, tc.incr)
+	bufs["result"] = res
+
+	const idMagicString = `"id":"`
+	idx := strings.Index(res, idMagicString)
+	if idx < 0 {
+		panic("id not found")
+	}
+	id := res[idx+len(idMagicString):]
+	id = id[:strings.IndexByte(id, '"')]
+	bufs["id"] = id
+}
+
+type testCommandMove struct {
+	addr      std.Address
+	from, to  string
+	promotion Piece
+}
+
+func (tc *testCommandMove) Run(t *testing.T, bufs map[string]string) {
+	std.TestSetOrigCaller(tc.addr)
+	bufs["result"] = MakeMove(bufs["id"], tc.from, tc.to, tc.promotion)
+}
+
+type testCommandGame struct {
+	idWanted string
+}
+
+func (tc *testCommandGame) Run(t *testing.T, bufs map[string]string) {
+	idl := tc.idWanted
+	if idl == "" {
+		idl = bufs["id"]
+	}
+	bufs["result"] = GetGame(idl)
+}
+
+type testCommandPlayer struct {
+	addr string
+}
+
+func (tc *testCommandPlayer) Run(t *testing.T, bufs map[string]string) {
+	bufs["result"] = GetPlayer(tc.addr)
+}
+
+type testCommandCopy struct {
+	dst, src string
+}
+
+func (tc *testCommandCopy) Run(t *testing.T, bufs map[string]string) {
+	bufs[tc.dst] = bufs[tc.src]
+}
+
+type testCommandSleep struct {
+	dur time.Duration
+}
+
+func (tc *testCommandSleep) Run(t *testing.T, bufs map[string]string) {
+	os_test.Sleep(tc.dur)
+}
+
+type testChecker struct {
+	fn    func(t *testing.T, bufs map[string]string, tc *testChecker)
+	tf    func(t *testing.T) func(string, ...interface{})
+	bufp  string
+	preds []string
+}
+
+func (*testChecker) Checker() {}
+func (tc *testChecker) Run(t *testing.T, bufs map[string]string) {
+	tc.fn(t, bufs, tc)
+}
+
 func runCommandTest(t *testing.T, command string) {
 	lines := strings.Split(command, "\n")
-	var funcs []func(t *testing.T, bufs map[string]string)
+	var funcs []testCommandRunner
 	var testName string
 	atoi := func(s string) int {
 		n, err := strconv.Atoi(s)
@@ -141,17 +257,9 @@ func runCommandTest(t *testing.T, command string) {
 		}
 		return n
 	}
-	catch := func(bufs map[string]string) {
-		e := recover()
-		if e == nil {
-			bufs["result"] = ""
-			bufs["panic"] = ""
-			return
-		}
-		bufs["panic"] = fmt.Sprint(e)
-	}
 	// so first move, if auto, is white
 	lastMove := black
+	var hasPanicChecker bool
 	parseColor := func(s string) std.Address {
 		switch s {
 		case "black":
@@ -167,21 +275,8 @@ func runCommandTest(t *testing.T, command string) {
 			panic("invalid color " + s)
 		}
 	}
-	fnColorGameID := func(fn func(string) string, s string, command []string, line string) {
-		if len(command) != 2 {
-			panic("invalid " + s + " command " + line)
-		}
-		addr := parseColor(command[1])
-		funcs = append(funcs, func(t *testing.T, bufs map[string]string) {
-			defer catch(bufs)
-			std.TestSetOrigCaller(addr)
-			bufs["result"] = fn(bufs["id"])
-		})
-	}
-	var hasPanicChecker bool
 
-	for _, line := range lines {
-		println("PROCA", line)
+	for lineNum, line := range lines {
 		flds := strings.Fields(line)
 		if len(flds) == 0 {
 			continue
@@ -201,11 +296,13 @@ func runCommandTest(t *testing.T, command string) {
 			// it means the previous command did not have a panic checker.
 			// add it.
 			if !hasPanicChecker && len(funcs) > 0 {
-				funcs = append(funcs, func(t *testing.T, bufs map[string]string) {
-					if bufs["panic"] != "" {
-						t.Fatalf("buffer \"panic\" is not empty (%q)", bufs["panic"])
-					}
-				})
+				funcs = append(funcs, testCommandChecker{testCommandFunc(
+					func(t *testing.T, bufs map[string]string) {
+						if bufs["panic"] != "" {
+							t.Fatalf("buffer \"panic\" is not empty (%q)", bufs["panic"])
+						}
+					},
+				)})
 			}
 		}
 		switch cmd {
@@ -221,20 +318,9 @@ func runCommandTest(t *testing.T, command string) {
 			default:
 				panic("invalid newgame command " + line)
 			}
-			funcs = append(funcs, func(t *testing.T, bufs map[string]string) {
-				defer catch(bufs)
-				std.TestSetOrigCaller(white)
-				res := NewGame(black, seconds, incr)
-				bufs["result"] = res
-				const idMagicString = `"id":"`
-				idx := strings.Index(res, idMagicString)
-				if idx < 0 {
-					panic("id not found")
-				}
-				id := res[idx+len(idMagicString):]
-				id = id[:strings.IndexByte(id, '"')]
-				bufs["id"] = id
-			})
+			funcs = append(funcs,
+				&testCommandNewGame{seconds, incr},
+			)
 		case "move":
 			if len(command) != 3 {
 				panic("invalid move command " + line)
@@ -252,35 +338,29 @@ func runCommandTest(t *testing.T, command string) {
 					panic("invalid piece for promotion: " + string(command[2][4]))
 				}
 			}
-			funcs = append(funcs, func(t *testing.T, bufs map[string]string) {
-				defer catch(bufs)
-				std.TestSetOrigCaller(addr)
-				bufs["result"] = MakeMove(bufs["id"], from, to, promotion)
+			funcs = append(funcs, &testCommandMove{
+				addr:      addr,
+				from:      from,
+				to:        to,
+				promotion: promotion,
 			})
 		case "draw":
-			fnColorGameID(Draw, "draw", command, line)
+			funcs = append(funcs, newTestCommandColorID(Draw, "draw", parseColor(command[1])))
 		case "drawoffer":
-			fnColorGameID(DrawOffer, "drawoffer", command, line)
+			funcs = append(funcs, newTestCommandColorID(DrawOffer, "drawoffer", parseColor(command[1])))
 		case "timeout":
-			fnColorGameID(ClaimTimeout, "timeout", command, line)
+			funcs = append(funcs, newTestCommandColorID(ClaimTimeout, "timeout", parseColor(command[1])))
 		case "resign":
-			fnColorGameID(Resign, "resign", command, line)
+			funcs = append(funcs, newTestCommandColorID(Resign, "resign", parseColor(command[1])))
 		case "game":
 			if len(command) > 2 {
 				panic("invalid game command " + line)
 			}
-			var id string
+			tc := &testCommandGame{}
 			if len(command) == 2 {
-				id = command[1]
+				tc.idWanted = command[1]
 			}
-			funcs = append(funcs, func(t *testing.T, bufs map[string]string) {
-				defer catch(bufs)
-				idl := id
-				if idl == "" {
-					idl = bufs["id"]
-				}
-				bufs["result"] = GetGame(idl)
-			})
+			funcs = append(funcs, tc)
 		case "player":
 			if len(command) != 2 {
 				panic("invalid player command " + line)
@@ -292,31 +372,24 @@ func runCommandTest(t *testing.T, command string) {
 			case "black":
 				v = string(black)
 			}
-			funcs = append(funcs, func(t *testing.T, bufs map[string]string) {
-				defer catch(bufs)
-				bufs["result"] = GetPlayer(v)
-			})
+			funcs = append(funcs, &testCommandPlayer{v})
 		case "name":
 			testName = strings.Join(command[1:], " ")
 		case "copy":
 			if len(command) > 3 || len(command) < 2 {
 				panic("invalid copy command " + line)
 			}
-			src := "result"
+			tc := &testCommandCopy{dst: command[1], src: "result"}
 			if len(command) == 3 {
-				src = command[2]
+				tc.src = command[2]
 			}
-			dst := command[1]
-			funcs = append(funcs, func(t *testing.T, bufs map[string]string) {
-				bufs[dst] = bufs[src]
-			})
+			funcs = append(funcs, tc)
 		case "sleep":
 			if len(command) != 2 {
 				panic("invalid sleep command " + line)
 			}
-			tim := time.Duration(atoi(command[1])) * time.Second
-			funcs = append(funcs, func(t *testing.T, bufs map[string]string) {
-				os_test.Sleep(tim)
+			funcs = append(funcs, &testCommandSleep{
+				time.Duration(atoi(command[1])) * time.Second,
 			})
 		default:
 			panic("invalid command " + cmd)
@@ -349,44 +422,62 @@ func runCommandTest(t *testing.T, command string) {
 			if len(checker) != 2 {
 				panic("invalid empty checker " + line)
 			}
-			funcs = append(funcs, func(t *testing.T, bufs map[string]string) {
-				if bufs[bufp] != "" {
-					tf(t)("buffer %q is not empty (%q)", bufp, bufs[bufp])
-				}
+			funcs = append(funcs, &testChecker{
+				fn: func(t *testing.T, bufs map[string]string, tc *testChecker) {
+					if bufs[tc.bufp] != "" {
+						tc.tf(t)("buffer %q is not empty (%v)", tc.bufp, bufs[tc.bufp])
+					}
+				},
+				tf:   tf,
+				bufp: bufp,
 			})
 		case "equal":
-			pred := line[len("equal "):]
-			isbuf := pred[0] == '#'
-			funcs = append(funcs, func(t *testing.T, bufs map[string]string) {
-				exp := pred
-				if isbuf {
-					exp = bufs[pred[1:]]
-				}
-				if bufs[bufp] != exp {
-					tf(t)("buffer %q: want %q got %q", bufp, exp, bufs[bufp])
-				}
+			pred := strings.Join(checker[2:], " ")
+			funcs = append(funcs, &testChecker{
+				fn: func(t *testing.T, bufs map[string]string, tc *testChecker) {
+					exp := tc.preds[0]
+					if exp[0] == '#' {
+						exp = bufs[exp[1:]]
+					}
+					if bufs[tc.bufp] != exp {
+						tc.tf(t)("buffer %q: want %v got %v", tc.bufp, exp, bufs[tc.bufp])
+					}
+				},
+				tf:    tf,
+				bufp:  bufp,
+				preds: []string{pred},
 			})
 		case "contains":
 			preds := checker[2:]
 			if len(preds) == 0 {
 				continue
 			}
-			funcs = append(funcs, func(t *testing.T, bufs map[string]string) {
-				for _, pred := range preds {
-					if !strings.Contains(bufs[bufp], pred) {
-						tf(t)("buffer %q: %q does not contain %q", bufp, bufs[bufp], pred)
+			funcs = append(funcs, &testChecker{
+				fn: func(t *testing.T, bufs map[string]string, tc *testChecker) {
+					for _, pred := range tc.preds {
+						if !strings.Contains(bufs[tc.bufp], pred) {
+							tc.tf(t)("buffer %q: %v does not contain %v", tc.bufp, bufs[tc.bufp], pred)
+						}
 					}
-				}
+				},
+				tf:    tf,
+				bufp:  bufp,
+				preds: preds,
 			})
 		case "containssp":
 			pred := strings.Join(checker[2:], " ")
 			if pred == "" {
 				panic("invalid contanssp checker " + line)
 			}
-			funcs = append(funcs, func(t *testing.T, bufs map[string]string) {
-				if !strings.Contains(bufs[bufp], pred) {
-					tf(t)("buffer %q: %q does not contain %q", bufp, bufs[bufp], pred)
-				}
+			funcs = append(funcs, &testChecker{
+				fn: func(t *testing.T, bufs map[string]string, tc *testChecker) {
+					if !strings.Contains(bufs[tc.bufp], tc.preds[0]) {
+						tc.tf(t)("buffer %q: %v does not contain %v", tc.bufp, bufs[tc.bufp], tc.preds[0])
+					}
+				},
+				tf:    tf,
+				bufp:  bufp,
+				preds: []string{pred},
 			})
 		default:
 			panic("invalid checker " + checker[1])
@@ -394,10 +485,27 @@ func runCommandTest(t *testing.T, command string) {
 	}
 
 	t.Run(testName, func(t *testing.T) {
+		cleanup()
 		bufs := make(map[string]string, 3)
 		for idx, f := range funcs {
-			println(idx)
-			f(t, bufs)
+			if _, ok := f.(interface{ Checker() }); ok {
+				f.Run(t, bufs)
+			} else {
+				catchPanic(f, t, bufs)
+			}
 		}
 	})
+}
+
+func catchPanic(tc testCommandRunner, t *testing.T, bufs map[string]string) {
+	defer func() {
+		e := recover()
+		if e == nil {
+			bufs["panic"] = ""
+			return
+		}
+		bufs["result"] = ""
+		bufs["panic"] = fmt.Sprint(e)
+	}()
+	tc.Run(t, bufs)
 }

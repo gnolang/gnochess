@@ -37,7 +37,7 @@ type Game struct {
 	Creator     std.Address  `json:"creator"`
 	CreatedAt   time.Time    `json:"created_at"`
 	DrawOfferer *std.Address `json:"draw_offerer"` // set on draw offers
-	Concluder   *std.Address `json:"concluder"`    // set on single-party draws, and aborts
+	Concluder   *std.Address `json:"concluder"`    // set on non-auto draws, and aborts
 
 	Time *TimeControl `json:"time"`
 }
@@ -90,6 +90,7 @@ func (g Game) MarshalJSON() (_ []byte, err error) {
 	b.WriteString(`"creator":"` + g.Creator.String() + `",`)
 	b.WriteString(`"created_at":"` + g.CreatedAt.Format(time.RFC3339) + `",`)
 	b.WriteString(`"draw_offerer":` + nilAddr(g.DrawOfferer) + ",")
+	b.WriteString(`"concluder":` + nilAddr(g.Concluder) + ",")
 
 	mjson("time", g.Time, false)
 	if err != nil {
@@ -577,6 +578,7 @@ func Draw(gameID string) string {
 	// accepted draw offer (do early to avoid gas for g.Position.IsFinished())
 	if g.DrawOfferer != nil && *g.DrawOfferer != caller {
 		g.State = GameStateDrawnByAgreement
+		g.Concluder = &caller
 
 		reportPlayerScore(g.Black, 0)
 		reportPlayerScore(g.White, 0)
