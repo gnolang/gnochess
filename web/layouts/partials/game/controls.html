@@ -2,7 +2,13 @@
   <div id="js-validation" class="relative hidden opacity-0 invisible flex-col p-5 pt-7 rounded bg-grey-200 mb-2">
     <div class="js-gamecontrols-title | mb-4 text-100 font-bold">Connection</div>
     <p class="js-gamecontrols-content | font-medium text-200 text-grey-600">Do you really want to Resign the Match?</p>
-    <button id="js-gamecontrols-confirm" class="relative w-full bg-grey-50 rounded-full mt-4 p-3 shadow font-bold text-center">Confirm</button>
+    <button id="js-gamecontrols-confirm" class="relative w-full bg-grey-50 rounded-full mt-4 p-3 shadow font-bold text-center">
+      <span
+        id="js-gamecontrols-confirm-timer"
+        class="relative hidden opacity-0 mr-2 pr-2 after:absolute after:w-0.5 after:translate-x-1/2 after:-translate-y-1/2 after:h-full after:right-0 after:top-1/2 after:bg-grey-400"
+        >9</span
+      ><span id="js-gamecontrols-confirm-content">Confirm</span>
+    </button>
   </div>
   <nav class="flex justify-between">
     <button id="js-gamecontrols-ctr0" class="relative w-[35%] h-full aspect-square rounded-circle shadow bg-grey-50 mr-4">

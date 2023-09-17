@@ -69,7 +69,7 @@ const Gameplayers = class extends Component {
       if (this.timer <= 0) {
         clearInterval(this.clock);
         this.DOM.timer.innerHTML = `00:00`;
-        this.call("engine", [false, true], "gameboard"); // let engine know timer is finished
+        this.call("engine", ["timeout"], "gameboard"); // let engine know timer is finished
       }
     };
 
