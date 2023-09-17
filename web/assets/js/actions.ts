@@ -1,14 +1,14 @@
-import {io} from "socket.io-client";
-import {getFromLocalStorage, saveToLocalStorage} from "./utils/localstorage";
-import Events from "./utils/events";
+import {saveToLocalStorage} from "./utils/localstorage";
 import {
-    type Colors,
     defaultFaucetTokenKey,
     defaultMnemonicKey,
+    Game,
     type GameoverType,
     GamePromise,
     type GameSettings,
-    GameTime
+    GameTime,
+    Player,
+    Promotion
 } from "./types/types";
 import {GnoWallet, GnoWSProvider} from "@gnolang/gno-js-client";
 import {generateMnemonic} from "./utils/crypto.ts";
@@ -20,7 +20,9 @@ const chessRealm: string = "gno.land/r/gnochess"
 
 /**
  * Actions is a singleton logic bundler
- * that is shared throughout the game
+ * that is shared throughout the game.
+ *
+ * Always use as Actions.getInstance()
  */
 // @ts-ignore
 class Actions {
@@ -52,8 +54,6 @@ class Actions {
      * @private
      */
     private async initialize() {
-        console.log("Gno-Client actions init");
-
         // Wallet initialization //
 
         // Try to load the mnemonic from local storage
@@ -109,38 +109,28 @@ class Actions {
      * @param time
      */
     public async joinLobby(time: GameTime): Promise<GameSettings> {
-        return new Promise<GameSettings>(async (resolve, reject) => {
-            try {
-                // Join the waiting lobby
-                const joinResponse: BroadcastTxCommitResult = await this.wallet?.callMethod(
-                    chessRealm,
-                    "JoinLobby", // TODO change when API is ready
-                    [
-                        time.time.toString(),
-                        time.increment.toString()
-                    ],
-                    TransactionEndpoint.BROADCAST_TX_COMMIT
-                ) as BroadcastTxCommitResult
+        // Join the waiting lobby
+        const joinResponse: BroadcastTxCommitResult = await this.wallet?.callMethod(
+            chessRealm,
+            "JoinLobby", // TODO change when API is ready
+            [
+                time.time.toString(),
+                time.increment.toString()
+            ],
+            TransactionEndpoint.BROADCAST_TX_COMMIT
+        ) as BroadcastTxCommitResult
 
-                // Parse the response from the node
-                const joinDataRaw: string | null = joinResponse.deliver_tx.ResponseBase.Data
-                if (!joinDataRaw) {
-                    reject("invalid join lobby response")
+        // Parse the response from the node
+        const joinDataRaw: string | null = joinResponse.deliver_tx.ResponseBase.Data
+        if (!joinDataRaw) {
+            throw new Error("invalid join lobby response")
+        }
 
-                    return
-                }
+        // Magically parse the response
+        const joinData: GamePromise = JSON.parse(joinDataRaw)
 
-                // Magically parse the response
-                const joinData: GamePromise = JSON.parse(joinDataRaw)
-
-                // Wait to be matched with an opponent
-                const gameSettings: GameSettings = await this.waitForGame(joinData.id)
-
-                resolve(gameSettings)
-            } catch (e) {
-                reject(e)
-            }
-        })
+        // Wait to be matched with an opponent
+        return await this.waitForGame(joinData.id)
     }
 
     /**
@@ -178,169 +168,210 @@ class Actions {
         })
     }
 
-    getRivalMove(chess: any, ia = false) {
-        //TODO: error handling && check if chess types
+    /**
+     * Fetches the active game state. Should be called
+     * within a loop and checked.
+     * @param gameID the ID of the running game
+     */
+    public async getGame(gameID: string): Promise<Game> {
+        const gameResponse: string = await this.provider?.evaluateExpression(
+            chessRealm,
+            `GetGame(${gameID})`
+        ) as string
 
-        return new Promise<string>((resolve) => {
-            if (ia) {
-                const possibleMoves = chess.moves();
-                const randomIdx = Math.floor(Math.random() * possibleMoves.length);
-                setTimeout(() => resolve(possibleMoves[randomIdx]), 1000);
-            } else {
-                //-- replace random IA above by WS function here
-                resolve("INSERT_MOVE_HERE"); // `${from}-${to}` or `C3d2` notations
-            }
-        });
+        // Parse the response
+        return JSON.parse(gameResponse)
     }
 
-    makeMove(from: string, to: string, promotion: string | number = 0) {
-        //TODO: error handling
-        // -- insert function here (eg. MakeMove(from, to, promotion))
-        return new Promise<boolean>((resolve) => {
-            console.log(from + " - " + to + " - " + promotion);
-            setTimeout(() => resolve(true), 200);
-        });
+    /**
+     * Executes the move and returns the game state
+     * @param gameID the ID of the game
+     * @param from from position
+     * @param to  to position
+     * @param promotion promotion information
+     */
+    async makeMove(
+        gameID: string,
+        from: string,
+        to: string,
+        promotion: Promotion = Promotion.NO_PROMOTION,
+    ): Promise<Game> {
+        // Make the move
+        const moveResponse: BroadcastTxCommitResult = await this.wallet?.callMethod(
+            chessRealm,
+            "MakeMove",
+            [
+                gameID,
+                from,
+                to,
+                promotion.toString()
+            ],
+            TransactionEndpoint.BROADCAST_TX_COMMIT
+        ) as BroadcastTxCommitResult
+
+        // Parse the response from the node
+        const moveDataRaw: string | null = moveResponse.deliver_tx.ResponseBase.Data
+        if (!moveDataRaw) {
+            throw new Error("invalid move response")
+        }
+
+        // Magically parse the response
+        return JSON.parse(moveDataRaw)
     }
 
-    isGameover(type: GameoverType) {
-        //check if gameover by type and return result
-        //TODO: error handling
-        // -- insert function here (eg. ClaimTimeout())
-        return new Promise<boolean>((resolve) => {
-            console.log(type);
-            setTimeout(() => resolve(true), 200);
-        });
+    /**
+     * Returns a flag indicating if the game with the specified ID is over
+     * @param gameID the ID of the running game
+     * @param type the game-over state types
+     */
+    async isGameOver(gameID: string, type: GameoverType): Promise<boolean> {
+        // Fetch the game state
+        const game: Game = await this.getGame(gameID)
+
+        return game.state === type
     }
 
-    requestDraw() {
-        //TODO: error handling
-        return new Promise<boolean>((resolve) => {
-            setTimeout(() => resolve(false), 9000); //if not accepted --> may need a cleartimeout
-        });
+    /**
+     * Triggers the game draw process
+     * @param gameID the ID of the running game
+     */
+    async requestDraw(gameID: string): Promise<Game> {
+        // Make the request
+        const drawResponse: BroadcastTxCommitResult = await this.wallet?.callMethod(
+            chessRealm,
+            "DrawOffer",
+            [
+                gameID,
+            ],
+            TransactionEndpoint.BROADCAST_TX_COMMIT
+        ) as BroadcastTxCommitResult
+
+        // Parse the response from the node
+        const drawResponseRaw: string | null = drawResponse.deliver_tx.ResponseBase.Data
+        if (!drawResponseRaw) {
+            throw new Error("invalid draw response")
+        }
+
+        // Magically parse the response
+        return JSON.parse(drawResponseRaw)
     }
 
-    requestResign() {
-        console.log("resign");
-        // -- insert function here (eg. Resign(gameid))
-        return true;
+    /**
+     * Triggers the game resignation
+     * @param gameID the ID of the running game
+     */
+    async requestResign(gameID: string): Promise<Game> {
+        // Make the request
+        const resignResponse: BroadcastTxCommitResult = await this.wallet?.callMethod(
+            chessRealm,
+            "Resign",
+            [
+                gameID,
+            ],
+            TransactionEndpoint.BROADCAST_TX_COMMIT
+        ) as BroadcastTxCommitResult
+
+        // Parse the response from the node
+        const resignResponseRaw: string | null = resignResponse.deliver_tx.ResponseBase.Data
+        if (!resignResponseRaw) {
+            throw new Error("invalid resign response")
+        }
+
+        // Magically parse the response
+        return JSON.parse(resignResponseRaw)
     }
 
-    listenDraw() {
-        setTimeout(() => {
-            console.log("Draw proposition");
-            //Could be a shared Symbol() id
-            Events.emit("drawPropal");
-        }, 8000);
+    /**
+     * Declines the draw for the game
+     * @param gameID the ID of the running game
+     */
+    async declineDraw(gameID: string): Promise<Game> {
+        // Make the request
+        const declineResponse: BroadcastTxCommitResult = await this.wallet?.callMethod(
+            chessRealm,
+            "DrawRefuse",
+            [
+                gameID,
+            ],
+            TransactionEndpoint.BROADCAST_TX_COMMIT
+        ) as BroadcastTxCommitResult
+
+        // Parse the response from the node
+        const declineResponseRaw: string | null = declineResponse.deliver_tx.ResponseBase.Data
+        if (!declineResponseRaw) {
+            throw new Error("invalid draw refuse response")
+        }
+
+        // Magically parse the response
+        return JSON.parse(declineResponseRaw)
     }
 
-    declineDraw() {
-        // -- insert function here
-        console.log("draw refused");
-    }
+    /**
+     * Accepts the draw for the game
+     * @param gameID the ID of the running game
+     */
+    async acceptDraw(gameID: string): Promise<Game> {
+        // Make the request
+        const acceptResponse: BroadcastTxCommitResult = await this.wallet?.callMethod(
+            chessRealm,
+            "Draw",
+            [
+                gameID,
+            ],
+            TransactionEndpoint.BROADCAST_TX_COMMIT
+        ) as BroadcastTxCommitResult
 
-    acceptDraw() {
-        // -- insert function here
-        console.log("draw accepted");
+        // Parse the response from the node
+        const acceptResponseRaw: string | null = acceptResponse.deliver_tx.ResponseBase.Data
+        if (!acceptResponseRaw) {
+            throw new Error("invalid draw accept response")
+        }
+
+        // Magically parse the response
+        return JSON.parse(acceptResponseRaw)
     }
 
     /****************
      * DASHBOARD
      ****************/
-    getUserData() {
-        // example
-        console.log("getUserData");
+
+    /**
+     * Fetches the current user player profile
+     */
+    async getUserData(): Promise<Player> {
+        // Get the current player address
+        const address: string = await this.wallet?.getAddress() as string
+
+        // Return the player data
+        return this.getPlayer(address)
     }
 
-    getUserScore() {
+    /**
+     * Fetches a list of all players,
+     * ordered by their position in the leaderboard
+     */
+    async getLeaderboard(): Promise<Player[]> {
+        const leaderboardResponse: string = await this.provider?.evaluateExpression(
+            chessRealm,
+            "Leaderboard()"
+        ) as string
+
+        // Parse the response
+        return JSON.parse(leaderboardResponse)
     }
 
-    getLeaderbord() {
-    }
+    /**
+     * Fetches the player score data
+     * @param playerID the ID of the player (can be address or @username)
+     */
+    async getPlayer(playerID: string): Promise<Player> {
+        const playerResponse: string = await this.provider?.evaluateExpression(
+            chessRealm,
+            `GetPlayer(${playerID})`
+        ) as string
 
-    getBlitzRating() {
-        return {
-            loses: 13,
-            wins: 0,
-            draws: 2,
-        };
-    }
-
-    getRapidRating() {
-        return {
-            loses: 2,
-            wins: 13,
-            draws: 1,
-        };
-    }
-
-    getBlitzLeaders() {
-        return [
-            {
-                token: "azerty1234",
-            },
-            {
-                token: "qsdfgt765",
-            },
-            {
-                token: "UJHFGVC565",
-            },
-            {
-                token: "azerty1234",
-            },
-            {
-                token: "qsdfgt765",
-            },
-            {
-                token: "UJHFGVC565",
-            },
-            {
-                token: "azerty1234",
-            },
-            {
-                token: "qsdfgt765",
-            },
-            {
-                token: "UJHFGVC565",
-            },
-            {
-                token: "qsdfgt765",
-            },
-        ];
-    }
-
-    getRapidLeaders() {
-        return [
-            {
-                token: "azerty1234",
-            },
-            {
-                token: "qsdfgt765",
-            },
-            {
-                token: "UJHFGVC565",
-            },
-            {
-                token: "azerty1234",
-            },
-            {
-                token: "qsdfgt765",
-            },
-            {
-                token: "UJHFGVC565",
-            },
-            {
-                token: "azerty1234",
-            },
-            {
-                token: "qsdfgt765",
-            },
-            {
-                token: "UJHFGVC565",
-            },
-            {
-                token: "qsdfgt765",
-            },
-        ];
+        // Parse the response
+        return JSON.parse(playerResponse)
     }
 
     /**
@@ -357,221 +388,4 @@ class Actions {
     }
 }
 
-export default new (class {
-    constructor() {
-        //INFO: MVP -> May not be the best way to handle the gno-ts
-        //INFO: global class instantied once at load (IIFE) and accessible through the app
-        //TODO: -> Should it be a seve component to communicate within the system (subpub etc)?
-        //TODO: remove mocked data
-        console.log("Gno-Client actions init");
-        console.log(io); //WS
-    }
-
-    /****************
-     * TOKEN
-     ****************/
-    setToken(token: "string") {
-        saveToLocalStorage(token, "token");
-    }
-
-    getToken() {
-        return getFromLocalStorage("token");
-    }
-
-    /****************
-     * GAME ENGINE
-     ****************/
-    createGame(timing: number[]) {
-        //TODO: error handling
-        //TODO: what if user quit game before creation?
-        //-- use for tx NewGame(tx NewGame(opponent, timing[0], timing[1]))
-        return new Promise<GameSettings>((resolve) => {
-            console.log(timing);
-            const mockedColor = ["w", "b"][Math.round(Math.random())];
-            const mockedSettings: GameSettings = {
-                me: {
-                    color: mockedColor as Colors,
-                    id: "glnaglnaglnaglnae558",
-                },
-                rival: {
-                    color: mockedColor === "w" ? "b" : "w",
-                    id: "grbqszfoiqefouqiz254",
-                },
-            };
-
-            setTimeout(() => resolve(mockedSettings), 1000);
-            this.listenDraw(); //TODO: remove this drawPoposition mockup call as well
-        });
-    }
-
-    getRivalMove(chess: any, ia = false) {
-        //TODO: error handling && check if chess types
-
-        return new Promise<string>((resolve) => {
-            if (ia) {
-                const possibleMoves = chess.moves();
-                const randomIdx = Math.floor(Math.random() * possibleMoves.length);
-                setTimeout(() => resolve(possibleMoves[randomIdx]), 1000);
-            } else {
-                //-- replace random IA above by WS function here
-                resolve("INSERT_MOVE_HERE"); // `${from}-${to}` or `C3d2` notations
-            }
-        });
-    }
-
-    makeMove(from: string, to: string, promotion: string | number = 0) {
-        //TODO: error handling
-        // -- insert function here (eg. MakeMove(from, to, promotion))
-        return new Promise<boolean>((resolve) => {
-            console.log(from + " - " + to + " - " + promotion);
-            setTimeout(() => resolve(true), 200);
-        });
-    }
-
-    isGameover(type: GameoverType) {
-        //check if gameover by type and return result
-        //TODO: error handling
-        // -- insert function here (eg. ClaimTimeout())
-        return new Promise<boolean>((resolve) => {
-            console.log(type);
-            setTimeout(() => resolve(true), 200);
-        });
-    }
-
-    requestDraw() {
-        //TODO: error handling
-        return new Promise<boolean>((resolve) => {
-            setTimeout(() => resolve(false), 9000); //if not accepted --> may need a cleartimeout
-        });
-    }
-
-    requestResign() {
-        console.log("resign");
-        // -- insert function here (eg. Resign(gameid))
-        return true;
-    }
-
-    listenDraw() {
-        setTimeout(() => {
-            console.log("Draw proposition");
-            //Could be a shared Symbol() id
-            Events.emit("drawPropal");
-        }, 8000);
-    }
-
-    declineDraw() {
-        // -- insert function here
-        console.log("draw refused");
-    }
-
-    acceptDraw() {
-        // -- insert function here
-        console.log("draw accepted");
-    }
-
-    /****************
-     * DASHBOARD
-     ****************/
-    getUserData() {
-        // example
-        console.log("getUserData");
-    }
-
-    getUserScore() {
-    }
-
-    getLeaderbord() {
-    }
-
-    getBlitzRating() {
-        return {
-            loses: 13,
-            wins: 0,
-            draws: 2,
-        };
-    }
-
-    getRapidRating() {
-        return {
-            loses: 2,
-            wins: 13,
-            draws: 1,
-        };
-    }
-
-    getBlitzLeaders() {
-        return [
-            {
-                token: "azerty1234",
-            },
-            {
-                token: "qsdfgt765",
-            },
-            {
-                token: "UJHFGVC565",
-            },
-            {
-                token: "azerty1234",
-            },
-            {
-                token: "qsdfgt765",
-            },
-            {
-                token: "UJHFGVC565",
-            },
-            {
-                token: "azerty1234",
-            },
-            {
-                token: "qsdfgt765",
-            },
-            {
-                token: "UJHFGVC565",
-            },
-            {
-                token: "qsdfgt765",
-            },
-        ];
-    }
-
-    getRapidLeaders() {
-        return [
-            {
-                token: "azerty1234",
-            },
-            {
-                token: "qsdfgt765",
-            },
-            {
-                token: "UJHFGVC565",
-            },
-            {
-                token: "azerty1234",
-            },
-            {
-                token: "qsdfgt765",
-            },
-            {
-                token: "UJHFGVC565",
-            },
-            {
-                token: "azerty1234",
-            },
-            {
-                token: "qsdfgt765",
-            },
-            {
-                token: "UJHFGVC565",
-            },
-            {
-                token: "qsdfgt765",
-            },
-        ];
-    }
-
-    //...
-
-    //close WS and Gno-Client
-    destroy() {
-    }
-})();
+export default Actions

@@ -1,7 +1,7 @@
 import {Component} from "sevejs";
 import {gsap} from "gsap";
-import Action from "../actions";
 import {GameTime} from "../types/types.ts";
+import Actions from "../actions.ts";
 
 type Options = {
     token: string;
@@ -135,10 +135,14 @@ const Gameoptions = class extends Component {
         this.DOM.timerIncrement.innerHTML = this.options.timer[1];
 
         //checkstep
-        if (Action.getToken()) {
-            this._clickOnCtrl1(null, true);
-        }
-        this.appear();
+        Actions.getInstance().then((actions) => {
+            // TODO @Alexis please check that the semantics are right here
+            if (actions.getFaucetToken()) {
+                this._clickOnCtrl1(null, true);
+            }
+
+            this.appear();
+        })
     }
 
     _clickOnCtrl0() {
@@ -155,6 +159,8 @@ const Gameoptions = class extends Component {
 
     async _clickOnCtrl1(_e: any, immediate = false) {
         this.currentState++;
+
+        const actions: Actions = await Actions.getInstance()
 
         switch (this.currentState) {
             case 1: {
@@ -173,13 +179,12 @@ const Gameoptions = class extends Component {
                 //TODO: error system
                 //setup game
                 this.lookingForRival = true;
-                const gameSetting = await Action.createGame(this.options.timer);
+                const gameSetting = await actions.joinLobby(this.options.timer);
                 console.log(gameSetting);
                 console.log("Logging")
 
                 //check if game has not been cancelled after the wait
                 if (this.lookingForRival) {
-                    console.log("HERE I AM")
                     this.call("disappear", [], "webgl");
 
                     this.disappear().then((_) => {
@@ -204,9 +209,13 @@ const Gameoptions = class extends Component {
 
     _inputToken() {
         const token = this.DOM.el.querySelector("#id-gameoptions-token").value || "";
-        if (!Action.getToken()) {
-            Action.setToken(token);
-        }
+
+        Actions.getInstance().then((actions) => {
+            if (!actions.getFaucetToken()) {
+                actions.setFaucetToken(token)
+            }
+        })
+
         return token;
     }
 
