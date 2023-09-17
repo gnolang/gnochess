@@ -91,6 +91,13 @@ processing is stopped on that line.
 		the buffer should contain the given predicate, which contains spaces.
 */
 var commandTests = [...]string{
+	`	name NewGameNegativeIncrement
+		newgame 10 -5 #panic containssp negative increment invalid
+	`,
+	`	name NewGameDouble
+		newgame
+		newgame #panic contains game with opponent is still ongoing
+	`,
 	`	name ScholarsMate
 		newgame #id equal 000000001
 		move auto e2e4
@@ -122,6 +129,24 @@ var commandTests = [...]string{
 		# contains "open" "concluder":null "draw_offerer":"g1white"
 		draw black
 		# contains "drawn_by_agreement" "concluder":"g1black" "draw_offerer":"g1white"
+	`,
+	`	name TimeoutAborted
+		newgame 3
+		move auto e2e4 #! contains "state":"open"
+		sleep 31
+		move auto e7e5
+		game
+		# contains e2e4
+		# contains "aborted"
+		# contains "concluder":"g1black"
+	`,
+	`	name TimeoutAbandoned
+		newgame 1
+		move auto e2e4
+		move auto e7e5
+		sleep 61
+		timeout black
+		# contains "state":"timeout" "winner":"black"
 	`,
 }
 
@@ -236,7 +261,7 @@ func (tc *testCommandSleep) Run(t *testing.T, bufs map[string]string) {
 
 type testChecker struct {
 	fn    func(t *testing.T, bufs map[string]string, tc *testChecker)
-	tf    func(t *testing.T) func(string, ...interface{})
+	tf    func(*testing.T, string, ...interface{})
 	bufp  string
 	preds []string
 }
@@ -246,10 +271,8 @@ func (tc *testChecker) Run(t *testing.T, bufs map[string]string) {
 	tc.fn(t, bufs, tc)
 }
 
-func runCommandTest(t *testing.T, command string) {
+func parseCommandTest(t *testing.T, command string) (funcs []testCommandRunner, testName string) {
 	lines := strings.Split(command, "\n")
-	var funcs []testCommandRunner
-	var testName string
 	atoi := func(s string) int {
 		n, err := strconv.Atoi(s)
 		if err != nil {
@@ -257,9 +280,10 @@ func runCommandTest(t *testing.T, command string) {
 		}
 		return n
 	}
+	// used to detect whether to auto-add a panic checker
+	var hasPanicChecker bool
 	// so first move, if auto, is white
 	lastMove := black
-	var hasPanicChecker bool
 	parseColor := func(s string) std.Address {
 		switch s {
 		case "black":
@@ -274,6 +298,15 @@ func runCommandTest(t *testing.T, command string) {
 		default:
 			panic("invalid color " + s)
 		}
+	}
+	panicChecker := func(lineNum int, testName string) testCommandRunner {
+		return testCommandChecker{testCommandFunc(
+			func(t *testing.T, bufs map[string]string) {
+				if bufs["panic"] != "" {
+					t.Fatalf("%s:%d: buffer \"panic\" is not empty (%q)", testName, lineNum, bufs["panic"])
+				}
+			},
+		)}
 	}
 
 	for lineNum, line := range lines {
@@ -296,13 +329,8 @@ func runCommandTest(t *testing.T, command string) {
 			// it means the previous command did not have a panic checker.
 			// add it.
 			if !hasPanicChecker && len(funcs) > 0 {
-				funcs = append(funcs, testCommandChecker{testCommandFunc(
-					func(t *testing.T, bufs map[string]string) {
-						if bufs["panic"] != "" {
-							t.Fatalf("buffer \"panic\" is not empty (%q)", bufs["panic"])
-						}
-					},
-				)})
+				// no lineNum+1 because it was the previous line
+				funcs = append(funcs, panicChecker(lineNum, testName))
 			}
 		}
 		switch cmd {
@@ -403,10 +431,10 @@ func runCommandTest(t *testing.T, command string) {
 		}
 
 		bufp := checker[0]
-		tf := func(t *testing.T) func(string, ...interface{}) { return t.Errorf }
+		useFatal := false
 		if len(bufp) > 1 && bufp[1] == '!' {
-			tf = func(t *testing.T) func(string, ...interface{}) { return t.Fatalf }
 			bufp = bufp[2:]
+			useFatal = true
 		} else {
 			bufp = bufp[1:]
 		}
@@ -416,6 +444,15 @@ func runCommandTest(t *testing.T, command string) {
 		if bufp == "panic" && !hasPanicChecker {
 			hasPanicChecker = true
 		}
+		tf := func(ln int, testName string, useFatal bool) func(*testing.T, string, ...interface{}) {
+			return func(t *testing.T, s string, v ...interface{}) {
+				fn := t.Errorf
+				if useFatal {
+					fn = t.Fatalf
+				}
+				fn("%s:%d: "+s, append([]interface{}{testName, ln}, v...)...)
+			}
+		}(lineNum+1, testName, useFatal)
 
 		switch checker[1] {
 		case "empty":
@@ -425,7 +462,7 @@ func runCommandTest(t *testing.T, command string) {
 			funcs = append(funcs, &testChecker{
 				fn: func(t *testing.T, bufs map[string]string, tc *testChecker) {
 					if bufs[tc.bufp] != "" {
-						tc.tf(t)("buffer %q is not empty (%v)", tc.bufp, bufs[tc.bufp])
+						tc.tf(t, "buffer %q is not empty (%v)", tc.bufp, bufs[tc.bufp])
 					}
 				},
 				tf:   tf,
@@ -440,7 +477,7 @@ func runCommandTest(t *testing.T, command string) {
 						exp = bufs[exp[1:]]
 					}
 					if bufs[tc.bufp] != exp {
-						tc.tf(t)("buffer %q: want %v got %v", tc.bufp, exp, bufs[tc.bufp])
+						tc.tf(t, "buffer %q: want %v got %v", tc.bufp, exp, bufs[tc.bufp])
 					}
 				},
 				tf:    tf,
@@ -450,13 +487,13 @@ func runCommandTest(t *testing.T, command string) {
 		case "contains":
 			preds := checker[2:]
 			if len(preds) == 0 {
-				continue
+				break
 			}
 			funcs = append(funcs, &testChecker{
 				fn: func(t *testing.T, bufs map[string]string, tc *testChecker) {
 					for _, pred := range tc.preds {
 						if !strings.Contains(bufs[tc.bufp], pred) {
-							tc.tf(t)("buffer %q: %v does not contain %v", tc.bufp, bufs[tc.bufp], pred)
+							tc.tf(t, "buffer %q: %v does not contain %v", tc.bufp, bufs[tc.bufp], pred)
 						}
 					}
 				},
@@ -472,7 +509,7 @@ func runCommandTest(t *testing.T, command string) {
 			funcs = append(funcs, &testChecker{
 				fn: func(t *testing.T, bufs map[string]string, tc *testChecker) {
 					if !strings.Contains(bufs[tc.bufp], tc.preds[0]) {
-						tc.tf(t)("buffer %q: %v does not contain %v", tc.bufp, bufs[tc.bufp], tc.preds[0])
+						tc.tf(t, "buffer %q: %v does not contain %v", tc.bufp, bufs[tc.bufp], tc.preds[0])
 					}
 				},
 				tf:    tf,
@@ -483,6 +520,14 @@ func runCommandTest(t *testing.T, command string) {
 			panic("invalid checker " + checker[1])
 		}
 	}
+	if !hasPanicChecker {
+		funcs = append(funcs, panicChecker(len(lines), testName))
+	}
+	return
+}
+
+func runCommandTest(t *testing.T, command string) {
+	funcs, testName := parseCommandTest(t, command)
 
 	t.Run(testName, func(t *testing.T) {
 		cleanup()

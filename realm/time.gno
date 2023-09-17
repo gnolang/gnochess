@@ -61,7 +61,7 @@ func (tc *TimeControl) MarshalJSON() ([]byte, error) {
 // AddMove records that at the current time, a new move was added.
 func (tc *TimeControl) AddMove() (valid bool) {
 	nd, v := tc.timedOut()
-	if !v {
+	if v {
 		return false
 	}
 	if len(tc.MoveTimestamps)&1 == 0 {
