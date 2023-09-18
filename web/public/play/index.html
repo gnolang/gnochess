@@ -60,7 +60,7 @@
 
 
  
-       <link href="/css/main.min.3debe534c9a1ce0111ebb4b8cc0a30f380fd230bc610dd83b9378abbdc6925a0.css" rel="stylesheet" />
+       <link href="/css/main.min.444df47571791f344349e8ca208cd631450a25ca31128818c40a74d3a5f29213.css" rel="stylesheet" />
 
 <link
   rel="stylesheet"
@@ -111,7 +111,7 @@
 </a>
     <a href="/about/" class="underline font-bold hidden md:inline-flex">About</a>
     <a href="https://github.com/gnolang/gnochess" class="underline font-bold pr-8 hidden md:inline-flex">GitHub</a>
-    <a href="/dashboard/" class="py-4 px-6 bg-grey-50 rounded-full font-bold">Dashbord</a>
+    <a href="/dashboard/" class="py-4 px-6 bg-grey-50 rounded-full font-bold shadow">Dashbord</a>
   </nav>
 </header>
  <section data-component="webgl">
@@ -122,8 +122,8 @@
 </section>
 
 
-    <main data-barba="container" data-barba-namespace="play">  <div class="absolute hidden top-0 left-0 h-screen w-screen overflow-hidden pointer-events-none">
-  <div class="absolute -bottom-[10vmax] -left-12 text-[24vmax] font-black text-grey-150 rotate-12">RAPID</div>
+    <main data-barba="container" data-barba-namespace="play">  <div class="absolute opacity-0 top-0 left-0 h-screen w-screen overflow-hidden pointer-events-none" data-component="gamecategory">
+  <div id="game-category" class="absolute -bottom-[10vmax] -left-12 text-[24vmax] font-black text-grey-150 rotate-12 leading-none">RAPID</div>
 </div>
 
 <div class="relative max-w-screen-xxl mx-auto xl:px-16 md:px-8 px-8 min-h-[95vh] grid grid-cols-12 gap-4 md:gap-16 pt-52 auto-rows-min">
@@ -294,18 +294,20 @@
   </ul>
 </section>
  <section data-component="gamecontrols" id="js-gamecontrols" class="absolute right-0 min-w-full flex-col col-span-3 col-start-10 self-end rounded-lg bg-grey-50 p-4 z-max hidden opacity-0 invisible">
-  <div id="js-validation" class="relative hidden opacity-0 invisible flex-col p-5 pt-7 rounded bg-grey-200 mb-2">
-    <div class="js-gamecontrols-title | mb-4 text-100 font-bold">Connection</div>
-    <p class="js-gamecontrols-content | font-medium text-200 text-grey-600">Do you really want to Resign the Match?</p>
-    <button id="js-gamecontrols-confirm" class="relative w-full bg-grey-50 rounded-full mt-4 p-3 shadow font-bold text-center">
-      <span
-        id="js-gamecontrols-confirm-timer"
-        class="relative hidden opacity-0 mr-2 pr-2 after:absolute after:w-0.5 after:translate-x-1/2 after:-translate-y-1/2 after:h-full after:right-0 after:top-1/2 after:bg-grey-400"
-        >9</span
-      ><span id="js-gamecontrols-confirm-content">Confirm</span>
-    </button>
+  <div id="js-validation" class="relative opacity-0 invisible h-0 overflow-hidden">
+    <div class="flex relative flex-col p-5 pt-7 w-full h-full rounded bg-grey-200">
+      <div class="js-gamecontrols-title | mb-4 text-100 font-bold">Connection</div>
+      <p class="js-gamecontrols-content | font-medium text-200 text-grey-600">Do you really want to Resign the Match?</p>
+      <button id="js-gamecontrols-confirm" class="relative w-full bg-grey-50 rounded-full mt-4 p-3 shadow font-bold text-center">
+        <span
+          id="js-gamecontrols-confirm-timer"
+          class="relative hidden opacity-0 mr-2 pr-2 after:absolute after:w-0.5 after:translate-x-1/2 after:-translate-y-1/2 after:h-full after:right-0 after:top-1/2 after:bg-grey-400"
+          >9</span
+        ><span id="js-gamecontrols-confirm-content">Confirm</span>
+      </button>
+    </div>
   </div>
-  <nav class="flex justify-between">
+  <nav class="flex justify-between mt-2">
     <button id="js-gamecontrols-ctr0" class="relative w-[35%] h-full aspect-square rounded-circle shadow bg-grey-50 mr-4">
       <span id="js-gamecontrols-icon-resign" class="js-icon | absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"><svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
   <path

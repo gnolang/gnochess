@@ -6,3 +6,4 @@ export { Gamecontrols } from "./components/gamecontrols";
 export { Gameboard } from "./components/gameboard";
 export { Webgl } from "./components/webgl";
 export { Dashboard } from "./components/dashboard";
+export { Gamecategory } from "./components/gamecategory";

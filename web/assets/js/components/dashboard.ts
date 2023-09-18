@@ -1,5 +1,6 @@
 import { Component } from "sevejs";
 import { truncateString } from "../utils/truncate";
+import { avatarize } from "../utils/avatar";
 
 import Actions from "../actions";
 type Categoy = "Blitz" | "Rapid" | "Global";
@@ -14,9 +15,7 @@ const Dashboard = class extends Component {
     // automatically called at start
     console.log("Dashboard component init");
 
-    //TODO: login/logout - redir
-    //TODO: feed data contents - personal
-    //TODO: feed data contents - leaderboard (dedicated component ?)
+    //TODO: login/logout - redir + deco wallet (in destroy)
 
     this.userToken = Actions.getToken() ?? null;
     this._feedUser(this.userToken);
@@ -27,7 +26,10 @@ const Dashboard = class extends Component {
   _feedUserSocial() {}
   _feedUser(token: string) {
     //avatar
-    //TODO: avatar creation
+    const bg = document.createElement("DIV");
+    bg.style.filter = `brightness(${avatarize(token)}`;
+    bg.className = "avatar_bg";
+    this.DOM.el.querySelector(".js-playeravatar").appendChild(bg);
 
     //token
     const DOM = document.getElementById("js-dashtoken");
@@ -62,27 +64,37 @@ const Dashboard = class extends Component {
   async _feedRatings() {
     const ratings = await Promise.all([this._feedUserBlitzRating(), this._feedUserRapidRating()]);
     const globalRating = ratings.reduce((acc, curr) => {
-      curr.win += acc.win;
-      curr.lose += acc.lose;
+      curr.wins += acc.wins;
+      curr.loses += acc.loses;
       curr.draws += acc.draws;
       return curr;
     });
+    this._createPie(globalRating);
+
     this._feedUserGlobalRating(globalRating);
+  }
+
+  _createPie(res: any) {
+    //TODO: refactor to get interactive chart
+    const total = res.wins + res.loses + res.draws;
+    const calc = (i: number) => Math.round((i / total) * 100);
+    const percents = [calc(res.wins), calc(res.loses), calc(res.draws)];
+    const pieEl = this.DOM.el.querySelector("#dashboard-rank");
+    pieEl.style.background = `conic-gradient(#777777 0% ${percents[0]}%, #b4b4b4 ${percents[0]}% ${percents[1]}%, #d9d9d9 ${percents[1]}% ${percents[2]}%)`;
+    pieEl.innerHTML = `<span class="dashbord-global-rank-value">${percents[0]}<span class="text-200">%</span> <br><span class="text-300">Wins</span></span>`;
   }
 
   _feedLeaderbord() {
     const leaders = [Actions.getBlitzLeaders(), Actions.getRapidLeaders()];
 
-    //TODO: check tailwind classes
     const leaderMapped = leaders.map((leadmap) => {
       return leadmap
         .map((lead: any) => {
-          return `<li class="dashboard-avatar flex">
-        <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
-        <div class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1">
-        ${truncateString(lead.token, 4, 4)}
-        </div>
-      </li>`;
+          avatarize(lead.token);
+          return `<li class="dashboard-avatar">
+                <div class="dashboard-avatar_img"><div class="dashboard-avatar_bg" style="filter: brightness(${avatarize(lead.token)})"></div><img src="/img/mini-gopher.png" alt="avatar"/></div>
+                <div class="dashboard-avatar_info">${truncateString(lead.token, 4, 4)}</div>
+          </li>`;
         })
         .reduce((acc, curr) => acc + curr);
     });
@@ -94,9 +106,7 @@ const Dashboard = class extends Component {
     if (DOMrapid) DOMrapid.innerHTML = leaderMapped[1];
   }
 
-  destroy() {
-    //TODO: deco from wallet
-  }
+  destroy() {}
 };
 
 export { Dashboard };

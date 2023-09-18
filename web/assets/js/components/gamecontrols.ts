@@ -69,7 +69,7 @@ const Gamecontrols = class extends Component {
     Events.on("drawPropal", this._getDrawProposition.bind(this));
 
     //tl
-    this.validationTL = gsap.timeline({ paused: true }).to(this.DOM.paneValidation, { autoAlpha: 1, display: "flex", duration: 0.6 });
+    this.validationTL = gsap.timeline({ paused: true }).to(this.DOM.paneValidation, { autoAlpha: 1, height: "auto", duration: 0.6 });
     this.disableCtr0TL = this._disableBtn(this.DOM.ctr0);
     this.disableCtr1TL = this._disableBtn(this.DOM.ctr1);
     this.swithCtr0TL = this._switchIconBtn(this.DOM.ctr0);

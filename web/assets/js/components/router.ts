@@ -16,9 +16,8 @@ const Router = class extends Component {
 
   init() {
     // automatically called at start
-    //TODO: TS type these views instead of "any"
     this.loadedViews = [playView, homeView, aboutView, genericView, dashboardView];
-    this.loadedTransition = [playTransition(this), ...homeTransition(this), ...aboutTransition(this), ...genericTransition(this), dashboardTransition(this)];
+    this.loadedTransition = [playTransition(this), ...homeTransition(this), ...aboutTransition(this), ...genericTransition(this), ...dashboardTransition(this)];
     this.views = [];
     this.transitions = [];
 
@@ -29,6 +28,10 @@ const Router = class extends Component {
     barba.init({
       views: this.views,
       transitions: this.transitions,
+    });
+
+    barba.hooks.enter(() => {
+      window.scrollTo(0, 0);
     });
   }
 
