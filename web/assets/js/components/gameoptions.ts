@@ -165,13 +165,16 @@ const Gameoptions = class extends Component {
       //check if game has not been cancelled after the wait
       if (this.lookingForRival) {
         this.call("disappear", [], "webgl");
+        this.call("setCategory", [this.options.category], "gamecategory");
 
         this.disappear().then((_) => {
           this.call("config", [this.options.timer, gameSetting.me.color, gameSetting.me.id, this.options.category], "gameplayers", "me");
           this.call("config", [this.options.timer, gameSetting.rival.color, gameSetting.rival.id, this.options.category], "gameplayers", "rival");
 
           gsap.set("#js-background", { transformOrigin: "center" });
-          gsap.to("#js-background", { scale: 1.1 });
+          gsap.to("#js-background", { scale: 1.1, duration: 1.4 });
+          this.call("appear", [], "gamecategory");
+
           this.call("appear", "", "gameplayers", "me");
           this.call("appear", "", "gameplayers", "rival");
           this.call("appear", "", "gamecontrols");

@@ -48,6 +48,7 @@ const homeTransition = (app: any) => {
           app.call("disappear", "", "Gameplayers", "me"),
           app.call("disappear", "", "Gameplayers", "rival"),
           app.call("disappear", "", "Gamecontrols"),
+          app.call("disappear", "", "gamecategory"),
           app.call("disappear", "", "Gameboard"),
         ]);
       },

@@ -26,6 +26,7 @@ const dashboardTransition = (app: any) => {
           app.call("disappear", "", "Gameplayers", "rival"),
           app.call("disappear", "", "Gamecontrols"),
           app.call("disappear", "", "Gameboard"),
+          app.call("disappear", "", "gamecategory"),
           app.call("disappear", true, "webgl"),
           gsap.to("#js-background", { autoAlpha: 1, x: "105%", scaleX: 1 }),
           prom,
