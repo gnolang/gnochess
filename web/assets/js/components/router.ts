@@ -17,7 +17,7 @@ const Router = class extends Component {
   init() {
     // automatically called at start
     this.loadedViews = [playView, homeView, aboutView, genericView, dashboardView];
-    this.loadedTransition = [playTransition(this), ...homeTransition(this), ...aboutTransition(this), ...genericTransition(this), dashboardTransition(this)];
+    this.loadedTransition = [playTransition(this), ...homeTransition(this), ...aboutTransition(this), ...genericTransition(this), ...dashboardTransition(this)];
     this.views = [];
     this.transitions = [];
 
