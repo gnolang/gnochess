@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"regexp"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/gnolang/faucet"
@@ -22,7 +23,8 @@ import (
 	"github.com/gnolang/faucet/estimate/static"
 	"github.com/gnolang/gno/tm2/pkg/crypto"
 	"github.com/gnolang/gno/tm2/pkg/std"
-	"github.com/pelletier/go-toml"
+	"github.com/peterbourgon/ff/v3"
+	"github.com/peterbourgon/ff/v3/fftoml"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
@@ -36,12 +38,42 @@ const (
 	defaultRemote    = "http://127.0.0.1:26657"
 )
 
+const (
+	tokenKey = "faucet-token"
+
+	envPrefix      = "GNOCHESS_FAUCET_"
+	configFlagName = "config"
+)
+
 var remoteRegex = regexp.MustCompile(`^https?://[a-z\d.-]+(:\d+)?(?:/[a-z\d]+)*$`)
 
 type rootCfg struct {
-	configPath string
-	remote     string
-	fundLimit  string
+	listenAddress string
+	chainID       string
+	mnemonic      string
+	sendAmount    string
+	numAccounts   uint64
+
+	remote    string
+	fundLimit string
+
+	allowedTokens stringArr
+}
+
+// generateFaucetConfig generates the Faucet configuration
+// based on the flag data
+func (c *rootCfg) generateFaucetConfig() *config.Config {
+	// Create the default configuration
+	cfg := config.DefaultConfig()
+	cfg.CORSConfig = nil
+
+	cfg.ListenAddress = c.listenAddress
+	cfg.ChainID = c.chainID
+	cfg.Mnemonic = c.mnemonic
+	cfg.SendAmount = c.sendAmount
+	cfg.NumAccounts = c.numAccounts
+
+	return cfg
 }
 
 func main() {
@@ -60,6 +92,16 @@ func main() {
 		Exec: func(_ context.Context, _ []string) error {
 			return execMain(cfg)
 		},
+		Options: []ff.Option{
+			// Allow using ENV variables
+			ff.WithEnvVars(),
+			ff.WithEnvVarPrefix(envPrefix),
+
+			// Allow using TOML config files
+			ff.WithAllowMissingConfigFile(true),
+			ff.WithConfigFileFlag(configFlagName),
+			ff.WithConfigFileParser(fftoml.Parser),
+		},
 	}
 
 	if err := cmd.ParseAndRun(context.Background(), os.Args[1:]); err != nil {
@@ -71,11 +113,46 @@ func main() {
 
 // registerFlags registers the main configuration flags
 func registerFlags(fs *flag.FlagSet, c *rootCfg) {
+	// Top level flags
 	fs.StringVar(
-		&c.configPath,
-		"faucet-config",
+		&c.listenAddress,
+		"listen-address",
+		config.DefaultListenAddress,
+		"the IP:PORT URL for the faucet server",
+	)
+
+	fs.StringVar(
+		&c.chainID,
+		"chain-id",
+		config.DefaultChainID,
+		"the chain ID associated with the remote Gno chain",
+	)
+
+	fs.StringVar(
+		&c.mnemonic,
+		"mnemonic",
 		"",
-		"the config file for the faucet (TOML)",
+		"the mnemonic for faucet keys",
+	)
+
+	fs.Uint64Var(
+		&c.numAccounts,
+		"num-accounts",
+		config.DefaultNumAccounts,
+		"the number of faucet accounts, based on the mnemonic",
+	)
+
+	fs.StringVar(
+		&c.sendAmount,
+		"send-amount",
+		config.DefaultSendAmount,
+		"the static send amount (native currency)",
+	)
+
+	fs.Var(
+		&c.allowedTokens,
+		"tokens",
+		"the allowed faucet tokens",
 	)
 
 	fs.StringVar(
@@ -95,25 +172,11 @@ func registerFlags(fs *flag.FlagSet, c *rootCfg) {
 
 // execMain starts the GnoChess faucet
 func execMain(cfg *rootCfg) error {
-	// Make sure the config path is set
-	if cfg.configPath == "" {
-		return errors.New("faucet config not provided")
-	}
-
-	// Read the config
-	faucetConfig, err := readConfig(cfg.configPath)
-	if err != nil {
-		return fmt.Errorf("unable to read config, %w", err)
-	}
-
 	// Parse static gas values.
 	// It is worth noting that this is temporary,
 	// and will be removed once gas estimation is enabled
 	// on Gno.land
-	gasFee, err := std.ParseCoin(defaultGasFee)
-	if err != nil {
-		return fmt.Errorf("invalid gas fee, %w", err)
-	}
+	gasFee := std.MustParseCoin(defaultGasFee)
 
 	gasWanted, err := strconv.ParseInt(defaultGasWanted, 10, 64)
 	if err != nil {
@@ -140,8 +203,11 @@ func execMain(cfg *rootCfg) error {
 	// Create the client (HTTP)
 	cli := tm2Client.NewClient(cfg.remote)
 
-	// Prepare the middleware
-	middleware := prepareMiddleware(cli, fundLimit)
+	// Prepare the middlewares
+	middlewares := []faucet.Middleware{
+		prepareTokenMiddleware(cfg.allowedTokens),
+		prepareFundMiddleware(cli, fundLimit),
+	}
 
 	// Create a new faucet with
 	// static gas estimation
@@ -149,8 +215,8 @@ func execMain(cfg *rootCfg) error {
 		static.New(gasFee, gasWanted),
 		cli,
 		faucet.WithLogger(newCommandLogger(logger)),
-		faucet.WithConfig(faucetConfig),
-		faucet.WithMiddlewares([]faucet.Middleware{middleware}),
+		faucet.WithConfig(cfg.generateFaucetConfig()),
+		faucet.WithMiddlewares(middlewares),
 	)
 	if err != nil {
 		return fmt.Errorf("unable to create faucet, %w", err)
@@ -164,25 +230,6 @@ func execMain(cfg *rootCfg) error {
 
 	// Wait for the faucet to exit
 	return w.wait()
-}
-
-// readConfig reads the faucet configuration
-// from the specified path
-func readConfig(path string) (*config.Config, error) {
-	// Read the config file
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	// Parse it
-	var faucetConfig config.Config
-
-	if err := toml.Unmarshal(content, &faucetConfig); err != nil {
-		return nil, err
-	}
-
-	return &faucetConfig, nil
 }
 
 type cmdLogger struct {
@@ -281,8 +328,8 @@ func (w *waiter) wait() error {
 	return g.Wait()
 }
 
-// prepareMiddleware prepares the fund validation middleware
-func prepareMiddleware(client client.Client, fundLimit std.Coins) faucet.Middleware {
+// prepareFundMiddleware prepares the fund (balance) validation middleware
+func prepareFundMiddleware(client client.Client, fundLimit std.Coins) faucet.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Parse the request to extract the address
@@ -325,6 +372,8 @@ func prepareMiddleware(client client.Client, fundLimit std.Coins) faucet.Middlew
 			account, err := client.GetAccount(beneficiary)
 			if err != nil {
 				http.Error(w, "Unable to fetch user", http.StatusInternalServerError)
+
+				return
 			}
 
 			accountBalance := account.GetCoins()
@@ -339,4 +388,53 @@ func prepareMiddleware(client client.Client, fundLimit std.Coins) faucet.Middlew
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+// prepareTokenMiddleware prepares the token validation middleware
+func prepareTokenMiddleware(tokens []string) faucet.Middleware {
+	// Create the token map
+	tokenMap := make(map[string]struct{}, len(tokens))
+
+	// Add in the token values
+	for _, token := range tokens {
+		tokenMap[token] = struct{}{}
+	}
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Fetch the faucet token
+			token := r.Header.Get(tokenKey)
+
+			// Make sure the token is valid
+			if _, valid := tokenMap[token]; !valid {
+				http.Error(w, "Invalid faucet token", http.StatusForbidden)
+
+				return
+			}
+
+			// Continue with serving the faucet request
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// stringArr defines the custom flag type
+// that represents an array of string values
+type stringArr []string
+
+// String is a required output method for the flag
+func (s *stringArr) String() string {
+	if len(*s) <= 0 {
+		return "..."
+	}
+
+	return strings.Join(*s, ", ")
+}
+
+// Set is a required output method for the flag.
+// This is where our custom type manipulation actually happens
+func (s *stringArr) Set(value string) error {
+	*s = append(*s, value)
+
+	return nil
 }
