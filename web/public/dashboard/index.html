@@ -60,7 +60,7 @@
 
 
  
-       <link href="/css/main.min.064c893f58f20ee63e6b64d8b17ca9632d8e1225e41afe178522c9e6292434cf.css" rel="stylesheet" />
+       <link href="/css/main.min.1bc034e070d166ac4b6f413782134bb88f6c3f51ac527108cc3f5a2e7f9772a5.css" rel="stylesheet" />
 
 <link
   rel="stylesheet"
@@ -129,8 +129,8 @@
 <div data-component="dashboard" class="min-h-[calc(100vh_-_theme(space.28))] grid grid-cols-12 gap-4 md:gap-16 pt-52">
   <header class="js-dashboardheader | opacity-0 max-w-screen-xxl mx-auto xl:px-16 md:px-8 px-8 w-full col-span-12 flex justify-between items-center">
     <div class="flex">
-      <div class="js-playeravatar | w-20 h-20 bg-grey-600 rounded-circle border border-grey-200 mt-0.5 overflow-hidden">
-        <img src="/img/mini-gopher.png" alt="my avatar" class="object-contain object-bottom h-full w-full" />
+      <div class="js-playeravatar | relative w-20 h-20 bg-grey-600 rounded-circle border border-grey-200 mt-0.5 overflow-hidden">
+        <img src="/img/mini-gopher.png" alt="my avatar" class="relative object-contain object-bottom h-full w-full" />
       </div>
 
       <div class="ml-5">
@@ -203,6 +203,10 @@
       </article>
       <article class="opacity-0 translate-y-20 relative overflow-hidden sm:col-span-2 row-start-2 bg-grey-50 rounded py-7 px-8 flex flex-col justify-between min-h-[26vh]">
         <h2 class="mb-4 text-100 font-bold">Global rating</h2>
+        <div
+          id="dashboard-rank"
+          class="absolute w-48 h-48 bg-grey-400 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-circle flex justify-center items-center text-grey-600 after:absolute after:w-[75%] after:h-[75%] after:top-[12.5%] after:left-[12.5%] after:bg-grey-50 after:rounded-circle after:block"
+        ></div>
 
         <div class="flex justify-between items-end font-bold">
           <div>

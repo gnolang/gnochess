@@ -64,12 +64,24 @@ const Dashboard = class extends Component {
   async _feedRatings() {
     const ratings = await Promise.all([this._feedUserBlitzRating(), this._feedUserRapidRating()]);
     const globalRating = ratings.reduce((acc, curr) => {
-      curr.win += acc.win;
-      curr.lose += acc.lose;
+      curr.wins += acc.wins;
+      curr.loses += acc.loses;
       curr.draws += acc.draws;
       return curr;
     });
+    this._createPie(globalRating);
+
     this._feedUserGlobalRating(globalRating);
+  }
+
+  _createPie(res: any) {
+    console.log(res);
+    const total = res.wins + res.loses + res.draws;
+    const calc = (i: number) => Math.round((i / total) * 100);
+    const percents = [calc(res.wins), calc(res.loses), calc(res.draws)];
+    const pieEl = this.DOM.el.querySelector("#dashboard-rank");
+    pieEl.style.background = `conic-gradient(#777777 0% ${percents[0]}%, #b4b4b4 ${percents[0]}% ${percents[1]}%, #d9d9d9 ${percents[1]}% ${percents[2]}%)`;
+    pieEl.innerHTML = `<span class="dashbord-global-rank-value">${percents[0]}<span class="text-200">%</span> <br><span class="text-300">Wins</span></span>`;
   }
 
   _feedLeaderbord() {

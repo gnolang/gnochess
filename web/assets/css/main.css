@@ -181,6 +181,9 @@ body {
   @apply absolute w-full h-full bg-grey-50;
 }
 
+.dashbord-global-rank-value {
+  @apply relative z-2 font-bold text-500 text-center leading-[.8];
+}
 .dashboard-avatar > div:last-child::before {
   content: counter(listCounter);
 }
