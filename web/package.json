@@ -25,6 +25,7 @@
     "gsap": "^3.12.2",
     "sevejs": "^0.1.2",
     "socket.io-client": "^4.7.2",
-    "three": "^0.156.1"
+    "three": "^0.156.1",
+    "tiny-emitter": "^2.1.0"
   }
 }

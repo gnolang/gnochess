@@ -73,16 +73,13 @@ const Dashboard = class extends Component {
   _feedLeaderbord() {
     const leaders = [Actions.getBlitzLeaders(), Actions.getRapidLeaders()];
 
-    //TODO: check tailwind classes
     const leaderMapped = leaders.map((leadmap) => {
       return leadmap
         .map((lead: any) => {
-          return `<li class="dashboard-avatar flex">
-        <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
-        <div class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1">
-        ${truncateString(lead.token, 4, 4)}
-        </div>
-      </li>`;
+          return `<li class="dashboard-avatar">
+                <div class="dashboard-avatar_img"><img src="/img/mini-gopher.png" alt="avatar" /></div>
+                <div class="dashboard-avatar_info">${truncateString(lead.token, 4, 4)}</div>
+          </li>`;
         })
         .reduce((acc, curr) => acc + curr);
     });

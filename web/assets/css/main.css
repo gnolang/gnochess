@@ -160,6 +160,20 @@ body {
   transform: translateY(var(--sidepane));
 }
 
+.dashboard-avatar {
+  @apply flex;
+}
+
+.dashboard-avatar_img {
+  @apply bg-grey-200 w-20 overflow-hidden p-2;
+}
+
+.dashboard-avatar_img > img {
+  @apply bg-grey-50 border border-grey-50 rounded-circle;
+}
+.dashboard-avatar_info {
+  @apply relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1;
+}
 .dashboard-avatar > div:last-child::before {
   content: counter(listCounter);
 }
@@ -167,6 +181,7 @@ body {
 .dashboard-avatar:first-child > div {
   border-radius: 50% 50% 0 0;
 }
+
 .dashboard-avatar:last-child > div {
   border-radius: 0 0 50% 50%;
 }
