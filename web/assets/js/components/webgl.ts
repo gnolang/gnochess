@@ -21,7 +21,6 @@ const Webgl = class extends Component {
 
   init() {
     //TODO: GZIP ThreeJS
-    //TODO: parallax fx mousemove
 
     // automatically called at start
     console.log("Webgl component init");
@@ -42,7 +41,7 @@ const Webgl = class extends Component {
     };
     // Canvas
     this.DOM.canvas = this.DOM.el.querySelector("#webgl-bg");
-    const scene = new THREE.Scene();
+    this.scene = new THREE.Scene();
 
     // Start of the code
     THREE.ColorManagement.enabled = false;
@@ -54,7 +53,7 @@ const Webgl = class extends Component {
     this.camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 100);
     this.camera.position.z = 4.2;
     this.camera.position.y = 10.1;
-    scene.add(this.camera);
+    this.scene.add(this.camera);
 
     /**
      * Renderer
@@ -107,7 +106,7 @@ const Webgl = class extends Component {
       this.bishop.rotation.x = Math.PI * -0.05;
       this.bishop.rotation.z = Math.PI * -0.1;
 
-      scene.add(this.model);
+      this.scene.add(this.model);
 
       this.move1TL = gsap
         .timeline({ paused: true })
@@ -139,7 +138,7 @@ const Webgl = class extends Component {
      * Lights
      */
     const ambientLight = new THREE.AmbientLight(0xffffff, 3);
-    scene.add(ambientLight);
+    this.scene.add(ambientLight);
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1.8);
     directionalLight.castShadow = true;
     directionalLight.shadow.mapSize.set(1024, 1024);
@@ -149,7 +148,7 @@ const Webgl = class extends Component {
     directionalLight.shadow.camera.right = 7;
     directionalLight.shadow.camera.bottom = -7;
     directionalLight.position.set(-3, 6, 0);
-    scene.add(directionalLight);
+    this.scene.add(directionalLight);
 
     /**
      * Animate
@@ -159,7 +158,7 @@ const Webgl = class extends Component {
       this.camera.position.y += (this.cursor.y - this.camera.position.y + 1) * this.easing;
       this.camera.lookAt(0, 1.2, 0);
 
-      this.renderer.render(scene, this.camera);
+      this.renderer.render(this.scene, this.camera);
 
       window.requestAnimationFrame(tick);
     };
@@ -215,9 +214,28 @@ const Webgl = class extends Component {
   }
 
   destroy() {
-    //TODO: dispose scene / materials / geometries
-    //TODO: stop animation
-    //TODO: remove objects
+    // traverse the scene for all disposables
+    this.scene.traverse(function (obj: any) {
+      // dispose geometry
+      if (obj.geometry) {
+        obj.geometry.dispose();
+      }
+      // dispose materials
+      if (obj.material) {
+        // a mesh's material may be an array
+        if (Array.isArray(obj.material)) {
+          obj.material.forEach(function (mtl: any) {
+            mtl.dispose();
+          });
+        } else {
+          obj.material.dispose();
+        }
+      }
+    });
+    this.scene.dispose();
+
+    this.move1TL.kill();
+    this.move2TL.kill();
   }
 };
 
