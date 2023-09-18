@@ -42,12 +42,29 @@ const Gameoptions = class extends Component {
     this.events = {} as Events;
   }
 
+  private eventsConfig = {
+    pressOnCtrl1: {
+      e: "keypress",
+      target: document,
+      cb: this._pressOnCtrl1.bind(this),
+    },
+    clickOnCtrl1: {
+      e: "click",
+      target: document.querySelector("#js-gameoptions-ctr1"),
+      cb: this._clickOnCtrl1.bind(this),
+    },
+    clickOnCtrl0: {
+      e: "click",
+      target: document.querySelector("#js-gameoptions-ctr0"),
+      cb: this._clickOnCtrl0.bind(this),
+    },
+  };
+
   init() {
     // automatically called at start
     console.log("PlayControls component init");
 
     //DOM
-
     this.DOM.paneConnection = this.DOM.el.querySelector("#js-connection");
     this.DOM.paneCategory = this.DOM.el.querySelector("#js-category");
     this.DOM.paneTimer = this.DOM.el.querySelector("#js-timer");
@@ -57,21 +74,12 @@ const Gameoptions = class extends Component {
     this.DOM.timerBtns = [...this.DOM.el.querySelectorAll(".js-timerUpdate")];
     this.DOM.timerDisplay = this.DOM.el.querySelector("#js-timerdisplay");
     this.DOM.timerIncrement = this.DOM.el.querySelector("#js-timerincrement");
-    this.DOM.ctrl0 = this.DOM.el.querySelector("#js-gameoptions-ctr0");
     this.DOM.ctrl1 = this.DOM.el.querySelector("#js-gameoptions-ctr1");
 
     //controls events
-    //TODO: keybord press events
-    this.events.clickOnCtrl0 = this.on({
-      e: "click",
-      target: this.DOM.ctrl0,
-      cb: this._clickOnCtrl0.bind(this),
-    });
-    this.events.clickOnCtrl1 = this.on({
-      e: "click",
-      target: this.DOM.ctrl1,
-      cb: this._clickOnCtrl1.bind(this),
-    });
+    this.events.clickOnCtrl0 = this.on(this.eventsConfig.clickOnCtrl0);
+    this.events.clickOnCtrl1 = this.on(this.eventsConfig.clickOnCtrl1);
+    this.events.pressOnCtrl1 = this.on(this.eventsConfig.pressOnCtrl1);
 
     //category events
     this.DOM.categoryBtns.forEach((categoryBtn: Element, i: number) => {
@@ -125,6 +133,14 @@ const Gameoptions = class extends Component {
       //TODO: stop WS rival finding -> this.lookingForRival
     } else {
       this.call("goTo", ["/"], "Router");
+    }
+  }
+  private _pressOnCtrl1(e: any) {
+    let keyCode = e.keyCode ? e.keyCode : e.which;
+
+    if (keyCode === 13) {
+      // call click function of the button if "enter" btn
+      this._clickOnCtrl1(e);
     }
   }
   async _clickOnCtrl1(_e: any, immediate = false) {
@@ -221,6 +237,9 @@ const Gameoptions = class extends Component {
       },
       "<+.1"
     );
+
+    // remove event keypress
+    this.off(this.events.pressOnCtrl1, this.eventsConfig.pressOnCtrl1);
 
     return tl;
   }

@@ -7,7 +7,6 @@ const dashboardView = {
 };
 
 // DOM init
-//TODO: scroll to top
 const dashboardTransition = (app: any) => {
   return {
     name: "play-transition",
