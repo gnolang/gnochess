@@ -1,4 +1,4 @@
-import { ITitleProps } from './title.types';
+import { ITitleProps } from './title.types.ts';
 import { FC } from 'react';
 import { Text } from '@chakra-ui/react';
 

@@ -1,4 +1,4 @@
-import { IAppLayoutProps } from './appLayout.types';
+import { IAppLayoutProps } from './appLayout.types.ts';
 import { FC } from 'react';
 import { Box, Container, useMediaQuery } from '@chakra-ui/react';
 import { Outlet } from 'react-router-dom';

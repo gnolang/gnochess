@@ -1,7 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import AppLayout from '../components/layout/AppLayout';
+import AppLayout from '../components/layout/AppLayout.tsx';
 import Home from '../components/pages/Home/Home.tsx';
-import Success from '../components/pages/Success/Success.tsx';
 
 const AppRouter = () => {
   return (
@@ -9,9 +8,8 @@ const AppRouter = () => {
       <Routes>
         <Route path={'/'} element={<AppLayout />}>
           <Route index element={<Home />} />
-          <Route path={'/success'} element={<Success />} />
         </Route>
-        <Route path="*" element={<Navigate to={'/'} />} />
+        <Route path='*' element={<Navigate to={'/'} />} />
       </Routes>
     </BrowserRouter>
   );

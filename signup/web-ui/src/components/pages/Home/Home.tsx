@@ -33,7 +33,7 @@ const Home: FC<IHomeProps> = () => {
     },
     enableReinitialize: true,
     validationSchema: formValidationSchema,
-    onSubmit: (values: IFormData, { resetForm }) => {
+    onSubmit: async (values: IFormData, { resetForm }) => {
       setSubmitting(true);
 
       try {
@@ -179,11 +179,11 @@ const Home: FC<IHomeProps> = () => {
           <Box>
             <Button
               rightIcon={<BsSend />}
-              variant="outline"
+              variant='outline'
               padding={6}
               isLoading={submitting}
               loadingText={'Submitting'}
-              spinner={<Spinner size={'md'} color="green" />}
+              spinner={<Spinner size={'md'} color='green' />}
               spinnerPlacement={'end'}
               type={'submit'}
             >
