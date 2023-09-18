@@ -148,7 +148,7 @@ const Gameoptions = class extends Component {
 
     if (this.currentState === 1) {
       this.options.token = this._inputToken();
-      this.DOM.ctrl1.innerHTML = this.states[this.currentState].ctrls[1]; //todo: animation
+      this.DOM.ctrl1.innerHTML = this.states[this.currentState].ctrls[1];
       this.switchAnimation1[immediate ? "progress" : "play"](immediate ? 1 : 0);
     } else if (this.currentState === 2) {
       this.switchAnimation2.play();

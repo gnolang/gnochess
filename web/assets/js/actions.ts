@@ -8,7 +8,6 @@ export default new (class {
     //INFO: MVP -> May not be the best way to handle the gno-ts
     //INFO: global class instantied once at load (IIFE) and accessible through the app
     //TODO: -> Should it be a seve component to communicate within the system (subpub etc)?
-    //TODO: remove mocked data
     console.log("Gno-Client actions init");
     console.log(io); //WS
   }
@@ -45,7 +44,7 @@ export default new (class {
       };
 
       setTimeout(() => resolve(mockedSettings), 1000);
-      this.listenDraw(); //TODO: remove this drawPoposition mockup call as well
+      this.listenDraw();
     });
   }
 
@@ -175,13 +174,13 @@ export default new (class {
   getRapidLeaders() {
     return [
       {
-        token: "azerty1234",
+        token: "azerty1234erfezg",
       },
       {
-        token: "qsdfgt765",
+        token: "qsdfgt765ezrgach",
       },
       {
-        token: "UJHFGVC565",
+        token: "UJHFGVC565pokuna",
       },
       {
         token: "azerty1234",

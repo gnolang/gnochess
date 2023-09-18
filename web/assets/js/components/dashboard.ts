@@ -1,5 +1,6 @@
 import { Component } from "sevejs";
 import { truncateString } from "../utils/truncate";
+import { avatarize } from "../utils/avatar";
 
 import Actions from "../actions";
 type Categoy = "Blitz" | "Rapid" | "Global";
@@ -14,9 +15,7 @@ const Dashboard = class extends Component {
     // automatically called at start
     console.log("Dashboard component init");
 
-    //TODO: login/logout - redir
-    //TODO: feed data contents - personal
-    //TODO: feed data contents - leaderboard (dedicated component ?)
+    //TODO: login/logout - redir + deco wallet (in destroy)
 
     this.userToken = Actions.getToken() ?? null;
     this._feedUser(this.userToken);
@@ -27,7 +26,10 @@ const Dashboard = class extends Component {
   _feedUserSocial() {}
   _feedUser(token: string) {
     //avatar
-    //TODO: avatar creation
+    const bg = document.createElement("DIV");
+    bg.style.filter = `brightness(${avatarize(token)}`;
+    bg.className = "avatar_bg";
+    this.DOM.el.querySelector(".js-playeravatar").appendChild(bg);
 
     //token
     const DOM = document.getElementById("js-dashtoken");
@@ -76,8 +78,9 @@ const Dashboard = class extends Component {
     const leaderMapped = leaders.map((leadmap) => {
       return leadmap
         .map((lead: any) => {
+          avatarize(lead.token);
           return `<li class="dashboard-avatar">
-                <div class="dashboard-avatar_img"><img src="/img/mini-gopher.png" alt="avatar" /></div>
+                <div class="dashboard-avatar_img"><div class="dashboard-avatar_bg" style="filter: brightness(${avatarize(lead.token)})"></div><img src="/img/mini-gopher.png" alt="avatar"/></div>
                 <div class="dashboard-avatar_info">${truncateString(lead.token, 4, 4)}</div>
           </li>`;
         })
@@ -91,9 +94,7 @@ const Dashboard = class extends Component {
     if (DOMrapid) DOMrapid.innerHTML = leaderMapped[1];
   }
 
-  destroy() {
-    //TODO: deco from wallet
-  }
+  destroy() {}
 };
 
 export { Dashboard };
