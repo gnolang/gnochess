@@ -16,6 +16,7 @@ const Gameoptions = class extends Component {
       { name: "token", panels: ["token"], ctrls: ["cross", "Connection"] },
       { name: "token", panels: ["game"], ctrls: ["arrow", "Play"] },
     ];
+    this.lookingForRival = false;
     this.currentState = 0;
     this.timer = 0;
     this.timers = {
@@ -120,13 +121,13 @@ const Gameoptions = class extends Component {
 
     if (this.currentState === 1) {
       this.switchAnimation2.reverse();
-      //TODO: stop WS rival finding
-      clearTimeout(this.lookingForRival);
+      this.lookingForRival = false;
+      //TODO: stop WS rival finding -> this.lookingForRival
     } else {
       this.call("goTo", ["/"], "Router");
     }
   }
-  _clickOnCtrl1(_e: any, immediate = false) {
+  async _clickOnCtrl1(_e: any, immediate = false) {
     this.currentState++;
 
     if (this.currentState === 1) {
@@ -139,15 +140,19 @@ const Gameoptions = class extends Component {
       this.call("changeStatus", ["action"], "webgl");
       this.call("moveScene", [""], "webgl");
 
-      //TODO: mochk to remove -> WS rival finder
       //TODO: error system
       //setup game
-      this.lookingForRival = setTimeout(() => {
+      this.lookingForRival = true;
+      const gameSetting = await Action.createGame(this.options.timer);
+      console.log(gameSetting);
+
+      //check if game has not been cancelled after the wait
+      if (this.lookingForRival) {
         this.call("disappear", [], "webgl");
 
         this.disappear().then((_) => {
-          this.call("config", [this.options.timer, "w", "glnaglnaglnaglnae558", this.options.category], "gameplayers", "me");
-          this.call("config", [this.options.timer, "b", "grbqszfoiqefouqiz254", this.options.category], "gameplayers", "rival");
+          this.call("config", [this.options.timer, gameSetting.me.color, gameSetting.me.id, this.options.category], "gameplayers", "me");
+          this.call("config", [this.options.timer, gameSetting.rival.color, gameSetting.rival.id, this.options.category], "gameplayers", "rival");
 
           gsap.set("#js-background", { transformOrigin: "center" });
           gsap.to("#js-background", { scale: 1.1 });
@@ -155,9 +160,9 @@ const Gameoptions = class extends Component {
           this.call("appear", "", "gameplayers", "rival");
           this.call("appear", "", "gamecontrols");
           this.call("appear", "", "gameboard");
-          this.call("startGame", ["w"], "gameboard");
+          this.call("startGame", gameSetting.me.color, "gameboard");
         });
-      }, 1000);
+      }
     }
   }
 

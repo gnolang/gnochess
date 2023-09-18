@@ -1,11 +1,14 @@
 import { Component } from "sevejs";
 import { gsap } from "gsap";
 import { Chess } from "chess.js";
-import { type Colors } from "../types/types";
+import { type Colors, type GameoverType } from "../types/types";
+
+import Action from "../actions";
 
 const Gameboard = class extends Component {
   constructor(opts: any) {
     super(opts);
+    this.events = {};
   }
 
   init() {
@@ -29,11 +32,6 @@ const Gameboard = class extends Component {
       moveSpeed: 1,
     });
     this.board.start();
-
-    this.DOM.cells = [...this.DOM.el.querySelectorAll(".square-55d63")];
-    this.DOM.cells.forEach((el: Element) => {
-      this.on({ e: "click", target: el, cb: this.selectCell.bind(this) });
-    });
   }
 
   _onSnapEnd() {
@@ -42,7 +40,13 @@ const Gameboard = class extends Component {
 
   startGame(color: Colors) {
     this.color = color;
+    if (this.color === "b") this.board.flip();
     this.rivalColor = this.color === "w" ? "b" : "w";
+
+    this.DOM.cells = [...this.DOM.el.querySelectorAll(".square-55d63")];
+    this.DOM.cells.forEach((el: Element, i: number) => {
+      this.events[`cell-${i}`] = this.on({ e: "click", target: el, cb: this.selectCell.bind(this) });
+    });
   }
 
   showScoreBoard(winner: Colors) {
@@ -54,7 +58,7 @@ const Gameboard = class extends Component {
     return this.chess.moveNumber();
   }
 
-  engine(init = false, gameover?: "me" | "rival") {
+  async engine(init = false, gameover?: GameoverType) {
     //for test purpose -> to et in if statment bellow
     // setTimeout(() => {
     //   this.call("finishGame", "gameover", "gameplayers", "me");
@@ -64,42 +68,38 @@ const Gameboard = class extends Component {
     //   this.showScoreBoard("w");
     // }, 10000);
 
+    //TODO: win cause rival resign
+    //TODO: draw screen in players
     if (this.chess.isGameOver() || gameover) {
-      console.log("game over");
-      // todo check from server
+      console.log("GAME OVER!");
+      let status: GameoverType = "checkmate";
+
+      if (gameover === "timeout") {
+        status = "timeout";
+        const valid = await Action.isGameover("timeout");
+        if (valid) this.call("finishGame", ["winner", status], "gameplayers", this.color === this.chess.turn() ? "rival" : "me");
+      }
+
+      if (this.chess.isCheckmate()) {
+        status = "checkmate";
+        const valid = await Action.isGameover("timeout");
+        if (valid) this.call("finishGame", ["winner", status], "gameplayers", this.color === this.chess.turn() ? "me" : "rival");
+      }
+
+      if (this.chess.isDraw() || gameover === "draw") {
+        status = this.chess.isStalemate() ? "stalemate" : this.chess.isThreefoldRepetition() ? "threefoldRepetition" : this.chess.isInsufficientMaterial() ? "insufficientMaterial" : "draw";
+        const valid = await Action.isGameover("timeout");
+        if (valid) this.call("finishGame", ["draw", status], "gameplayers", "me");
+      }
+
       this.call("stopTimer", [true], "gameplayers", "me");
       this.call("stopTimer", [true], "gameplayers", "rival");
       this.call("disappear", "", "gamecontrols");
 
-      // TODO: improve facto
-      if (gameover) {
-        // for timeout
-        if (this.color === this.chess.turn()) {
-          this.call("finishGame", [], "gameplayers", "rival");
-        } else {
-          this.call("finishGame", [], "gameplayers", "me");
-        }
-      }
-
-      if (this.chess.isStalemate()) {
-        console.log("isStalemate");
-      }
-      if (this.chess.isDraw()) {
-        console.log("isDraw");
-      }
-      if (this.chess.isThreefoldRepetition()) {
-        console.log("isThreefoldRepetition");
-      }
-      if (this.chess.isInsufficientMaterial()) {
-        console.log("isInsufficientMaterial");
-      }
-      if (this.chess.isCheckmate()) {
-        console.log("isCheckmate");
-      }
-
       return; // action
     }
 
+    //game turn update
     if (this.color === this.chess.turn()) {
       this.call("stopTimer", [init], "gameplayers", "rival");
       this.call("startTimer", [init], "gameplayers", "me");
@@ -108,29 +108,23 @@ const Gameboard = class extends Component {
       this.call("stopTimer", [init], "gameplayers", "me");
       this.call("startTimer", [init], "gameplayers", "rival");
       this.allowedToMove = false;
+      this.rivalMove();
     }
-    //1 blanc -> je commande
-    // call timer
-    // je select
-    // je move
-    // envoie de la data
-    //checkmate / gameover / pad
-    //stop timer
-    // changement turn (if turn === color) -> je peux select et move
-    // call timer
-    // wait du WS
-    // hook des que coup recu
-    // -> auto move (et incidence -)
-    // ->
-    // stop timer
-    //checkmate / gameover / pad
   }
 
-  rivalMove() {
-    //TODO: listen action from WS rival
+  async rivalMove() {
+    //TODO: error handling try
+    const rivalMove = await Action.getRivalMove(this.chess, true);
+    const move = this.chess.move(rivalMove);
+    this.board.position(this.chess.fen());
+
+    if (move.captured) {
+      this.call("capturePawn", [move.captured], "gameplayers", move.color === this.color ? "me" : "rival");
+    }
+    this.engine();
   }
 
-  async promote() {
+  async promote(): Promise<string | number> {
     // make popup appear
     gsap.to(this.DOM.promoteModal, { autoAlpha: 1 });
 
@@ -162,11 +156,17 @@ const Gameboard = class extends Component {
 
   async selectCell(e: any) {
     //TODO: highlight selected pawn
+
+    //only if player turn
+    if (!this.allowedToMove) return;
+
     const currentCell = e.currentTarget.dataset.square;
 
     if (this.moves.includes(currentCell)) {
       this.moves = [];
-      let promoted;
+      let promoted: string | number = 0;
+
+      //if promotion, wwait for user choice
       if (this.promotion.length > 0) {
         this.DOM.board.style.pointerEvents = "none";
         promoted = await this.promote();
@@ -180,9 +180,12 @@ const Gameboard = class extends Component {
         // capture
         this.call("capturePawn", [move.captured], "gameplayers", move.color === this.color ? "me" : "rival");
       }
-      // ------ WS emmit my move ------
+
+      // ------ Action - emmit my move ------
+      await Action.makeMove(move.from, move.to, promoted);
       this.engine();
-      //reset allowed position
+
+      //reset allowed positions
       gsap.to(".chess-board [data-square]", { "--disp-opacity": 0 });
       this.DOM.moves = [];
     } else {
@@ -197,7 +200,7 @@ const Gameboard = class extends Component {
       // get allowed position on board DOM then DOM
       this.selected = currentCell;
       const moves = this.chess.moves({ square: currentCell, verbose: true });
-      this.moves = [...new Set(moves.map((pos: any) => pos.to))]; //remove diplicate of "to" (promotion ones)
+      this.moves = [...new Set(moves.map((pos: any) => pos.to))]; //remove duplicate of "to" (promotion ones)
       this.promotion = [...new Set(moves.filter((move: any) => move.promotion).map((move: any) => move.to))];
 
       this.moves.forEach((cell: Element) => {
