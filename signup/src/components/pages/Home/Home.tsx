@@ -16,6 +16,7 @@ import Title from '../../atoms/Title/Title.tsx';
 import { BsSend } from 'react-icons/bs';
 import { useFormik } from 'formik';
 import formValidationSchema from '../../../shared/schemas/formSchema.ts';
+import banner from '../../../assets/img/banner.png';
 
 const Home: FC<IHomeProps> = () => {
   const [isMdOrSmaller] = useMediaQuery('(max-width: 62em)');
@@ -61,15 +62,32 @@ const Home: FC<IHomeProps> = () => {
       flexDirection={'column'}
       my={'auto'}
       mx={'auto'}
-      width={isMdOrSmaller ? '100%' : '80%'}
+      maxWidth={isMdOrSmaller ? '100%' : '40%'}
+      width={'100%'}
       padding={8}
       borderRadius={'30px'}
       backgroundColor={'white'}
     >
-      <Title
-        text={'GnoChess Signup Form'}
-        size={isMdOrSmaller ? '2xl' : '3xl'}
-      />
+      <Box
+        display={'flex'}
+        alignItems={'center'}
+        width={'100%'}
+        flexDirection={'column'}
+      >
+        <Title
+          text={'Welcome to GnoChess!'}
+          size={isMdOrSmaller ? '2xl' : '3xl'}
+        />
+        <img
+          src={banner}
+          alt={'Banner'}
+          style={{
+            width: '100%',
+            height: 'auto'
+          }}
+        />
+      </Box>
+
       <form onSubmit={formik.handleSubmit}>
         <Box display={'flex'} flexDirection={'column'}>
           <Box
