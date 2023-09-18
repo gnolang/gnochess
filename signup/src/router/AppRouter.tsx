@@ -11,7 +11,7 @@ const AppRouter = () => {
           <Route index element={<Home />} />
           <Route path={'/success'} element={<Success />} />
         </Route>
-        <Route path='*' element={<Navigate to={'/'} />} />
+        <Route path="*" element={<Navigate to={'/'} />} />
       </Routes>
     </BrowserRouter>
   );

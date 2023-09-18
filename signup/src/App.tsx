@@ -3,7 +3,15 @@ import AppRouter from './router/AppRouter.tsx';
 
 const App = () => {
   return (
-    <ChakraProvider>
+    <ChakraProvider
+      toastOptions={{
+        defaultOptions: {
+          position: 'bottom-right',
+          isClosable: true,
+          duration: 30000
+        }
+      }}
+    >
       <AppRouter />
     </ChakraProvider>
   );
