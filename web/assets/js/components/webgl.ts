@@ -4,12 +4,19 @@ import * as THREE from "three";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
+type Events = Record<string, any>;
 type SceneAction = "init" | "pending" | "action" | "none";
 const Webgl = class extends Component {
   constructor(opts: any) {
     super(opts);
     this.scene = null;
     this.camera = null;
+    this.easing = 0.08;
+    this.cursor = {
+      x: 0,
+      y: 0,
+    };
+    this.events = {} as Events;
   }
 
   init() {
@@ -18,6 +25,12 @@ const Webgl = class extends Component {
 
     // automatically called at start
     console.log("Webgl component init");
+
+    this.events.mouseMove = this.on({
+      e: "mousemove",
+      target: window.document,
+      cb: this.setCursor.bind(this),
+    });
 
     /**
      * Scene
@@ -40,7 +53,7 @@ const Webgl = class extends Component {
     // Base camera
     this.camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 100);
     this.camera.position.z = 4.2;
-    this.camera.position.y = 1.1;
+    this.camera.position.y = 10.1;
     scene.add(this.camera);
 
     /**
@@ -142,11 +155,20 @@ const Webgl = class extends Component {
      * Animate
      */
     const tick = () => {
+      this.camera.position.x += (this.cursor.x - this.camera.position.x + 0.3) * this.easing;
+      this.camera.position.y += (this.cursor.y - this.camera.position.y + 1) * this.easing;
+      this.camera.lookAt(0, 1.2, 0);
+
       this.renderer.render(scene, this.camera);
 
       window.requestAnimationFrame(tick);
     };
     tick();
+  }
+
+  setCursor(e: any) {
+    this.cursor.x = (e.clientX / document.body.clientWidth - 0.5) / 4;
+    this.cursor.y = (e.clientY / document.body.clientHeight - 0.5) / 4;
   }
 
   changeStatus(status: SceneAction) {
