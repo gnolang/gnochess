@@ -75,7 +75,7 @@ const Dashboard = class extends Component {
   }
 
   _createPie(res: any) {
-    console.log(res);
+    //TODO: refactor to get interactive chart
     const total = res.wins + res.loses + res.draws;
     const calc = (i: number) => Math.round((i / total) * 100);
     const percents = [calc(res.wins), calc(res.loses), calc(res.draws)];
