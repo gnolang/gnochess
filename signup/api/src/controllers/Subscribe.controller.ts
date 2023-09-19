@@ -29,6 +29,11 @@ class SubscribeController {
       // Extract the subscribe request
       const subscribeRequest: SubscribeRequest = request.body;
 
+      // Make sure the ToC is accepted if the game is played
+      if (subscribeRequest.termsAndConditions !== subscribeRequest.participate) {
+        return RequestHelper.sendError(response, 400, { errors: { message: 'Bad request' } });
+      }
+
       // Subscribe the user
       await mailchimp.lists.addListMember(
         CONFIG.MAILCHIMP_AUDIENCE_ID, {
@@ -39,11 +44,11 @@ class SubscribeController {
             LNAME: subscribeRequest.lastName,
             MERGE5: subscribeRequest.participate ? 'Yes' : 'No',
             MMERGE3: getRandomToken(),
-            MMERGE4: 'dummyhandle', // TODO GitHub
-            MMERGE6: 'dummyhandle', // TODO Social handle
-            MMERGE8: 'General Gno.land', // TODO dropdown
-            MMERGE9: 'Yes', // TODO News about gnoland
-            MMERGE10: 'Yes' // TODO Terms and Conditions
+            MMERGE4: subscribeRequest.githubHandle,
+            MMERGE6: subscribeRequest.socialHandle,
+            MMERGE8: subscribeRequest.interests,
+            MMERGE9: subscribeRequest.receiveNews ? 'Yes' : 'No',
+            MMERGE10: subscribeRequest.termsAndConditions ? 'Yes' : 'No'
           }
           // TODO add tags
         });

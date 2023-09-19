@@ -6,8 +6,10 @@ import {
   Checkbox,
   FormControl,
   FormErrorMessage,
+  FormHelperText,
   FormLabel,
   Input,
+  Select,
   Spinner,
   useMediaQuery,
   useToast
@@ -31,7 +33,12 @@ const Home: FC<IHomeProps> = () => {
       firstName: '',
       lastName: '',
       email: '',
-      participate: true
+      githubHandle: '',
+      socialHandle: '',
+      interests: 'General Gno.land',
+      receiveNews: true,
+      participate: true,
+      termsAndConditions: false
     },
     enableReinitialize: true,
     validationSchema: formValidationSchema,
@@ -63,7 +70,7 @@ const Home: FC<IHomeProps> = () => {
       flexDirection={'column'}
       my={'auto'}
       mx={'auto'}
-      maxWidth={isMdOrSmaller ? '100%' : '40%'}
+      maxWidth={isMdOrSmaller ? '100%' : '60%'}
       width={'100%'}
       padding={8}
       borderRadius={'30px'}
@@ -165,7 +172,81 @@ const Home: FC<IHomeProps> = () => {
               <FormErrorMessage>{formik.errors.email}</FormErrorMessage>
             </FormControl>
           </Box>
-          <Box my={6}>
+          <Box display={'flex'} flexDirection={'column'} mt={6}>
+            <FormControl
+              isInvalid={!!formik.errors.githubHandle && formik.touched.githubHandle}
+            >
+              <FormLabel>GitHub handle</FormLabel>
+              <Input
+                variant={'outline'}
+                placeholder={'johndoe'}
+                size={'lg'}
+                id={'githubHandle'}
+                name={'githubHandle'}
+                value={formik.values.githubHandle}
+                onChange={formik.handleChange}
+              />
+              <FormErrorMessage>{formik.errors.githubHandle}</FormErrorMessage>
+            </FormControl>
+          </Box>
+          <Box display={'flex'} flexDirection={'column'} mt={6}>
+            <FormControl
+              isInvalid={!!formik.errors.socialHandle && formik.touched.socialHandle}
+            >
+              <FormLabel>Social handle</FormLabel>
+              <Input
+                variant={'outline'}
+                placeholder={'@johndoe'}
+                size={'lg'}
+                id={'socialHandle'}
+                name={'socialHandle'}
+                value={formik.values.socialHandle}
+                onChange={formik.handleChange}
+              />
+              <FormErrorMessage>{formik.errors.socialHandle}</FormErrorMessage>
+            </FormControl>
+          </Box>
+          <Box display={'flex'} flexDirection={'column'} mt={6}>
+            <FormControl
+              isInvalid={!!formik.errors.interests && formik.touched.interests}
+            >
+              <FormLabel>What are your interests</FormLabel>
+              <Select
+                variant={'outline'}
+                size={'lg'}
+                id={'interests'}
+                name={'interests'}
+                value={formik.values.interests}
+                onChange={formik.handleChange}
+              >
+                <option>General Gno.land</option>
+                <option>Joining the team</option>
+                <option>Grants Program</option>
+              </Select>
+              <FormErrorMessage>{formik.errors.interests}</FormErrorMessage>
+            </FormControl>
+          </Box>
+          <Box mt={6}>
+            <FormControl
+              isInvalid={!!formik.errors.receiveNews && formik.touched.receiveNews}
+            >
+              <Checkbox
+                size={'lg'}
+                colorScheme={'green'}
+                id={'receiveNews'}
+                name={'receiveNews'}
+                onChange={formik.handleChange}
+                isChecked={formik.values.receiveNews}
+              >
+                Do you want to receive news on Gno.land?
+              </Checkbox>
+              <FormHelperText>Note: By filling out this form you agree for New Tendermint Inc and AiB Inc. to use your
+                registration email to send you updates on its projects and products as well as future
+                events</FormHelperText>
+              <FormErrorMessage>{formik.errors.receiveNews}</FormErrorMessage>
+            </FormControl>
+          </Box>
+          <Box mt={6}>
             <Checkbox
               size={'lg'}
               colorScheme={'green'}
@@ -176,6 +257,26 @@ const Home: FC<IHomeProps> = () => {
             >
               Participate in GnoChess
             </Checkbox>
+          </Box>
+          <Box my={6}>
+            <FormControl
+              isInvalid={!!formik.errors.termsAndConditions && formik.touched.termsAndConditions}
+            >
+              <Checkbox
+                size={'lg'}
+                colorScheme={'green'}
+                id={'termsAndConditions'}
+                name={'termsAndConditions'}
+                onChange={formik.handleChange}
+                isChecked={formik.values.termsAndConditions}
+              >
+                Please confirm you accept the <a href={'https://hackmd.io'} target={'_blank'} style={{
+                textDecoration: 'underline'
+              }}>Terms and Conditions </a>
+              </Checkbox>
+              <FormHelperText>Note: Required if participating in GnoChess</FormHelperText>
+              <FormErrorMessage>{formik.errors.termsAndConditions}</FormErrorMessage>
+            </FormControl>
           </Box>
           <Box>
             <Button

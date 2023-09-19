@@ -2,7 +2,12 @@ export interface ISubscribeData {
   firstName: string;
   lastName: string;
   email: string;
-  participate: boolean;
+  githubHandle: string,
+  socialHandle: string,
+  interests: string,
+  receiveNews: boolean,
+  participate: boolean,
+  termsAndConditions: boolean,
 }
 
 export interface ISubscribeResponse {
