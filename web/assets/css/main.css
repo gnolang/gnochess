@@ -11,66 +11,73 @@
 */
 /* Inter */
 @font-face {
-  font-family: "Inter";
+  font-family: 'Inter';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("../fonts/inter/Inter-Regular.woff2?v=3.19") format("woff2"), url("../fonts/inter/Inter-Regular.woff?v=3.19") format("woff");
+  src: url('../fonts/inter/Inter-Regular.woff2?v=3.19') format('woff2'),
+    url('../fonts/inter/Inter-Regular.woff?v=3.19') format('woff');
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: 'Inter';
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url("../fonts/inter/Inter-Medium.woff2?v=3.19") format("woff2"), url("../fonts/inter/Inter-Medium.woff?v=3.19") format("woff");
+  src: url('../fonts/inter/Inter-Medium.woff2?v=3.19') format('woff2'),
+    url('../fonts/inter/Inter-Medium.woff?v=3.19') format('woff');
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: 'Inter';
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url("../fonts/inter/Inter-Medium.woff2?v=3.19") format("woff2"), url("../fonts/inter/Inter-Medium.woff?v=3.19") format("woff");
+  src: url('../fonts/inter/Inter-Medium.woff2?v=3.19') format('woff2'),
+    url('../fonts/inter/Inter-Medium.woff?v=3.19') format('woff');
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: 'Inter';
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url("../fonts/inter/Inter-Bold.woff2?v=3.19") format("woff2"), url("../fonts/inter/Inter-Bold.woff?v=3.19") format("woff");
+  src: url('../fonts/inter/Inter-Bold.woff2?v=3.19') format('woff2'),
+    url('../fonts/inter/Inter-Bold.woff?v=3.19') format('woff');
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: 'Inter';
   font-style: normal;
   font-weight: 900;
   font-display: swap;
-  src: url("../fonts/inter/Inter-Black.woff2?v=3.19") format("woff2"), url("../fonts/inter/Inter-Black.woff?v=3.19") format("woff");
+  src: url('../fonts/inter/Inter-Black.woff2?v=3.19') format('woff2'),
+    url('../fonts/inter/Inter-Black.woff?v=3.19') format('woff');
 }
 
 /* Inter var */
 @font-face {
-  font-family: "Inter var";
+  font-family: 'Inter var';
   font-weight: 100 900;
   font-display: swap;
   font-style: oblique 0deg 10deg;
-  src: url("../fonts/intervar/Inter.var.woff2?v=3.19") format("woff2");
+  src: url('../fonts/intervar/Inter.var.woff2?v=3.19') format('woff2');
 }
 
 /* Termina */
 @font-face {
-  font-family: "Termina";
-  src: url("../fonts/termina/Termina-Demi.woff2") format("woff2"), url("../fonts/termina/Termina-Demi.woff") format("woff");
+  font-family: 'Termina';
+  src: url('../fonts/termina/Termina-Demi.woff2') format('woff2'),
+    url('../fonts/termina/Termina-Demi.woff') format('woff');
   font-style: normal;
   font-weight: 600;
   font-stretch: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Termina";
-  src: url("../fonts/termina/Termina-Bold.woff2") format("woff2"), url("../fonts/termina/Termina-Bold.woff") format("woff");
+  font-family: 'Termina';
+  src: url('../fonts/termina/Termina-Bold.woff2') format('woff2'),
+    url('../fonts/termina/Termina-Bold.woff') format('woff');
   font-style: normal;
   font-weight: 700;
   font-stretch: normal;
@@ -79,8 +86,8 @@
 
 html {
   @apply font-interNormal overflow-x-hidden;
-  font-feature-settings: "kern" on, "liga" on, "calt" on, "zero" on;
-  -webkit-font-feature-settings: "kern" on, "liga" on, "calt" on, "zero" on;
+  font-feature-settings: 'kern' on, 'liga' on, 'calt' on, 'zero' on;
+  -webkit-font-feature-settings: 'kern' on, 'liga' on, 'calt' on, 'zero' on;
   text-size-adjust: 100%;
   -moz-osx-font-smoothing: grayscale;
   font-smoothing: antialiased;
@@ -203,7 +210,7 @@ body {
   transform: translate3d(-50%, -50%, 0);
   height: 80%;
   aspect-ratio: 1/1;
-  background-image: url("/img/images/pawn-sprite-rotation.png");
+  background-image: url('/img/images/pawn-sprite-rotation.png');
   background-size: 1000% 100%;
   filter: brightness(1.34) grayscale(1);
   background-repeat: no-repeat;
@@ -224,7 +231,7 @@ body {
 
 @media (min-width: 48.75rem) {
   .player-info::after {
-    content: "";
+    content: '';
     position: absolute;
     display: block;
     width: calc(50vw + 4rem);
@@ -239,7 +246,7 @@ body {
   }
 }
 
-[data-component-id="me"] .playercapturepawns > div {
+[data-component-id='me'] .playercapturepawns > div {
   @apply md:rotate-180 scale-x-[-1];
 }
 
@@ -255,14 +262,15 @@ body {
   margin: 0.6% 0.5%;
   border-radius: 1.5vw;
   transition: box-shadow 0.1s ease;
-  box-shadow: rgba(0, 0, 0, 0.4) 0px 1px 2px, rgba(0, 0, 0, 0.3) 0px 3px 6px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
+  box-shadow: rgba(0, 0, 0, 0.4) 0px 1px 2px,
+    rgba(0, 0, 0, 0.3) 0px 3px 6px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
 }
 
 .chess-board [data-square] {
   --disp-opacity: 0;
 }
 .chess-board > div > div > div > div:not(:last-child)::after {
-  content: "";
+  content: '';
   position: absolute;
   display: block;
   top: 48%;
@@ -295,7 +303,8 @@ body {
 } */
 
 .chess-board > div > div > div > div:hover {
-  box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 2px, rgba(0, 0, 0, 0.1) 0px 3px 6px -3px, rgba(0, 0, 0, 0.2) 0px -1px 0px inset;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 2px,
+    rgba(0, 0, 0, 0.1) 0px 3px 6px -3px, rgba(0, 0, 0, 0.2) 0px -1px 0px inset;
 }
 
 .chess-board > div {
@@ -307,7 +316,8 @@ body {
   background: white;
   border-radius: 3rem;
   padding: 2.4rem 1.8rem;
-  box-shadow: rgba(0, 0, 0, 0.2) 0px 2px 15px, rgba(0, 0, 0, 0.1) 0px 7px 30px -13px, rgba(0, 0, 0, 0.2) 0px -6px 0px inset;
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 2px 15px,
+    rgba(0, 0, 0, 0.1) 0px 7px 30px -13px, rgba(0, 0, 0, 0.2) 0px -6px 0px inset;
 }
 
 .chess-board img {

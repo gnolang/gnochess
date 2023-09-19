@@ -1,9 +1,9 @@
-import { Component } from "sevejs";
-import { gsap } from "gsap";
-import { Chess } from "chess.js";
-import { type Colors, type GameoverType } from "../types/types";
+import { Component } from 'sevejs';
+import { gsap } from 'gsap';
+import { Chess } from 'chess.js';
+import { type Colors, type GameoverType } from '../types/types';
 
-import Action from "../actions";
+import Action from '../actions';
 
 const Gameboard = class extends Component {
   constructor(opts: any) {
@@ -12,7 +12,7 @@ const Gameboard = class extends Component {
   }
 
   init() {
-    console.log("PlayBoard component init");
+    console.log('PlayBoard component init');
 
     this.chess = new Chess();
     this.moves = [];
@@ -20,16 +20,16 @@ const Gameboard = class extends Component {
     this.allowedToMove = false;
     this.pomotionEvents = [];
 
-    this.DOM.board = this.DOM.el.querySelector("#js-game");
-    this.DOM.promotionBtns = [...this.DOM.el.querySelectorAll(".js-topromote")];
+    this.DOM.board = this.DOM.el.querySelector('#js-game');
+    this.DOM.promotionBtns = [...this.DOM.el.querySelectorAll('.js-topromote')];
     this.DOM.moves = [];
-    this.DOM.promoteModal = this.DOM.el.querySelector("#js-promote-modal");
+    this.DOM.promoteModal = this.DOM.el.querySelector('#js-promote-modal');
 
     // @ts-ignore
     this.board = Chessboard(this.DOM.board, {
       pieceTheme: `/img/images/pieces/staunton/basic/{piece}.png`,
       onMoveEnd: this._onSnapEnd.bind(this),
-      moveSpeed: 1,
+      moveSpeed: 1
     });
     this.board.start();
   }
@@ -40,18 +40,27 @@ const Gameboard = class extends Component {
 
   startGame(color: Colors) {
     this.color = color;
-    if (this.color === "b") this.board.flip();
-    this.rivalColor = this.color === "w" ? "b" : "w";
+    if (this.color === 'b') this.board.flip();
+    this.rivalColor = this.color === 'w' ? 'b' : 'w';
 
-    this.DOM.cells = [...this.DOM.el.querySelectorAll(".square-55d63")];
+    this.DOM.cells = [...this.DOM.el.querySelectorAll('.square-55d63')];
     this.DOM.cells.forEach((el: Element, i: number) => {
-      this.events[`cell-${i}`] = this.on({ e: "click", target: el, cb: this.selectCell.bind(this) });
+      this.events[`cell-${i}`] = this.on({
+        e: 'click',
+        target: el,
+        cb: this.selectCell.bind(this)
+      });
     });
   }
 
   showScoreBoard(winner: Colors) {
-    gsap.set(this.DOM.el, { willChange: "transform" });
-    gsap.to(this.DOM.el, { rotate: winner === "w" ? "-20deg" : "20deg", x: "60%", y: winner === "w" ? "0%" : "25%", scale: 0.8 });
+    gsap.set(this.DOM.el, { willChange: 'transform' });
+    gsap.to(this.DOM.el, {
+      rotate: winner === 'w' ? '-20deg' : '20deg',
+      x: '60%',
+      y: winner === 'w' ? '0%' : '25%',
+      scale: 0.8
+    });
   }
 
   getMoveNumber() {
@@ -71,42 +80,61 @@ const Gameboard = class extends Component {
     //TODO: win cause rival resign
     //TODO: draw screen in players
     if (this.chess.isGameOver() || gameover) {
-      console.log("GAME OVER!");
-      let status: GameoverType = "checkmate";
+      console.log('GAME OVER!');
+      let status: GameoverType = 'checkmate';
 
-      if (gameover === "timeout") {
-        status = "timeout";
-        const valid = await Action.isGameover("timeout");
-        if (valid) this.call("finishGame", ["winner", status], "gameplayers", this.color === this.chess.turn() ? "rival" : "me");
+      if (gameover === 'timeout') {
+        status = 'timeout';
+        const valid = await Action.isGameover('timeout');
+        if (valid)
+          this.call(
+            'finishGame',
+            ['winner', status],
+            'gameplayers',
+            this.color === this.chess.turn() ? 'rival' : 'me'
+          );
       }
 
       if (this.chess.isCheckmate()) {
-        status = "checkmate";
-        const valid = await Action.isGameover("timeout");
-        if (valid) this.call("finishGame", ["winner", status], "gameplayers", this.color === this.chess.turn() ? "me" : "rival");
+        status = 'checkmate';
+        const valid = await Action.isGameover('timeout');
+        if (valid)
+          this.call(
+            'finishGame',
+            ['winner', status],
+            'gameplayers',
+            this.color === this.chess.turn() ? 'me' : 'rival'
+          );
       }
 
-      if (this.chess.isDraw() || gameover === "draw") {
-        status = this.chess.isStalemate() ? "stalemate" : this.chess.isThreefoldRepetition() ? "threefoldRepetition" : this.chess.isInsufficientMaterial() ? "insufficientMaterial" : "draw";
-        const valid = await Action.isGameover("timeout");
-        if (valid) this.call("finishGame", ["draw", status], "gameplayers", "me");
+      if (this.chess.isDraw() || gameover === 'draw') {
+        status = this.chess.isStalemate()
+          ? 'stalemate'
+          : this.chess.isThreefoldRepetition()
+          ? 'threefoldRepetition'
+          : this.chess.isInsufficientMaterial()
+          ? 'insufficientMaterial'
+          : 'draw';
+        const valid = await Action.isGameover('timeout');
+        if (valid)
+          this.call('finishGame', ['draw', status], 'gameplayers', 'me');
       }
 
-      this.call("stopTimer", [true], "gameplayers", "me");
-      this.call("stopTimer", [true], "gameplayers", "rival");
-      this.call("disappear", "", "gamecontrols");
+      this.call('stopTimer', [true], 'gameplayers', 'me');
+      this.call('stopTimer', [true], 'gameplayers', 'rival');
+      this.call('disappear', '', 'gamecontrols');
 
       return; // action
     }
 
     //game turn update
     if (this.color === this.chess.turn()) {
-      this.call("stopTimer", [init], "gameplayers", "rival");
-      this.call("startTimer", [init], "gameplayers", "me");
+      this.call('stopTimer', [init], 'gameplayers', 'rival');
+      this.call('startTimer', [init], 'gameplayers', 'me');
       this.allowedToMove = true;
     } else {
-      this.call("stopTimer", [init], "gameplayers", "me");
-      this.call("startTimer", [init], "gameplayers", "rival");
+      this.call('stopTimer', [init], 'gameplayers', 'me');
+      this.call('startTimer', [init], 'gameplayers', 'rival');
       this.allowedToMove = false;
       this.rivalMove();
     }
@@ -119,7 +147,12 @@ const Gameboard = class extends Component {
     this.board.position(this.chess.fen());
 
     if (move.captured) {
-      this.call("capturePawn", [move.captured], "gameplayers", move.color === this.color ? "me" : "rival");
+      this.call(
+        'capturePawn',
+        [move.captured],
+        'gameplayers',
+        move.color === this.color ? 'me' : 'rival'
+      );
     }
     this.engine();
   }
@@ -143,9 +176,9 @@ const Gameboard = class extends Component {
         };
 
         const evOpts = {
-          e: "click",
+          e: 'click',
           target: el,
-          cb: cb.bind(this),
+          cb: cb.bind(this)
         };
 
         const ev = this.on(evOpts);
@@ -168,17 +201,26 @@ const Gameboard = class extends Component {
 
       //if promotion, wwait for user choice
       if (this.promotion.length > 0) {
-        this.DOM.board.style.pointerEvents = "none";
+        this.DOM.board.style.pointerEvents = 'none';
         promoted = await this.promote();
-        this.DOM.board.style.pointerEvents = "auto";
+        this.DOM.board.style.pointerEvents = 'auto';
       }
 
       // if click on allowed cell (to move)
-      const move = this.chess.move({ from: this.selected, to: currentCell, promotion: promoted });
+      const move = this.chess.move({
+        from: this.selected,
+        to: currentCell,
+        promotion: promoted
+      });
       this.board.move(`${move.from}-${move.to}`);
       if (move.captured) {
         // capture
-        this.call("capturePawn", [move.captured], "gameplayers", move.color === this.color ? "me" : "rival");
+        this.call(
+          'capturePawn',
+          [move.captured],
+          'gameplayers',
+          move.color === this.color ? 'me' : 'rival'
+        );
       }
 
       // ------ Action - emmit my move ------
@@ -186,14 +228,14 @@ const Gameboard = class extends Component {
       this.engine();
 
       //reset allowed positions
-      gsap.to(".chess-board [data-square]", { "--disp-opacity": 0 });
+      gsap.to('.chess-board [data-square]', { '--disp-opacity': 0 });
       this.DOM.moves = [];
     } else {
       // if click on disallow cell (new select)
       if (this.DOM.moves.length > 0) {
         // if new select on board -> reset allowed position
 
-        gsap.to(".chess-board [data-square]", { "--disp-opacity": 0 });
+        gsap.to('.chess-board [data-square]', { '--disp-opacity': 0 });
         this.DOM.moves = [];
       }
 
@@ -201,20 +243,29 @@ const Gameboard = class extends Component {
       this.selected = currentCell;
       const moves = this.chess.moves({ square: currentCell, verbose: true });
       this.moves = [...new Set(moves.map((pos: any) => pos.to))]; //remove duplicate of "to" (promotion ones)
-      this.promotion = [...new Set(moves.filter((move: any) => move.promotion).map((move: any) => move.to))];
+      this.promotion = [
+        ...new Set(
+          moves
+            .filter((move: any) => move.promotion)
+            .map((move: any) => move.to)
+        )
+      ];
 
       this.moves.forEach((cell: Element) => {
-        this.DOM.moves.push(this.DOM.el.querySelector(`[data-square="${cell}"]`));
+        this.DOM.moves.push(
+          this.DOM.el.querySelector(`[data-square="${cell}"]`)
+        );
       });
       // highlight allowed position
-      if (this.DOM.moves.length > 0) gsap.to(this.DOM.moves, { "--disp-opacity": 1 });
+      if (this.DOM.moves.length > 0)
+        gsap.to(this.DOM.moves, { '--disp-opacity': 1 });
     }
   }
 
   appear() {
-    gsap.to(this.DOM.el, { autoAlpha: 1, display: "flex" });
-    gsap.from(".piece-417db", { y: "-65%", ease: "bounce.out", stagger: 0.03 });
-    gsap.from(".piece-417db", { autoAlpha: 0, stagger: 0.03 }).then(() => {
+    gsap.to(this.DOM.el, { autoAlpha: 1, display: 'flex' });
+    gsap.from('.piece-417db', { y: '-65%', ease: 'bounce.out', stagger: 0.03 });
+    gsap.from('.piece-417db', { autoAlpha: 0, stagger: 0.03 }).then(() => {
       this.engine(true);
     });
   }

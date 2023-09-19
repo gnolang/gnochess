@@ -1,10 +1,24 @@
-{{ define "meta" }} {{ partial "head/jsonld" (dict "context" . "content" "head/schema/schema-corporation.html") }} {{ partial "head/jsonld" (dict "context" . "content"
-"head/schema/schema-website.html") }} {{ end }} {{ define "main" }} {{ $data := index .Site.Data .Site.Language.Lang }} {{ partial "game/category.html" . }}
-<div data-component="dashboard" class="min-h-[calc(100vh_-_theme(space.28))] grid grid-cols-12 gap-4 md:gap-16 pt-52">
-  <header class="js-dashboardheader | opacity-0 max-w-screen-xxl mx-auto xl:px-16 md:px-8 px-8 w-full col-span-12 flex justify-between items-center">
+{{ define "meta" }} {{ partial "head/jsonld" (dict "context" . "content"
+"head/schema/schema-corporation.html") }} {{ partial "head/jsonld" (dict
+"context" . "content" "head/schema/schema-website.html") }} {{ end }} {{ define
+"main" }} {{ $data := index .Site.Data .Site.Language.Lang }} {{ partial
+"game/category.html" . }}
+<div
+  data-component="dashboard"
+  class="min-h-[calc(100vh_-_theme(space.28))] grid grid-cols-12 gap-4 md:gap-16 pt-52"
+>
+  <header
+    class="js-dashboardheader | opacity-0 max-w-screen-xxl mx-auto xl:px-16 md:px-8 px-8 w-full col-span-12 flex justify-between items-center"
+  >
     <div class="flex">
-      <div class="js-playeravatar | relative w-20 h-20 bg-grey-600 rounded-circle border border-grey-200 mt-0.5 overflow-hidden">
-        <img src="/img/mini-gopher.png" alt="my avatar" class="relative object-contain object-bottom h-full w-full" />
+      <div
+        class="js-playeravatar | relative w-20 h-20 bg-grey-600 rounded-circle border border-grey-200 mt-0.5 overflow-hidden"
+      >
+        <img
+          src="/img/mini-gopher.png"
+          alt="my avatar"
+          class="relative object-contain object-bottom h-full w-full"
+        />
       </div>
 
       <div class="ml-5">
@@ -19,41 +33,63 @@
     </ul>
   </header>
 
-  <section class="js-dashboard | relative py-20 col-span-12 after:bg-grey-200 after:w-full after:absolute after:left-0 after:z-min after:top-0 after:rounded-t after:h-full">
-    <div class="max-w-screen-xxl mx-auto xl:px-16 md:px-8 px-8 w-full grid lg:grid-cols-4 grid-cols-1 sm:grid-cols-2 grid-rows-2 gap-2">
-      <article class="opacity-0 translate-y-20 col-span-1 bg-grey-50 rounded py-7 px-8 flex flex-col justify-between">
+  <section
+    class="js-dashboard | relative py-20 col-span-12 after:bg-grey-200 after:w-full after:absolute after:left-0 after:z-min after:top-0 after:rounded-t after:h-full"
+  >
+    <div
+      class="max-w-screen-xxl mx-auto xl:px-16 md:px-8 px-8 w-full grid lg:grid-cols-4 grid-cols-1 sm:grid-cols-2 grid-rows-2 gap-2"
+    >
+      <article
+        class="opacity-0 translate-y-20 col-span-1 bg-grey-50 rounded py-7 px-8 flex flex-col justify-between"
+      >
         <h2 class="mb-4 text-100 font-bold">Rapid rating</h2>
 
-        <span class="text-600 font-bold text-grey-600"><span class="text-750" id="js-dashboardRapidWins">0</span>wins</span>
+        <span class="text-600 font-bold text-grey-600"
+          ><span class="text-750" id="js-dashboardRapidWins">0</span>wins</span
+        >
         <div class="flex justify-between items-end font-bold">
           <div>
             <div class="flex items-center">
-              <span class="inline-flex mr-2 w-6 justify-center items-center">{{- partial "icons/ico-lose.html" . -}}</span><span id="js-dashboardRapidLoses">0</span> Loses
+              <span class="inline-flex mr-2 w-6 justify-center items-center"
+                >{{- partial "icons/ico-lose.html" . -}}</span
+              ><span id="js-dashboardRapidLoses">0</span> Loses
             </div>
             <div class="flex items-center">
-              <span class="inline-flex mr-2 w-6 justify-center items-center">{{- partial "icons/ico-flag.html" . -}}</span><span id="js-dashboardRapidDraws">0</span> Draws
+              <span class="inline-flex mr-2 w-6 justify-center items-center"
+                >{{- partial "icons/ico-flag.html" . -}}</span
+              ><span id="js-dashboardRapidDraws">0</span> Draws
             </div>
           </div>
           <div><span id="js-dashboardRapidGames">0</span> Games</div>
         </div>
       </article>
-      <article class="opacity-0 translate-y-20 col-span-1 bg-grey-50 rounded py-7 px-8 flex flex-col justify-between">
+      <article
+        class="opacity-0 translate-y-20 col-span-1 bg-grey-50 rounded py-7 px-8 flex flex-col justify-between"
+      >
         <h2 class="mb-4 text-100 font-bold">Blitz rating</h2>
 
-        <span class="text-600 font-bold text-grey-600"><span class="text-750" id="js-dashboardBlitzWins">0</span>wins</span>
+        <span class="text-600 font-bold text-grey-600"
+          ><span class="text-750" id="js-dashboardBlitzWins">0</span>wins</span
+        >
         <div class="flex justify-between items-end font-bold">
           <div>
             <div class="flex items-center">
-              <span class="inline-flex mr-2 w-6 justify-center items-center">{{- partial "icons/ico-lose.html" . -}}</span><span id="js-dashboardBlitzLoses">0</span> Loses
+              <span class="inline-flex mr-2 w-6 justify-center items-center"
+                >{{- partial "icons/ico-lose.html" . -}}</span
+              ><span id="js-dashboardBlitzLoses">0</span> Loses
             </div>
             <div class="flex items-center">
-              <span class="inline-flex mr-2 w-6 justify-center items-center">{{- partial "icons/ico-flag.html" . -}}</span><span id="js-dashboardBlitzDraws">0</span> Draws
+              <span class="inline-flex mr-2 w-6 justify-center items-center"
+                >{{- partial "icons/ico-flag.html" . -}}</span
+              ><span id="js-dashboardBlitzDraws">0</span> Draws
             </div>
           </div>
           <div><span id="js-dashboardBlitzGames">0</span> Games</div>
         </div>
       </article>
-      <article class="opacity-0 translate-y-20 relative overflow-hidden sm:col-span-2 row-start-2 bg-grey-50 rounded py-7 px-8 flex flex-col justify-between min-h-[26vh]">
+      <article
+        class="opacity-0 translate-y-20 relative overflow-hidden sm:col-span-2 row-start-2 bg-grey-50 rounded py-7 px-8 flex flex-col justify-between min-h-[26vh]"
+      >
         <h2 class="mb-4 text-100 font-bold">Global rating</h2>
         <div
           id="dashboard-rank"
@@ -63,29 +99,51 @@
         <div class="flex justify-between items-end font-bold">
           <div>
             <div class="flex items-center mt-2">
-              <span class="inline-flex mr-2 w-6 justify-center items-center"><span class="rounded-circle w-full aspect-square bg-grey-600"></span></span><span id="js-dashboardGlobalWins">0</span> Wins
+              <span class="inline-flex mr-2 w-6 justify-center items-center"
+                ><span
+                  class="rounded-circle w-full aspect-square bg-grey-600"
+                ></span></span
+              ><span id="js-dashboardGlobalWins">0</span> Wins
             </div>
             <div class="flex items-center mt-2">
-              <span class="inline-flex mr-2 w-6 justify-center items-center"><span class="rounded-circle w-full aspect-square bg-grey-400"></span></span
+              <span class="inline-flex mr-2 w-6 justify-center items-center"
+                ><span
+                  class="rounded-circle w-full aspect-square bg-grey-400"
+                ></span></span
               ><span id="js-dashboardGlobalLoses">0</span> Loses
             </div>
             <div class="flex items-center mt-2">
-              <span class="inline-flex mr-2 w-6 justify-center items-center"><span class="rounded-circle w-full aspect-square bg-grey-200"></span></span
+              <span class="inline-flex mr-2 w-6 justify-center items-center"
+                ><span
+                  class="rounded-circle w-full aspect-square bg-grey-200"
+                ></span></span
               ><span id="js-dashboardGlobalDraws">0</span> Draws
             </div>
           </div>
           <div><span id="js-dashboardGlobalGames">0</span> Games</div>
         </div>
-        <img src="/img/images/trophy.png" class="absolute top-0 right-0 h-5/6" alt="" />
+        <img
+          src="/img/images/trophy.png"
+          class="absolute top-0 right-0 h-5/6"
+          alt=""
+        />
       </article>
-      <article class="leaderboard translate-y-20 opacity-0 sm:col-span-2 row-span-2 bg-grey-50 rounded min-h-[30vh] max-h-[60vh] overflow-scroll py-7 px-8">
+      <article
+        class="leaderboard translate-y-20 opacity-0 sm:col-span-2 row-span-2 bg-grey-50 rounded min-h-[30vh] max-h-[60vh] overflow-scroll py-7 px-8"
+      >
         <h2 class="mb-4 text-100 font-bold">Leaderboard</h2>
         <div class="flex w-full justify-between">
           <div class="w-1/2">
             <div class="font-termina text-300 font-bold my-4">Rapid</div>
             <ol id="js-dashrapidleaderboard" class="leaderboard-table">
               <li class="dashboard-avatar flex">
-                <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
+                <div class="bg-grey-200 w-20 overflow-hidde p-2">
+                  <img
+                    src="/img/mini-gopher.png"
+                    class="bg-grey-50 border border-grey-50 rounded-circle"
+                    alt="avatar"
+                  />
+                </div>
                 <div
                   class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1"
                 >
@@ -99,7 +157,13 @@
 
             <ol id="js-dashblitzleaderboard" class="leaderboard-table">
               <li class="dashboard-avatar flex">
-                <div class="bg-grey-200 w-20 overflow-hidde p-2"><img src="/img/mini-gopher.png" class="bg-grey-50 border border-grey-50 rounded-circle" alt="avatar" /></div>
+                <div class="bg-grey-200 w-20 overflow-hidde p-2">
+                  <img
+                    src="/img/mini-gopher.png"
+                    class="bg-grey-50 border border-grey-50 rounded-circle"
+                    alt="avatar"
+                  />
+                </div>
                 <div
                   class="relative flex ml-4 pt-5 font-bold text-300 before:top-0 before:leading-tight before:absolute before:left-0 before:font-termina before:text-750 before:text-grey-150 items-center before:z-min z-1"
                 >

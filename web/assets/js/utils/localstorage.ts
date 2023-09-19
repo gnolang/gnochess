@@ -5,7 +5,7 @@ const saveToLocalStorage = (data: string, key: string) => {
 const getFromLocalStorage = (key: string): string => {
   // Fetch it from local storage and parse
 
-  return localStorage.getItem(key) ?? "";
+  return localStorage.getItem(key) ?? '';
 };
 
 export { saveToLocalStorage, getFromLocalStorage };
