@@ -153,6 +153,9 @@ class Actions {
                     // Parse the response
                     const gameSettings: GameSettings = JSON.parse(waitResponse)
 
+                    // Clear the fetch interval
+                    clearInterval(fetchInterval)
+
                     resolve(gameSettings)
                 } catch (e) {
                     // Game not ready, continue polling...
