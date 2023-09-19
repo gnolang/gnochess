@@ -2,7 +2,7 @@ import { Component } from 'sevejs';
 import { gsap } from 'gsap';
 import Events from '../utils/events';
 import Actions from '../actions.ts';
-import { Game, GameState } from '../types/types.ts';
+import { Game, GameState, drawRequestTimer } from '../types/types.ts';
 
 type Events = Record<string, any>;
 type GameAction = 'void' | 'draw' | 'resign' | 'offer';
@@ -179,9 +179,9 @@ const Gamecontrols = class extends Component {
   async _declineOffer() {
     const actions: Actions = await Actions.getInstance();
 
-    await actions.declineDraw(this.gameId); // TODO @Alexis add game ID
+    await actions.declineDraw(this.gameId);
     clearInterval(this.pendingDraw);
-    this.timer = 15;
+    this.timer = drawRequestTimer;
     this.pendingDraw = null;
   }
 
@@ -194,7 +194,7 @@ const Gamecontrols = class extends Component {
 
       if (this.timer <= 0) {
         this._clickOnCtr('draw', true);
-        this.timer = 15;
+        this.timer = drawRequestTimer;
       }
     }, 1000);
     this._clickOnCtr('offer', false);

@@ -2,6 +2,7 @@ import { saveToLocalStorage } from './utils/localstorage';
 import {
   defaultFaucetTokenKey,
   defaultMnemonicKey,
+  drawRequestTimer,
   Game,
   type GameoverType,
   type GameSettings,
@@ -11,7 +12,10 @@ import {
   Promotion
 } from './types/types';
 import { GnoWallet, GnoWSProvider } from '@gnolang/gno-js-client';
-import { BroadcastTxCommitResult, TransactionEndpoint } from '@gnolang/tm2-js-client';
+import {
+  BroadcastTxCommitResult,
+  TransactionEndpoint
+} from '@gnolang/tm2-js-client';
 import { generateMnemonic } from './utils/crypto.ts'; // TODO move this out into an ENV variable that's loaded in
 
 // TODO move this out into an ENV variable that's loaded in
@@ -146,7 +150,7 @@ class Actions {
    */
   private async waitForGame(timeout?: number): Promise<GameSettings> {
     return new Promise(async (resolve, reject) => {
-      const exitTimeout = timeout ? timeout : 15000; // wait time is max 15s
+      const exitTimeout = timeout ? timeout : drawRequestTimer * 1000; // wait time is max 15s
 
       const fetchInterval = setInterval(async () => {
         try {
@@ -219,7 +223,7 @@ class Actions {
 
     // Parse the response
     return JSON.parse(gameResponse);
-}
+  }
 
   /**
    * Executes the move and returns the game state
@@ -301,7 +305,10 @@ class Actions {
       default:
     }
 
-    return this.waitForDraw(gameID, timeout ? timeout : 15000);
+    return this.waitForDraw(
+      gameID,
+      timeout ? timeout : drawRequestTimer * 1000
+    );
   }
 
   /**
