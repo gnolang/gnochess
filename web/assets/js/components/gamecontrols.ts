@@ -146,7 +146,7 @@ const Gamecontrols = class extends Component {
     const actions: Actions = await Actions.getInstance();
 
     if (this.action === 'resign') {
-      await actions.requestResign(''); // TODO @Alexis add game ID
+      await actions.requestResign(this.gameId);
       this.call('goTo', ['/'], 'router');
     }
     if (this.action === 'draw') {
@@ -156,7 +156,7 @@ const Gamecontrols = class extends Component {
         this.pendingDraw = null;
       } else {
         //TODO: wait screen
-        const game: Game = await actions.requestDraw(''); // TODO @Alexis add game ID
+        const game: Game = await actions.requestDraw(this.gameId);
         // TODO @Alexis, you need to check the game state here,
         // or set up a poller for checking if a draw happens (if you don't validate the state on each move).
         //
@@ -181,7 +181,7 @@ const Gamecontrols = class extends Component {
   async _declineOffer() {
     const actions: Actions = await Actions.getInstance();
 
-    await actions.declineDraw(''); // TODO @Alexis add game ID
+    await actions.declineDraw(this.gameId); // TODO @Alexis add game ID
     clearInterval(this.pendingDraw);
     this.timer = 9;
     this.pendingDraw = null;
@@ -205,7 +205,8 @@ const Gamecontrols = class extends Component {
     // TODO @Alexis is something supposed to happen here with Actions?
   }
 
-  appear() {
+  appear(gameId: string) {
+    this.gameId = gameId;
     gsap.to(this.DOM.el, { autoAlpha: 1, display: 'flex' });
   }
 

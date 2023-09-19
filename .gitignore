@@ -111,12 +111,12 @@ typings/
 
 #hugo ressources
 web/resources/_gen/assets
-web/public/js/*
-web/public/css/*
-web/public/terms/*
-web/public/about/*
-web/public/index.html
-web/public/play/*
+
+web/public/js/**/*.js
+web/public/css/**/*.css
+web/public/**/*.html
+web/public/**/*.xml
+
 
 realm/*.go
 

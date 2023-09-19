@@ -26,6 +26,9 @@ const chessRealm: string = 'gno.land/r/gnochess';
  */
 // @ts-ignore
 class Actions {
+  static getFaucetToken() {
+    throw new Error('Method not implemented.');
+  }
   private static instance: Actions;
 
   private wallet: GnoWallet | null = null;
