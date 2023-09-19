@@ -5,7 +5,13 @@ export type GameoverType =
   | 'draw'
   | 'stalemate'
   | 'threefoldRepetition'
-  | 'insufficientMaterial';
+  | 'insufficientMaterial'
+  | 'drawn_5_fold'
+  | 'drawn_75_move'
+  | 'drawn_5_fold'
+  | 'drawn_50_move'
+  | 'drawn_3_fold';
+
 export type Move = {
   from: string;
   to: string;

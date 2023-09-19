@@ -68,24 +68,23 @@ const Gameboard = class extends Component {
   }
 
   async engine(init = false, gameover?: GameoverType) {
-    //for test purpose -> to et in if statment bellow
-    // setTimeout(() => {
-    //   this.call("finishGame", "gameover", "gameplayers", "me");
-    //   this.call("stopTimer", [true], "gameplayers", "me");
-    //   this.call("stopTimer", [true], "gameplayers", "rival");
-    //   this.call("disappear", "", "gamecontrols");
-    //   this.showScoreBoard("w");
-    // }, 10000);
-
     const actions: Actions = await Actions.getInstance();
 
     //TODO: win cause rival resign
     //TODO: draw screen in players
-    if (this.chess.isGameOver() || gameover) {
+
+    const gameState = await actions.getGame(this.gameId);
+
+    if (gameState.state !== 'open' || this.chess.isGameOver() || gameover) {
       console.log('GAME OVER!');
+
+      if (gameState.state === 'invalid') {
+        throw new Error('invalid move');
+      }
+
       let status: GameoverType = 'checkmate';
 
-      if (gameover === 'timeout') {
+      if (gameover === 'timeout' || gameState.state === 'timeout') {
         status = 'timeout';
         const valid = await actions.isGameOver(this.gameId, 'timeout');
         if (valid)
@@ -97,7 +96,7 @@ const Gameboard = class extends Component {
           );
       }
 
-      if (this.chess.isCheckmate()) {
+      if (this.chess.isCheckmate() || gameState.state === 'checkmated') {
         status = 'checkmate';
         const valid = await actions.isGameOver(this.gameId, 'checkmate');
         if (valid)
@@ -109,7 +108,16 @@ const Gameboard = class extends Component {
           );
       }
 
-      if (this.chess.isDraw() || gameover === 'draw') {
+      const isEngineDrawn =
+        gameState.state === 'stalemate' ||
+        gameState.state === 'drawn_75_move' ||
+        gameState.state === 'drawn_5_fold' ||
+        gameState.state === 'drawn_50_move' ||
+        gameState.state === 'drawn_3_fold' ||
+        gameState.state === 'drawn_insufficient' ||
+        gameState.state === 'drawn_by_agreement';
+
+      if (isEngineDrawn || this.chess.isDraw() || gameover === 'draw') {
         status = this.chess.isStalemate()
           ? 'stalemate'
           : this.chess.isThreefoldRepetition()
@@ -120,6 +128,12 @@ const Gameboard = class extends Component {
         const valid = await actions.isGameOver(this.gameId, status);
         if (valid)
           this.call('finishGame', ['draw', status], 'gameplayers', 'me');
+      }
+
+      if (gameState.state === 'resigned') {
+        const valid = await actions.isGameOver(this.gameId, 'checkmate');
+        if (valid)
+          this.call('finishGame', ['winner', status], 'gameplayers', 'me');
       }
 
       this.call('stopTimer', [true], 'gameplayers', 'me');
@@ -143,12 +157,6 @@ const Gameboard = class extends Component {
   }
 
   async rivalMove() {
-    // TODO @Alexis
-    // There is no method for querying if the
-    // rival made a move (event). You need to manually
-    // poll the game state using "await Actions.getInstance().getGame(gameID)"
-    // and seeing if the positions changed for the rival
-
     const actions: Actions = await Actions.getInstance();
 
     const checkRivalMove = async () => {
