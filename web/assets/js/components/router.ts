@@ -1,13 +1,13 @@
-import { Component } from "sevejs";
-import barba from "@barba/core";
+import { Component } from 'sevejs';
+import barba from '@barba/core';
 
-import { playView, playTransition } from "../routes/play.ts";
-import { homeTransition, homeView } from "../routes/home.ts";
-import { genericTransition, genericView } from "../routes/generic.ts";
-import { aboutTransition, aboutView } from "../routes/about.ts";
-import { dashboardTransition, dashboardView } from "../routes/dashboard.ts";
+import { playView, playTransition } from '../routes/play.ts';
+import { homeTransition, homeView } from '../routes/home.ts';
+import { genericTransition, genericView } from '../routes/generic.ts';
+import { aboutTransition, aboutView } from '../routes/about.ts';
+import { dashboardTransition, dashboardView } from '../routes/dashboard.ts';
 
-type RouterType = "views" | "transitions";
+type RouterType = 'views' | 'transitions';
 
 const Router = class extends Component {
   constructor(opts: any) {
@@ -16,18 +16,30 @@ const Router = class extends Component {
 
   init() {
     // automatically called at start
-    this.loadedViews = [playView, homeView, aboutView, genericView, dashboardView];
-    this.loadedTransition = [playTransition(this), ...homeTransition(this), ...aboutTransition(this), ...genericTransition(this), ...dashboardTransition(this)];
+    this.loadedViews = [
+      playView,
+      homeView,
+      aboutView,
+      genericView,
+      dashboardView
+    ];
+    this.loadedTransition = [
+      playTransition(this),
+      ...homeTransition(this),
+      ...aboutTransition(this),
+      ...genericTransition(this),
+      ...dashboardTransition(this)
+    ];
     this.views = [];
     this.transitions = [];
 
     this._updateModules();
-    this._createModules("views", this.loadedViews);
-    this._createModules("transitions", this.loadedTransition);
+    this._createModules('views', this.loadedViews);
+    this._createModules('transitions', this.loadedTransition);
 
     barba.init({
       views: this.views,
-      transitions: this.transitions,
+      transitions: this.transitions
     });
 
     barba.hooks.enter(() => {
@@ -54,8 +66,12 @@ const Router = class extends Component {
   _updateModules() {
     this.loadedViews.forEach((loadedView: any) => {
       /** Check if barba after/before function exist then yes save it */
-      const viewAfterFunc = loadedView.afterEnter ? loadedView.afterEnter : null;
-      const viewBeforeFunc = loadedView.beforeLeave ? loadedView.beforeLeave : null;
+      const viewAfterFunc = loadedView.afterEnter
+        ? loadedView.afterEnter
+        : null;
+      const viewBeforeFunc = loadedView.beforeLeave
+        ? loadedView.beforeLeave
+        : null;
 
       loadedView.beforeLeave = () => {
         viewBeforeFunc && viewBeforeFunc();
@@ -68,14 +84,14 @@ const Router = class extends Component {
         viewAfterFunc && viewAfterFunc();
 
         // Global Emit
-        this.trigger("pageLoad");
+        this.trigger('pageLoad');
 
         // Other general actions...
 
         /** if not first load -> modularjs already init in general index.js */
         if (data.current.container) {
-          this.call("destroy", data.current.container, "app");
-          this.call("update", data.next.container, "app");
+          this.call('destroy', data.current.container, 'app');
+          this.call('update', data.next.container, 'app');
         }
       };
     });

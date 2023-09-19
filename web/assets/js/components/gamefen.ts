@@ -1,5 +1,5 @@
-import { Component } from "sevejs";
-import { gsap } from "gsap";
+import { Component } from 'sevejs';
+import { gsap } from 'gsap';
 
 const Gamefen = class extends Component {
   constructor(opts: any) {
@@ -8,11 +8,11 @@ const Gamefen = class extends Component {
 
   init() {
     // automatically called at start
-    console.log("PlayFen component init");
+    console.log('PlayFen component init');
   }
 
   appear() {
-    gsap.to(this.DOM.el, { autoAlpha: 1, display: "flex" });
+    gsap.to(this.DOM.el, { autoAlpha: 1, display: 'flex' });
   }
   disappear() {}
 
