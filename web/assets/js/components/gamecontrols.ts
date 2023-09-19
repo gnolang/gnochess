@@ -2,7 +2,7 @@ import { Component } from 'sevejs';
 import { gsap } from 'gsap';
 import Events from '../utils/events';
 import Actions from '../actions.ts';
-import { Game } from '../types/types.ts';
+import { Game, GameState } from '../types/types.ts';
 
 type Events = Record<string, any>;
 type GameAction = 'void' | 'draw' | 'resign' | 'offer';
@@ -155,15 +155,13 @@ const Gamecontrols = class extends Component {
         this.timer = 9;
         this.pendingDraw = null;
       } else {
-        //TODO: wait screen
+        this.waitingTL.play();
+
         const game: Game = await actions.requestDraw(this.gameId);
-        // TODO @Alexis, you need to check the game state here,
-        // or set up a poller for checking if a draw happens (if you don't validate the state on each move).
-        //
-        // if (game.state === GameState.DRAWN_BY_AGREEMENT) {
-        //     this.call("engine", [false, "draw"], "gameboard");
-        // }
-        console.log(game);
+        if (game.state === GameState.DRAWN_BY_AGREEMENT) {
+          this.call('engine', [false, 'draw'], 'gameboard');
+          this.waitingTL.reverse();
+        }
       }
     }
 
@@ -183,7 +181,7 @@ const Gamecontrols = class extends Component {
 
     await actions.declineDraw(this.gameId); // TODO @Alexis add game ID
     clearInterval(this.pendingDraw);
-    this.timer = 9;
+    this.timer = 15;
     this.pendingDraw = null;
   }
 
@@ -196,7 +194,7 @@ const Gamecontrols = class extends Component {
 
       if (this.timer <= 0) {
         this._clickOnCtr('draw', true);
-        this.timer = 9;
+        this.timer = 15;
       }
     }, 1000);
     this._clickOnCtr('offer', false);
