@@ -2,7 +2,7 @@ import express, { NextFunction, Request, Response } from 'express';
 import * as bodyParser from 'body-parser';
 import * as http from 'http';
 import { ApplicationEnv, CONFIG } from './config';
-import { userRouter } from './routes/routers';
+import { subscribeRouter } from './routes/routers';
 import errorhandler from 'errorhandler';
 import cors from 'cors';
 
@@ -43,7 +43,7 @@ app.use((req, res, next) => {
 });
 
 // Define API routes //
-app.use('/api/users', userRouter);
+app.use('/api/subscribe', subscribeRouter);
 
 // Catch 404s
 app.use('*', (request: Request, response: Response) => {

@@ -5,8 +5,11 @@ import { Request, Response } from 'express';
 import mailchimp from '@mailchimp/mailchimp_marketing';
 import { CONFIG } from '../config';
 import subscribeUserSchema from '../schemas/users.schema';
+import ajvFormats from 'ajv-formats';
+import getRandomToken from '../helpers/token.helper';
 
 const ajv = new Ajv();
+ajvFormats(ajv);
 
 // Set up mailchimp
 mailchimp.setConfig({
@@ -14,11 +17,7 @@ mailchimp.setConfig({
   server: CONFIG.MAILCHIMP_API_SERVER
 });
 
-const mailchimpClient = require('@mailchimp/mailchimp_transactional')(
-  CONFIG.MAILCHIMP_API_KEY
-);
-
-class UsersController {
+class SubscribeController {
   static async subscribeUser(request: Request, response: Response) {
     try {
       // Validate the request
@@ -31,43 +30,45 @@ class UsersController {
       const subscribeRequest: SubscribeRequest = request.body;
 
       // Subscribe the user
-      const addResponse = await mailchimp.lists.addListMember(
+      await mailchimp.lists.addListMember(
         CONFIG.MAILCHIMP_AUDIENCE_ID, {
           email_address: subscribeRequest.email,
           status: 'subscribed',
           merge_fields: {
-            // TODO validate these fields
             FNAME: subscribeRequest.firstName,
             LNAME: subscribeRequest.lastName,
-            MERGE5: subscribeRequest.participate ? 'Yes' : 'No'
+            MERGE5: subscribeRequest.participate ? 'Yes' : 'No',
+            MMERGE3: getRandomToken(),
+            MMERGE4: 'dummyhandle', // TODO GitHub
+            MMERGE6: 'dummyhandle', // TODO Social handle
+            MMERGE8: 'General Gno.land', // TODO dropdown
+            MMERGE9: 'Yes', // TODO News about gnoland
+            MMERGE10: 'Yes' // TODO Terms and Conditions
           }
+          // TODO add tags
         });
 
-      // TODO check error response
-      console.log(addResponse);
+      // Trigger an email for the user
+      //@ts-ignore
+      const journeyResponse = await mailchimp.customerJourneys.trigger(
+        CONFIG.MAILCHIMP_JOURNEY_ID,
+        CONFIG.MAILCHIMP_JOURNEY_STEP,
+        {
+          email_address: subscribeRequest.email
+        }
+      );
 
-      if (subscribeRequest.participate) {
-        // The user wants to participate in GnoChess,
-        // send him the token over email
-        const sendResponse = await mailchimpClient.messages.sendTemplate({
-          template_name: 'GNOCHESS_TOKEN_TEMPLATE',
-          template_content: [{
-            TOKEN: 'DUMMY TOKEN' // TODO check this
-          }],
-          message: {}
-        });
-
-        // TODO check error response
-        console.log(sendResponse);
+      if (journeyResponse != null) {
+        throw new Error(journeyResponse);
       }
 
-      return RequestHelper.sendSuccess(response, 'user subscribed');
+      return RequestHelper.sendSuccess(response, { message: 'User subscribed' });
     } catch (err) {
-      console.error(err.message);
+      console.error(err);
 
-      return RequestHelper.sendError(response, 500, 'Server error');
+      return RequestHelper.sendError(response, 500, { errors: { message: 'Unable to subscribe user' } });
     }
   }
 }
 
-export default UsersController;
+export default SubscribeController;

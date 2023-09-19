@@ -1,4 +1,4 @@
-import { IFormData, IHomeProps } from './home.types.ts';
+import { IHomeProps } from './home.types.ts';
 import { FC, useState } from 'react';
 import {
   Box,
@@ -17,6 +17,8 @@ import { BsSend } from 'react-icons/bs';
 import { useFormik } from 'formik';
 import formValidationSchema from '../../../shared/schemas/formSchema.ts';
 import banner from '../../../assets/img/banner.png';
+import { ISubscribeData } from '../../../services/subscribe/subscribe.types.ts';
+import SubscribeService from '../../../services/subscribe/subscribe.ts';
 
 const Home: FC<IHomeProps> = () => {
   const [isMdOrSmaller] = useMediaQuery('(max-width: 62em)');
@@ -33,14 +35,13 @@ const Home: FC<IHomeProps> = () => {
     },
     enableReinitialize: true,
     validationSchema: formValidationSchema,
-    onSubmit: async (values: IFormData, { resetForm }) => {
+    onSubmit: async (values: ISubscribeData, { resetForm }) => {
       setSubmitting(true);
 
       try {
-        // TODO execute POST
-        console.log(values);
-        resetForm();
+        await SubscribeService.subscribeUser(values);
 
+        resetForm();
         toast({
           title: 'Sign up successful!',
           status: 'success'

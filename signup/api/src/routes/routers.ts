@@ -1,5 +1,5 @@
-import userRouter from '../routes/users.router';
+import subscribeRouter from '../routes/subscribe.router';
 
 export {
-  userRouter
+  subscribeRouter
 };
