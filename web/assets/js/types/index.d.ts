@@ -1,2 +1,2 @@
-declare module "sevejs";
-declare module "tiny-emitter";
+declare module 'sevejs';
+declare module 'tiny-emitter';

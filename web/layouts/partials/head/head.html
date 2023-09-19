@@ -1,11 +1,15 @@
 <head>
   {{ template "_internal/google_analytics.html" . }}
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1.0" />
+  <meta
+    name="viewport"
+    content="width=device-width,height=device-height,initial-scale=1.0"
+  />
   <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-  {{ block "head/resource-hints" . }}{{ partial "head/resource-hints.html" . }}{{ end }}
-  {{ block "head/seo" . }} {{ partial "head/seo.html" . }} {{ end }} 
-  {{ block "head/opengraph" . }}{{ partial "head/opengraph.html" . }}{{ end }} 
-  {{ block "head/favicons" . }}{{ partial "head/favicons.html" . }}{{ end }} 
-  {{ block "head/stylesheets" . }}{{ partialCached "head/stylesheets.html" . }}{{ end }}
+  {{ block "head/resource-hints" . }}{{ partial "head/resource-hints.html" .
+  }}{{ end }} {{ block "head/seo" . }} {{ partial "head/seo.html" . }} {{ end }}
+  {{ block "head/opengraph" . }}{{ partial "head/opengraph.html" . }}{{ end }}
+  {{ block "head/favicons" . }}{{ partial "head/favicons.html" . }}{{ end }} {{
+  block "head/stylesheets" . }}{{ partialCached "head/stylesheets.html" . }}{{
+  end }}
 </head>

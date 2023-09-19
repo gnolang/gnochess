@@ -3,14 +3,14 @@
 
 <!-- DESCRIPTION -->
 {{ with .Params.meta_description -}}
-    <meta name="description" content="{{ . }}">
+    <meta name="description" content="{{ . }}" />
 {{ else -}}
-    <meta name="description" content="{{ .Site.Params.description }}">
+    <meta name="description" content="{{ .Site.Params.description }}" />
 {{ end -}}
 
 <!-- KEYWORDS -->
 {{ if .Keywords }}
-    <meta name="keywords" content="{{ delimit .Keywords ", " }}">
+    <meta name="keywords" content="{{ delimit .Keywords ", " }}" />
 {{ else if .Params.meta.keywords }}
-    <meta name="keywords" content="{{ delimit .Params.meta.keywords ", " }}">
+    <meta name="keywords" content="{{ delimit .Params.meta.keywords ", " }}" />
 {{ end }}

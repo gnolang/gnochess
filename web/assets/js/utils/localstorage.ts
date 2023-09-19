@@ -4,7 +4,7 @@
  * @param data the data to be saved
  */
 const saveToLocalStorage = (key: string, data: string) => {
-    localStorage.setItem(key, data);
+  localStorage.setItem(key, data);
 };
 
 /**
@@ -12,7 +12,7 @@ const saveToLocalStorage = (key: string, data: string) => {
  * @param key the key associated with the data
  */
 const getFromLocalStorage = (key: string): string => {
-    return localStorage.getItem(key) ?? "";
+  return localStorage.getItem(key) ?? '';
 };
 
-export {saveToLocalStorage, getFromLocalStorage};
+export { saveToLocalStorage, getFromLocalStorage };

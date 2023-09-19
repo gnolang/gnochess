@@ -3,56 +3,140 @@
   id="js-gameoptions"
   class="relative sm:absolute right-0 min-w-full opacity-0 invisible flex-col lg:col-span-4 md:col-span-5 sm:col-span-8 col-span-12 lg:col-start-9 md:col-start-7 sm:col-start-3 col-start-1 self-end rounded-lg bg-grey-50 p-4 z-max overflow-hidden"
 >
-  <div id="js-connection" class="js-pane | relative flex flex-col p-7 rounded bg-grey-200 mb-2 min-h-[17rem]">
+  <div
+    id="js-connection"
+    class="js-pane | relative flex flex-col p-7 rounded bg-grey-200 mb-2 min-h-[17rem]"
+  >
     <div class="mb-4 text-100 font-bold">Connection</div>
-    <p class="pr-[30%] font-medium text-200 text-grey-600">Get your token by... Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+    <p class="pr-[30%] font-medium text-200 text-grey-600">
+      Get your token by... Lorem ipsum dolor sit amet, consectetur adipiscing
+      elit.
+    </p>
     <div class="relative w-full bg-grey-50 rounded-full flex mt-auto">
-      <label class="p-4 pl-5 relative font-bold after:absolute after:w-0.5 after:bg-grey-200 after:h-1/2 after:top-1/2 after:right-0 after:-translate-y-1/2" for="id-gameoptions-token ">Token</label>
-      <input class="bg-transparent p-4 w-full outline-none font-bold placeholder:text-grey-200" type="text" id="id-gameoptions-token" placeholder="TOKEN_VALUE_HERE" />
+      <label
+        class="p-4 pl-5 relative font-bold after:absolute after:w-0.5 after:bg-grey-200 after:h-1/2 after:top-1/2 after:right-0 after:-translate-y-1/2"
+        for="id-gameoptions-token "
+        >Token</label
+      >
+      <input
+        class="bg-transparent p-4 w-full outline-none font-bold placeholder:text-grey-200"
+        type="text"
+        id="id-gameoptions-token"
+        placeholder="TOKEN_VALUE_HERE"
+      />
     </div>
   </div>
 
-  <div id="js-category" class="js-pane | hidden relative opacity-0 invisible flex-col p-7 rounded bg-grey-200 mb-2 min-h-[17rem] overflow-hidden">
-    <div id="js-categoryWord" class="absolute top-10 text-grey-100 font-black text-900 whitespace-nowrap -translate-x-[15%]">RAPID RAPID BLITZ BLITZ</div>
+  <div
+    id="js-category"
+    class="js-pane | hidden relative opacity-0 invisible flex-col p-7 rounded bg-grey-200 mb-2 min-h-[17rem] overflow-hidden"
+  >
+    <div
+      id="js-categoryWord"
+      class="absolute top-10 text-grey-100 font-black text-900 whitespace-nowrap -translate-x-[15%]"
+    >
+      RAPID RAPID BLITZ BLITZ
+    </div>
     <div class="gameoptions-sprite"></div>
     <div class="mb-4 text-100 font-bold text">Category</div>
     <div class="relative z-1 p-1 w-full bg-grey-50 rounded-full flex mt-auto">
-      <label class="p-4 pl-5 relative font-bold w-full text-center cursor-pointer" for="rapid">Rapid</label>
-      <label class="p-4 pl-5 relative font-bold w-full text-center cursor-pointer" for="blitz">Blitz</label>
-      <input type="radio" id="rapid" class="js-categoryUpdate | hidden" name="category" value="rapid" checked />
-      <input type="radio" id="blitz" class="js-categoryUpdate | hidden" name="category" value="blitz" />
-      <div id="js-categorySwitch" class="absolute h-[calc(100%_-_theme(space.2))] w-[calc(50%_-_theme(space.1))] bg-grey-200 rounded-full z-min"></div>
+      <label
+        class="p-4 pl-5 relative font-bold w-full text-center cursor-pointer"
+        for="rapid"
+        >Rapid</label
+      >
+      <label
+        class="p-4 pl-5 relative font-bold w-full text-center cursor-pointer"
+        for="blitz"
+        >Blitz</label
+      >
+      <input
+        type="radio"
+        id="rapid"
+        class="js-categoryUpdate | hidden"
+        name="category"
+        value="rapid"
+        checked
+      />
+      <input
+        type="radio"
+        id="blitz"
+        class="js-categoryUpdate | hidden"
+        name="category"
+        value="blitz"
+      />
+      <div
+        id="js-categorySwitch"
+        class="absolute h-[calc(100%_-_theme(space.2))] w-[calc(50%_-_theme(space.1))] bg-grey-200 rounded-full z-min"
+      ></div>
     </div>
   </div>
 
-  <div id="js-timer" class="js-pane | hidden relative opacity-0 invisible flex-col p-7 rounded bg-grey-200 mb-2 min-h-[9rem] overflow-hidden">
+  <div
+    id="js-timer"
+    class="js-pane | hidden relative opacity-0 invisible flex-col p-7 rounded bg-grey-200 mb-2 min-h-[9rem] overflow-hidden"
+  >
     <div class="mb-4 text-100 font-bold text">Timer</div>
-    <div class="relative z-1 p-1.5 w-4/5 flex m-auto justify-around items-center">
-      <button data-ctrl="-" class="js-timerUpdate | w-[24%] relative font-bold shadow aspect-square bg-grey-50 rounded-full text-center">
-        <span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">-</span>
+    <div
+      class="relative z-1 p-1.5 w-4/5 flex m-auto justify-around items-center"
+    >
+      <button
+        data-ctrl="-"
+        class="js-timerUpdate | w-[24%] relative font-bold shadow aspect-square bg-grey-50 rounded-full text-center"
+      >
+        <span
+          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+          >-</span
+        >
       </button>
       <div class="text-center leading-tight">
-        <div class="font-bold"><span id="js-timerdisplay" class="text-400">10</span><span>+</span><span id="js-timerincrement" class="text-400">0</span></div>
+        <div class="font-bold">
+          <span id="js-timerdisplay" class="text-400">10</span><span>+</span
+          ><span id="js-timerincrement" class="text-400">0</span>
+        </div>
       </div>
-      <button data-ctrl="+" class="js-timerUpdate | w-[24%] relative font-bold shadow aspect-square bg-grey-50 rounded-full text-center">
-        <span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">+</span>
+      <button
+        data-ctrl="+"
+        class="js-timerUpdate | w-[24%] relative font-bold shadow aspect-square bg-grey-50 rounded-full text-center"
+      >
+        <span
+          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+          >+</span
+        >
       </button>
     </div>
   </div>
 
-  <div id="js-paneloader" class="js-pane | hidden relative opacity-0 invisible flex-col p-7 rounded bg-grey-200 mb-2 min-h-[28rem] overflow-hidden">
-    <div class="js-paneloaderWord | absolute top-10 text-grey-100 font-black text-900 whitespace-nowrap -translate-x-[15%] flex overflow-hidden marquee">
+  <div
+    id="js-paneloader"
+    class="js-pane | hidden relative opacity-0 invisible flex-col p-7 rounded bg-grey-200 mb-2 min-h-[28rem] overflow-hidden"
+  >
+    <div
+      class="js-paneloaderWord | absolute top-10 text-grey-100 font-black text-900 whitespace-nowrap -translate-x-[15%] flex overflow-hidden marquee"
+    >
       <span>WAITING OPPONENT&nbsp;</span><span>WAITING OPPONENT&nbsp;</span>
     </div>
-    <div class="js-paneloaderWord | absolute top-1/2 text-grey-100 font-black text-900 whitespace-nowrap -translate-x-[55%] flex overflow-hidden marquee2">
+    <div
+      class="js-paneloaderWord | absolute top-1/2 text-grey-100 font-black text-900 whitespace-nowrap -translate-x-[55%] flex overflow-hidden marquee2"
+    >
       <span>WAITING OPPONENT&nbsp;</span><span>WAITING OPPONENT&nbsp;</span>
     </div>
   </div>
 
   <nav id="gameoptions-actions" class="mt-6 xxl:mt-8 flex">
-    <button id="js-gameoptions-ctr0" class="relative w-[25%] sm:w-[30%] md:w-[35%] lg:w-[40%] xxl:w-[28%] h-full grow-[1] aspect-square rounded-circle shadow bg-grey-50 mr-4">
-      <span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">{{- partial "icons/ico-cross.html" . -}}</span>
+    <button
+      id="js-gameoptions-ctr0"
+      class="relative w-[25%] sm:w-[30%] md:w-[35%] lg:w-[40%] xxl:w-[28%] h-full grow-[1] aspect-square rounded-circle shadow bg-grey-50 mr-4"
+    >
+      <span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+        >{{- partial "icons/ico-cross.html" . -}}</span
+      >
     </button>
-    <button id="js-gameoptions-ctr1" class="rounded-full shadow px-6 w-full bg-grey-50 font-bold">Connection</button>
+    <button
+      id="js-gameoptions-ctr1"
+      class="rounded-full shadow px-6 w-full bg-grey-50 font-bold"
+    >
+      Connection
+    </button>
   </nav>
 </section>

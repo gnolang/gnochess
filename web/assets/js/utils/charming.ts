@@ -15,7 +15,7 @@
 
 type Option = {
   tagName: string;
-  type: "letter" | "word";
+  type: 'letter' | 'word';
   nesting: number;
   classPrefix: string;
 };
@@ -23,16 +23,19 @@ type Option = {
 export function charming(element: Element, options: Option) {
   options = options || {};
 
-  const tagName = options?.tagName ?? "span",
-    chunkType = options.type || "letter",
+  const tagName = options?.tagName ?? 'span',
+    chunkType = options.type || 'letter',
     nestingLevel = options.nesting || 1,
     classPrefix = options.classPrefix != null ? options.classPrefix : chunkType;
   let count = 1;
 
   function inject(element: Element) {
     const parentNode = element?.parentNode ?? document,
-      string = element.nodeValue || "",
-      content = chunkType === "letter" ? string : string.split(" ").map((word) => word + " "),
+      string = element.nodeValue || '',
+      content =
+        chunkType === 'letter'
+          ? string
+          : string.split(' ').map((word) => word + ' '),
       length = content.length;
 
     let i = -1;
@@ -49,7 +52,7 @@ export function charming(element: Element, options: Option) {
         node.className = classPrefix + count;
         count++;
       }
-      node.innerHTML = opening.join(" ") + content[i] + ending.join(" ");
+      node.innerHTML = opening.join(' ') + content[i] + ending.join(' ');
       parentNode.insertBefore(node, element);
     }
     parentNode.removeChild(element);

@@ -1,8 +1,8 @@
 ---
-namespace: "about"
-meta_title: "About GnoChess: Showcasing Gno.land At GopherCon 2023"
-meta_description: "GnoChess shows web2 developers how easily they can port their apps to web3 or build new ones from scratch on Gno.land during GopherCon 2023."
-title: "About GnoChess"
+namespace: 'about'
+meta_title: 'About GnoChess: Showcasing Gno.land At GopherCon 2023'
+meta_description: 'GnoChess shows web2 developers how easily they can port their apps to web3 or build new ones from scratch on Gno.land during GopherCon 2023.'
+title: 'About GnoChess'
 ---
 
 GopherCon is the most hotly anticipated event on the gopher community’s calendar. A place where gophers from around the world get together to exchange ideas, share their work, and expand the Go network. What better place to spread the word about Gno.land and show web2 developers how easily they can port their apps to web3 or build new ones from scratch? And why not have a little fun while doing it?
