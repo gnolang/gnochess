@@ -137,11 +137,12 @@ class Actions {
     /**
      * Waits for the game with the specified ID to begin
      * @param id the ID of the game
+     * @param timeout the maximum wait time for a game
      * @private
      */
-    private async waitForGame(id: number): Promise<GameSettings> {
+    private async waitForGame(id: number, timeout?: number): Promise<GameSettings> {
         return new Promise(async (resolve, reject) => {
-            const exitTimeout = 15000; // wait time is max 15s
+            const exitTimeout = timeout ? timeout : 15000; // wait time is max 15s
 
             const fetchInterval = setInterval(async () => {
                 try {
