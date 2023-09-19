@@ -14,7 +14,7 @@ services:
         max-file: "10"
         max-size: "100m"
   gnoweb:
-    image: ghcr.io/gnolang/gno:latest
+    image: ghcr.io/gnolang/gno/gnochess:latest
     command: [ "gnoweb", "-remote", "gnoland:26657", "-bind", "0.0.0.0:8888" ]
     working_dir: /opt/gno/src/gno.land
     networks:
@@ -28,7 +28,7 @@ services:
         max-file: "10"
         max-size: "100m"
   gnoland:
-    image: ghcr.io/gnolang/gno:latest
+    image: ghcr.io/gnolang/gno/gnochess:latest
     environment:
       - LOG_LEVEL=4
     command: [ "gnoland", "start", "-genesis-max-vm-cycles", "100000000" ]

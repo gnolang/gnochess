@@ -17,7 +17,7 @@ ls *.gno | entr -ns '
 path=gno.land/r/demo/chess_$RANDOM
 echo "publishing as $path"
 echo | gnokey maketx addpkg \
-	--gas-wanted 10000000 \
+	--gas-wanted 50000000 \
 	--gas-fee 1ugnot \
 	--pkgpath $path \
 	--pkgdir . \
