@@ -112,9 +112,9 @@ var commandTests = [...]string{
 		# contains "state":"checkmated" "winner":"white"
 		# containssp r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4
 		player white
-		# contains "address":"g1white" "position":0 "wins":1 "losses":0 "draws":0 "score":1
+		# contains "address":"g1white" "position":0 "wins":1 "losses":0 "draws":0
 		player black
-		# contains "address":"g1black" "position":1 "wins":0 "losses":1 "draws":0 "score":-1
+		# contains "address":"g1black" "position":1 "wins":0 "losses":1 "draws":0
 	`,
 	`	name DrawByAgreement
 		newgame

@@ -147,16 +147,6 @@ func (w Winner) MarshalJSON() ([]byte, error) {
 	return nil, errors.New("invalid winner value")
 }
 
-func (w Winner) Scores() (wscore, bscore int) {
-	switch w {
-	case WinnerWhite:
-		return 1, -1
-	case WinnerBlack:
-		return -1, 1
-	}
-	return
-}
-
 // GameState represents the current game state.
 type GameState byte
 
@@ -372,9 +362,7 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 			} else {
 				g.Winner = WinnerWhite
 			}
-			wscore, bscore := g.Winner.Scores()
-			reportPlayerScore(g.White, wscore)
-			reportPlayerScore(g.Black, bscore)
+			saveGameResult(g)
 			return g.json()
 		}
 	}
@@ -427,9 +415,7 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 		g.Winner = WinnerDraw
 	}
 	g.DrawOfferer = nil
-	wscore, bscore := g.Winner.Scores()
-	reportPlayerScore(g.White, wscore)
-	reportPlayerScore(g.Black, bscore)
+	saveGameResult(g)
 
 	return g.json()
 }
@@ -470,9 +456,7 @@ func ClaimTimeout(gameID string) string {
 		g.Winner = WinnerWhite
 	}
 	g.DrawOfferer = nil
-	wscore, bscore := g.Winner.Scores()
-	reportPlayerScore(g.White, wscore)
-	reportPlayerScore(g.Black, bscore)
+	saveGameResult(g)
 
 	return g.json()
 }
@@ -514,9 +498,7 @@ func Resign(gameID string) string {
 		panic("you are not involved in this game")
 	}
 	g.DrawOfferer = nil
-	wscore, bscore := g.Winner.Scores()
-	reportPlayerScore(g.White, wscore)
-	reportPlayerScore(g.Black, bscore)
+	saveGameResult(g)
 
 	return g.json()
 }
@@ -578,10 +560,10 @@ func Draw(gameID string) string {
 	// accepted draw offer (do early to avoid gas for g.Position.IsFinished())
 	if g.DrawOfferer != nil && *g.DrawOfferer != caller {
 		g.State = GameStateDrawnByAgreement
+		g.Winner = WinnerDraw
 		g.Concluder = &caller
 
-		reportPlayerScore(g.Black, 0)
-		reportPlayerScore(g.White, 0)
+		saveGameResult(g)
 
 		return g.json()
 	}
@@ -600,8 +582,8 @@ func Draw(gameID string) string {
 	g.Concluder = &caller
 	g.Winner = WinnerDraw
 	g.DrawOfferer = nil
-	reportPlayerScore(g.Black, 0)
-	reportPlayerScore(g.White, 0)
+
+	saveGameResult(g)
 
 	return g.json()
 }
