@@ -165,8 +165,8 @@ const Gameoptions = class extends Component {
       });
 
     //actions
-    this.DOM.timerDisplay.innerHTML = this.options.timer[0];
-    this.DOM.timerIncrement.innerHTML = this.options.timer[1];
+    this.DOM.timerDisplay.innerHTML = this.options.timer.time;
+    this.DOM.timerIncrement.innerHTML = this.options.timer.increment;
 
     //checkstep
     Actions.getInstance().then((actions) => {
@@ -277,9 +277,12 @@ const Gameoptions = class extends Component {
   _inputToken() {
     const token =
       this.DOM.el.querySelector('#id-gameoptions-token').value || '';
-    if (!Action.getToken()) {
-      Action.setToken(token);
-    }
+
+    Actions.getInstance().then((actions) => {
+      if (!actions.getFaucetToken()) {
+        actions.setFaucetToken(token);
+      }
+    });
     return token;
   }
 
@@ -308,8 +311,8 @@ const Gameoptions = class extends Component {
 
     this.options.timer = this.timers[this.options.category][this.timer];
 
-    this.DOM.timerDisplay.innerHTML = this.options.timer[0];
-    this.DOM.timerIncrement.innerHTML = this.options.timer[1];
+    this.DOM.timerDisplay.innerHTML = this.options.timer.time;
+    this.DOM.timerIncrement.innerHTML = this.options.timer.increment;
   }
 
   _updateCategory(e: any) {
@@ -322,24 +325,12 @@ const Gameoptions = class extends Component {
       ease: 'steps(9)',
       duration: 0.4
     });
-    const token =
-      this.DOM.el.querySelector('#id-gameoptions-token').value || '';
 
-    Actions.getInstance().then((actions) => {
-      if (!actions.getFaucetToken()) {
-        actions.setFaucetToken(token);
-      }
-    });
-
-    const arry = [
-      ...document.getElementsByName('category')
-    ] as HTMLInputElement[];
     const dir: number = e ? (e.currentTarget.dataset.ctrl === '+' ? 1 : -1) : 0;
     this.timer = Math.min(
       this.timers[this.options.category].length - 1,
       Math.max(0, this.timer + dir)
     );
-    const cat = e.currentTarget.value === 'blitz';
     this._updateTimer('', 0);
     gsap.to('.gameoptions-sprite', {
       backgroundPosition: cat ? '100%' : '0',
