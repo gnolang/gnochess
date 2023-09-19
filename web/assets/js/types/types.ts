@@ -10,7 +10,8 @@ export type GameoverType =
   | 'drawn_75_move'
   | 'drawn_5_fold'
   | 'drawn_50_move'
-  | 'drawn_3_fold';
+  | 'drawn_3_fold'
+  | 'resigned';
 
 export type Move = {
   from: string;

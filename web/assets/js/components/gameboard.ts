@@ -70,10 +70,14 @@ const Gameboard = class extends Component {
   async engine(init = false, gameover?: GameoverType) {
     const actions: Actions = await Actions.getInstance();
 
-    //TODO: win cause rival resign
-    //TODO: draw screen in players
-
     const gameState = await actions.getGame(this.gameId);
+
+    if (gameover === 'resigned') {
+      const valid = await actions.isGameOver(this.gameId, 'timeout');
+      // the player asking for a request quit the board so only the remaining one will live during this finishGame call
+      if (valid)
+        this.call('finishGame', ['winner', 'resigned'], 'gameplayers', 'me');
+    }
 
     if (gameState.state !== 'open' || this.chess.isGameOver() || gameover) {
       console.log('GAME OVER!');
