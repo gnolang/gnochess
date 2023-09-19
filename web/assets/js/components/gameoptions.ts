@@ -263,9 +263,13 @@ const Gameoptions = class extends Component {
 
             this.call('appear', '', 'gameplayers', 'me');
             this.call('appear', '', 'gameplayers', 'rival');
-            this.call('appear', '', 'gamecontrols');
+            this.call('appear', [gameSetting.game.id], 'gamecontrols');
+            this.call(
+              'startGame',
+              [gameSetting.game.id, gameSetting.me.color],
+              'gameboard'
+            );
             this.call('appear', '', 'gameboard');
-            this.call('startGame', gameSetting.me.color, 'gameboard');
           });
         }
         break;

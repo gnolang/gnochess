@@ -37,7 +37,8 @@ const Gameboard = class extends Component {
     this.board.position(this.chess.fen());
   }
 
-  startGame(color: Colors) {
+  startGame(gameId: string, color: Colors) {
+    this.gameId = gameId;
     this.color = color;
     if (this.color === 'b') this.board.flip();
     this.rivalColor = this.color === 'w' ? 'b' : 'w';
@@ -86,7 +87,7 @@ const Gameboard = class extends Component {
 
       if (gameover === 'timeout') {
         status = 'timeout';
-        const valid = await actions.isGameOver('', 'timeout'); // TODO @Alexis add game ID
+        const valid = await actions.isGameOver(this.gameId, 'timeout');
         if (valid)
           this.call(
             'finishGame',
@@ -98,7 +99,7 @@ const Gameboard = class extends Component {
 
       if (this.chess.isCheckmate()) {
         status = 'checkmate';
-        const valid = await actions.isGameOver('', 'timeout'); // TODO @Alexis add game ID, change type (to checkmate)?
+        const valid = await actions.isGameOver(this.gameId, 'checkmate');
         if (valid)
           this.call(
             'finishGame',
@@ -116,7 +117,7 @@ const Gameboard = class extends Component {
           : this.chess.isInsufficientMaterial()
           ? 'insufficientMaterial'
           : 'draw';
-        const valid = await actions.isGameOver('', 'timeout'); // TODO @Alexis add game ID, change type (to stalemate)?
+        const valid = await actions.isGameOver(this.gameId, status);
         if (valid)
           this.call('finishGame', ['draw', status], 'gameplayers', 'me');
       }
@@ -228,7 +229,7 @@ const Gameboard = class extends Component {
       }
 
       // ------ Action - emmit my move ------
-      await actions.makeMove('', move.from, move.to, promotion); // TODO @Alexis add game ID
+      await actions.makeMove(this.gameID, move.from, move.to, promotion);
       this.engine(); // TODO @Alexis missing await?
 
       //reset allowed positions

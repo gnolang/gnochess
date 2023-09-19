@@ -16,6 +16,9 @@ export type UserSettings = {
   id: string;
 };
 export type GameSettings = {
+  game: {
+    id: string;
+  };
   me: UserSettings;
   rival: UserSettings;
 };
