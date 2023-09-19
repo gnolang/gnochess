@@ -152,8 +152,9 @@ const Gameboard = class extends Component {
     const actions: Actions = await Actions.getInstance();
 
     const checkRivalMove = async () => {
-      let tick;
       const gameState = await actions.getGame(this.gameId);
+      let tick = setTimeout(checkRivalMove, 350);
+
       const currentFen = gameState.position.fen;
 
       if (this.chess.fen !== currentFen) {
@@ -161,6 +162,13 @@ const Gameboard = class extends Component {
         const move = this.chess.move(
           gameState.position.moves[gameState.position.moves.length - 1]
         );
+        //If moves doesnt work -> use load method
+        //   try {
+        //     this.chess.load(currentFen);
+        //   } catch (e) {
+        //     throw new Error(e + ' — Invalid fen');
+        //   }
+
         this.board.position(this.chess.fen());
 
         if (move.captured) {
@@ -172,16 +180,7 @@ const Gameboard = class extends Component {
           );
         }
         this.engine();
-
-        //If moves doesnt work -> use load method
-        //   try {
-        //     this.chess.load(currentFen);
-        //   } catch (e) {
-        //     throw new Error(e + ' — Invalid fen');
-        //   }
       }
-
-      tick = setTimeout(checkRivalMove, 1000);
     };
     checkRivalMove();
   }
