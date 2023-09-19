@@ -23,6 +23,7 @@ const genericTransition = (app: any) => {
           app.call('disappear', '', 'Gameoptions'),
           app.call('disappear', '', 'Gameplayers', 'me'),
           app.call('disappear', '', 'Gameplayers', 'rival'),
+          app.call('disappear', '', 'gamecategory'),
           app.call('disappear', '', 'Gamecontrols')
         ]);
       },

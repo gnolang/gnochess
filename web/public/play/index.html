@@ -68,7 +68,7 @@
     <link rel="manifest" href="/site.webmanifest" />
 
     <link
-      href="/css/main.min.3debe534c9a1ce0111ebb4b8cc0a30f380fd230bc610dd83b9378abbdc6925a0.css"
+      href="/css/main.min.444df47571791f344349e8ca208cd631450a25ca31128818c40a74d3a5f29213.css"
       rel="stylesheet"
     />
 
@@ -157,7 +157,7 @@
         >
         <a
           href="/dashboard/"
-          class="py-4 px-6 bg-grey-50 rounded-full font-bold"
+          class="py-4 px-6 bg-grey-50 rounded-full font-bold shadow"
           >Dashbord</a
         >
       </nav>
@@ -174,10 +174,12 @@
 
     <main data-barba="container" data-barba-namespace="play">
       <div
-        class="absolute hidden top-0 left-0 h-screen w-screen overflow-hidden pointer-events-none"
+        class="absolute opacity-0 top-0 left-0 h-screen w-screen overflow-hidden pointer-events-none"
+        data-component="gamecategory"
       >
         <div
-          class="absolute -bottom-[10vmax] -left-12 text-[24vmax] font-black text-grey-150 rotate-12"
+          id="game-category"
+          class="absolute -bottom-[10vmax] -left-12 text-[24vmax] font-black text-grey-150 rotate-12 leading-none"
         >
           RAPID
         </div>
@@ -560,28 +562,32 @@
         >
           <div
             id="js-validation"
-            class="relative hidden opacity-0 invisible flex-col p-5 pt-7 rounded bg-grey-200 mb-2"
+            class="relative opacity-0 invisible h-0 overflow-hidden"
           >
-            <div class="js-gamecontrols-title | mb-4 text-100 font-bold">
-              Connection
+            <div
+              class="flex relative flex-col p-5 pt-7 w-full h-full rounded bg-grey-200"
+            >
+              <div class="js-gamecontrols-title | mb-4 text-100 font-bold">
+                Connection
+              </div>
+              <p
+                class="js-gamecontrols-content | font-medium text-200 text-grey-600"
+              >
+                Do you really want to Resign the Match?
+              </p>
+              <button
+                id="js-gamecontrols-confirm"
+                class="relative w-full bg-grey-50 rounded-full mt-4 p-3 shadow font-bold text-center"
+              >
+                <span
+                  id="js-gamecontrols-confirm-timer"
+                  class="relative hidden opacity-0 mr-2 pr-2 after:absolute after:w-0.5 after:translate-x-1/2 after:-translate-y-1/2 after:h-full after:right-0 after:top-1/2 after:bg-grey-400"
+                  >9</span
+                ><span id="js-gamecontrols-confirm-content">Confirm</span>
+              </button>
             </div>
-            <p
-              class="js-gamecontrols-content | font-medium text-200 text-grey-600"
-            >
-              Do you really want to Resign the Match?
-            </p>
-            <button
-              id="js-gamecontrols-confirm"
-              class="relative w-full bg-grey-50 rounded-full mt-4 p-3 shadow font-bold text-center"
-            >
-              <span
-                id="js-gamecontrols-confirm-timer"
-                class="relative hidden opacity-0 mr-2 pr-2 after:absolute after:w-0.5 after:translate-x-1/2 after:-translate-y-1/2 after:h-full after:right-0 after:top-1/2 after:bg-grey-400"
-                >9</span
-              ><span id="js-gamecontrols-confirm-content">Confirm</span>
-            </button>
           </div>
-          <nav class="flex justify-between">
+          <nav class="flex justify-between mt-2">
             <button
               id="js-gamecontrols-ctr0"
               class="relative w-[35%] h-full aspect-square rounded-circle shadow bg-grey-50 mr-4"

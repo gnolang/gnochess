@@ -12,6 +12,8 @@ const saveToLocalStorage = (key: string, data: string) => {
  * @param key the key associated with the data
  */
 const getFromLocalStorage = (key: string): string => {
+  // Fetch it from local storage and parse
+
   return localStorage.getItem(key) ?? '';
 };
 

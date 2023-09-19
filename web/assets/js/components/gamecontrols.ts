@@ -52,6 +52,8 @@ const Gamecontrols = class extends Component {
     this.DOM.ctrConfirmContent = this.DOM.el.querySelector(
       '#js-gamecontrols-confirm-content'
     );
+    this.DOM.contentPane = this.DOM.el.querySelector('#js-gamecontrols-pane');
+    this.DOM.waitingPane = this.DOM.el.querySelector('#js-gamecontrols-wait');
 
     //controls events
     this.events.clickOnCtr0 = this.on({
@@ -78,13 +80,17 @@ const Gamecontrols = class extends Component {
       .timeline({ paused: true })
       .to(this.DOM.paneValidation, {
         autoAlpha: 1,
-        display: 'flex',
+        height: 'auto',
         duration: 0.6
       });
     this.disableCtr0TL = this._disableBtn(this.DOM.ctr0);
     this.disableCtr1TL = this._disableBtn(this.DOM.ctr1);
     this.swithCtr0TL = this._switchIconBtn(this.DOM.ctr0);
     this.swithCtr1TL = this._switchIconBtn(this.DOM.ctr1);
+    this.waitingTL = gsap
+      .timeline({ paused: true })
+      .to(this.DOM.contentPane, { autoAlpha: 0, duration: 0.6 })
+      .to(this.DOM.waitingPane, { autoAlpha: 1, duration: 0.6 });
   }
 
   _disableBtn(btn: Element) {
@@ -128,6 +134,7 @@ const Gamecontrols = class extends Component {
       this[action === 'resign' ? 'disableCtr1TL' : 'disableCtr0TL'].reverse();
       this[action === 'resign' ? 'swithCtr0TL' : 'swithCtr1TL'].reverse();
 
+      this.waitingTL.reverse();
       this.validationTL.reverse().then(() => {
         this.DOM.timer.innerHTML = this.timer;
         gsap.set(this.DOM.timer, { autoAlpha: 0, display: 'none' });

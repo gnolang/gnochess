@@ -67,12 +67,29 @@ const Gameoptions = class extends Component {
     this.events = {} as Events;
   }
 
+  private eventsConfig = {
+    pressOnCtrl1: {
+      e: 'keypress',
+      target: document,
+      cb: this._pressOnCtrl1.bind(this)
+    },
+    clickOnCtrl1: {
+      e: 'click',
+      target: document.querySelector('#js-gameoptions-ctr1'),
+      cb: this._clickOnCtrl1.bind(this)
+    },
+    clickOnCtrl0: {
+      e: 'click',
+      target: document.querySelector('#js-gameoptions-ctr0'),
+      cb: this._clickOnCtrl0.bind(this)
+    }
+  };
+
   init() {
     // automatically called at start
     console.log('PlayControls component init');
 
     //DOM
-
     this.DOM.paneConnection = this.DOM.el.querySelector('#js-connection');
     this.DOM.paneCategory = this.DOM.el.querySelector('#js-category');
     this.DOM.paneTimer = this.DOM.el.querySelector('#js-timer');
@@ -84,21 +101,12 @@ const Gameoptions = class extends Component {
     this.DOM.timerBtns = [...this.DOM.el.querySelectorAll('.js-timerUpdate')];
     this.DOM.timerDisplay = this.DOM.el.querySelector('#js-timerdisplay');
     this.DOM.timerIncrement = this.DOM.el.querySelector('#js-timerincrement');
-    this.DOM.ctrl0 = this.DOM.el.querySelector('#js-gameoptions-ctr0');
     this.DOM.ctrl1 = this.DOM.el.querySelector('#js-gameoptions-ctr1');
 
     //controls events
-    //TODO: keybord press events
-    this.events.clickOnCtrl0 = this.on({
-      e: 'click',
-      target: this.DOM.ctrl0,
-      cb: this._clickOnCtrl0.bind(this)
-    });
-    this.events.clickOnCtrl1 = this.on({
-      e: 'click',
-      target: this.DOM.ctrl1,
-      cb: this._clickOnCtrl1.bind(this)
-    });
+    this.events.clickOnCtrl0 = this.on(this.eventsConfig.clickOnCtrl0);
+    this.events.clickOnCtrl1 = this.on(this.eventsConfig.clickOnCtrl1);
+    this.events.pressOnCtrl1 = this.on(this.eventsConfig.pressOnCtrl1);
 
     //category events
     this.DOM.categoryBtns.forEach((categoryBtn: Element, i: number) => {
@@ -183,6 +191,15 @@ const Gameoptions = class extends Component {
     }
   }
 
+  private _pressOnCtrl1(e: any) {
+    let keyCode = e.keyCode ? e.keyCode : e.which;
+
+    if (keyCode === 13) {
+      // call click function of the button if "enter" btn
+      this._clickOnCtrl1(e);
+    }
+  }
+
   async _clickOnCtrl1(_e: any, immediate = false) {
     this.currentState++;
 
@@ -214,6 +231,7 @@ const Gameoptions = class extends Component {
         //check if game has not been cancelled after the wait
         if (this.lookingForRival) {
           this.call('disappear', [], 'webgl');
+          this.call('setCategory', [this.options.category], 'gamecategory');
 
           this.disappear().then((_) => {
             this.call(
@@ -240,7 +258,9 @@ const Gameoptions = class extends Component {
             );
 
             gsap.set('#js-background', { transformOrigin: 'center' });
-            gsap.to('#js-background', { scale: 1.1 });
+            gsap.to('#js-background', { scale: 1.1, duration: 1.4 });
+            this.call('appear', [], 'gamecategory');
+
             this.call('appear', '', 'gameplayers', 'me');
             this.call('appear', '', 'gameplayers', 'rival');
             this.call('appear', '', 'gamecontrols');
@@ -248,7 +268,6 @@ const Gameoptions = class extends Component {
             this.call('startGame', gameSetting.me.color, 'gameboard');
           });
         }
-
         break;
       }
       default:
@@ -258,13 +277,9 @@ const Gameoptions = class extends Component {
   _inputToken() {
     const token =
       this.DOM.el.querySelector('#id-gameoptions-token').value || '';
-
-    Actions.getInstance().then((actions) => {
-      if (!actions.getFaucetToken()) {
-        actions.setFaucetToken(token);
-      }
-    });
-
+    if (!Action.getToken()) {
+      Action.setToken(token);
+    }
     return token;
   }
 
@@ -307,6 +322,30 @@ const Gameoptions = class extends Component {
       ease: 'steps(9)',
       duration: 0.4
     });
+    const token =
+      this.DOM.el.querySelector('#id-gameoptions-token').value || '';
+
+    Actions.getInstance().then((actions) => {
+      if (!actions.getFaucetToken()) {
+        actions.setFaucetToken(token);
+      }
+    });
+
+    const arry = [
+      ...document.getElementsByName('category')
+    ] as HTMLInputElement[];
+    const dir: number = e ? (e.currentTarget.dataset.ctrl === '+' ? 1 : -1) : 0;
+    this.timer = Math.min(
+      this.timers[this.options.category].length - 1,
+      Math.max(0, this.timer + dir)
+    );
+    const cat = e.currentTarget.value === 'blitz';
+    this._updateTimer('', 0);
+    gsap.to('.gameoptions-sprite', {
+      backgroundPosition: cat ? '100%' : '0',
+      ease: 'steps(9)',
+      duration: 0.4
+    });
     gsap.to(this.DOM.categorySwitch, { x: cat ? '100%' : '0' });
     gsap.to('#js-categoryWord', { x: cat ? '-60%' : '-15%' });
   }
@@ -329,6 +368,9 @@ const Gameoptions = class extends Component {
       },
       '<+.1'
     );
+
+    // remove event keypress
+    this.off(this.events.pressOnCtrl1, this.eventsConfig.pressOnCtrl1);
 
     return tl;
   }

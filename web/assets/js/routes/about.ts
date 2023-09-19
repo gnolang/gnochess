@@ -31,7 +31,14 @@ const onEnter = function (next?: any) {
       classPrefix: 'char char'
     });
   });
-  gsap.to('#js-background', { x: '50%', scaleY: 1, scaleX: 1.1, duration: 1 });
+
+  gsap.to('#js-background', {
+    autoAlpha: 1,
+    x: '50%',
+    scaleY: 1,
+    scaleX: 1.1,
+    duration: 1
+  });
   gsap.to(container.querySelectorAll('.js-title .char > span'), {
     y: '0%',
     stagger: 0.04,
@@ -82,8 +89,41 @@ const aboutTransition = (app: any) => {
       }
     },
     {
-      name: 'about-transition-play',
+      name: 'about-transition-dashboard',
       sync: true,
+      from: {
+        namespace: ['dashboard']
+      },
+      to: {
+        namespace: ['about']
+      },
+
+      leave({ current }: { current: any }) {
+        const prom = new Promise<void>((resolve) => {
+          const dashboardheader = current.container.querySelector(
+            '.js-dashboardheader'
+          );
+          const dashboard = current.container.querySelector('.js-dashboard');
+          const dashboardArticle = current.container.querySelectorAll(
+            '.js-dashboard article'
+          );
+          gsap.to(dashboardheader, { autoAlpha: 0, duration: 0.4 });
+          gsap.to(dashboard, { '--sidepane': '100%' });
+          gsap.to(dashboardArticle, {
+            autoAlpha: 0,
+            duration: 0.4,
+            onComplete: () => resolve()
+          });
+        });
+        return Promise.all([prom]);
+      },
+      enter({ next }: { next: any }) {
+        onEnter(next);
+        webglMove(app);
+      }
+    },
+    {
+      name: 'about-transition-play',
       to: {
         namespace: ['about']
       },

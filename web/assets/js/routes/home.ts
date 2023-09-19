@@ -77,6 +77,7 @@ const homeTransition = (app: any) => {
           app.call('disappear', '', 'Gameplayers', 'me'),
           app.call('disappear', '', 'Gameplayers', 'rival'),
           app.call('disappear', '', 'Gamecontrols'),
+          app.call('disappear', '', 'gamecategory'),
           app.call('disappear', '', 'Gameboard')
         ]);
       },
@@ -101,7 +102,11 @@ const homeTransition = (app: any) => {
           const subtitles = current.container.querySelectorAll('.js-subtitle');
           const content = current.container.querySelectorAll('.js-content');
           if (titles)
-            gsap.to(titles, { y: '100%', autoAlpha: 0, duration: 0.4 });
+            gsap.to(titles, {
+              y: '100%',
+              autoAlpha: 0,
+              duration: 0.4
+            });
           if (subtitles) gsap.to(subtitles, { autoAlpha: 0, duration: 0.4 });
           if (content)
             gsap.to(content, {

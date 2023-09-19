@@ -21,7 +21,8 @@ export default {
       xxl: `${pxToRem(1540)}rem`
     },
     boxShadow: {
-      DEFAULT: '0 0 25px -8px rgba(0, 0, 0, .25)'
+      DEFAULT: '0 0 25px -8px rgba(0, 0, 0, .25)',
+      sm: '0 0 15px -8px rgba(0, 0, 0, .25)'
     },
     borderRadius: {
       none: '0',
