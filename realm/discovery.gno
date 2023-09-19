@@ -16,7 +16,7 @@ import (
 
 // realm state
 var (
-	playerStore avl.Tree // std.Address -> Player
+	playerStore avl.Tree // std.Address -> *Player
 	leaderboard leaderboardType
 )
 
@@ -26,7 +26,7 @@ func GetPlayer(player string) string {
 	if !ok {
 		panic("player not found: " + player)
 	}
-	b, err := v.(Player).MarshalJSON()
+	b, err := v.(*Player).MarshalJSON()
 	if err != nil {
 		panic(err)
 	}
@@ -105,16 +105,6 @@ func saveGameResult(g *Game) {
 		return // TODO: maybe panic
 	}
 
-	// Create ratings if the players don't hve them
-	if w.Rating == nil {
-		w.Rating = NewPlayerRating(g.White)
-		playerRatings = append(playerRatings, w.Rating)
-	}
-	if b.Rating == nil {
-		b.Rating = NewPlayerRating(g.Black)
-		playerRatings = append(playerRatings, b.Rating)
-	}
-
 	// Call glicko 2 rating calculator.
 	owr, obr := w.Rating.Rating, b.Rating.Rating
 	updateRatings(playerRatings, []RatingScore{{
@@ -132,14 +122,14 @@ func saveGameResult(g *Game) {
 	}
 }
 
-func getPlayer(addr std.Address) Player {
+func getPlayer(addr std.Address) *Player {
 	praw, ok := playerStore.Get(addr.String())
-	var p Player
 	if ok {
-		p = praw.(Player)
-	} else {
-		p = Player{Address: addr}
+		return praw.(*Player)
 	}
+	p := &Player{Address: addr, Rating: NewPlayerRating(addr)}
+	playerRatings = append(playerRatings, p.Rating)
+	playerStore.Set(addr.String(), p)
 	return p
 }
 
