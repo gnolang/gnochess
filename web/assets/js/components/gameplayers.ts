@@ -1,7 +1,7 @@
 import { Component } from "sevejs";
 import { gsap } from "gsap";
 import { truncateString } from "../utils/truncate";
-import { type Colors } from "../types/types";
+import { type Colors, type GameoverType } from "../types/types";
 
 const Gameplayers = class extends Component {
   constructor(opts: any) {
@@ -90,8 +90,10 @@ const Gameplayers = class extends Component {
     this.DOM.pawns.appendChild(pawnEl);
   }
 
-  finishGame() {
-    this.DOM.el.querySelector(".js-playergametype").innerHTML = this.category;
+  finishGame(type = "Winner", status: GameoverType = "checkmate") {
+    // ICI draw
+    this.DOM.el.querySelector(".js-playergamegameovertitle").innerHTML = type;
+    this.DOM.el.querySelector(".js-playergametype").innerHTML = this.category + " - " + status;
     this.DOM.el.querySelector(".js-playerpoints").innerHTML = `${this.call("getMoveNumber", "", "gameboard")} moves`;
     gsap
       .timeline()

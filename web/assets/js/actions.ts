@@ -44,7 +44,6 @@ export default new (class {
       };
 
       setTimeout(() => resolve(mockedSettings), 1000);
-      this.listenDraw();
     });
   }
 
