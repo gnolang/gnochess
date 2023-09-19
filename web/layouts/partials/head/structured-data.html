@@ -1,33 +1,33 @@
 {{ if .IsHome -}}
 <script type="application/ld+json">
-    {
-        "@context": "http://schema.org",
-        "@id": "https://corporation.allinbits.com/",
-        "@type": "Corporation",
-        "name": "{{ .Site.Params.personTitle}}",
-        "description": "{{ .Site.Params.personDescription }}",
-        "url": "{{ .Permalink | absURL }}",
-        "image": { 
-            "@type":"ImageObject", 
-            "url": "" 
-        }
-    } 
+  {
+    "@context": "http://schema.org",
+    "@id": "https://corporation.allinbits.com/",
+    "@type": "Corporation",
+    "name": "{{ .Site.Params.personTitle}}",
+    "description": "{{ .Site.Params.personDescription }}",
+    "url": "{{ .Permalink | absURL }}",
+    "image": {
+      "@type": "ImageObject",
+      "url": ""
+    }
+  }
 </script>
 
 <script type="application/ld+json">
-{{ $url := urls.Parse (.Permalink | absLangURL)  }}
-{
-  "@context": "http://schema.org",
-  "@type": "WebSite",
-  "@id": "{{ $url.Scheme }}://official.{{ $url.Host }}{{ $url.Path }}",
-	"name": "{{ .Site.Params.siteTitle}}",
-  "description": "{{ .Site.Params.siteDescription}}",
-  "url": "{{ .Permalink | absLangURL }}",
-  "inLanguage": "{{ .Lang }}",
-  "image":{
-		"@type":"ImageObject",
-		"url":""
-	}
-}
+  {{ $url := urls.Parse (.Permalink | absLangURL)  }}
+  {
+    "@context": "http://schema.org",
+    "@type": "WebSite",
+    "@id": "{{ $url.Scheme }}://official.{{ $url.Host }}{{ $url.Path }}",
+  	"name": "{{ .Site.Params.siteTitle}}",
+    "description": "{{ .Site.Params.siteDescription}}",
+    "url": "{{ .Permalink | absLangURL }}",
+    "inLanguage": "{{ .Lang }}",
+    "image":{
+  		"@type":"ImageObject",
+  		"url":""
+  	}
+  }
 </script>
 {{ end -}}

@@ -1,5 +1,12 @@
-{ "@context": "http://schema.org", "@type": "Corporation", "@id": "https://allinbits.com/#organization", "name": "{{ $.Site.Title }}", "description": "{{ $.Site.Params.CorporationDescription}}",
-"url": "{{ $.Site.BaseURL }}", "logo": { "@type": "ImageObject", "url": "{{ $.Site.Params.Logo }}", "width": 300, "height": 300 }, "location": { "@type": "Place", "name": "{{ $.Site.Title }}",
-"address": { "@type": "PostalAddress", "streetAddress": "{{ $.Site.Params.street_address }}", "postalCode": "{{ $.Site.Params.postal_code }}", "addressLocality": "{{ $.Site.Params.city }}",
-"addressCountry": "{{ $.Site.Params.country }}" } } }{{/* ".context" -> hack for HUGO & JSONDLD -> safeJS doesnt work :
-https://discourse.gohugo.io/t/how-to-pass-variables-to-a-partial-template/7321/11 */}}
+{ "@context": "http://schema.org", "@type": "Corporation", "@id":
+"https://allinbits.com/#organization", "name": "{{ $.Site.Title }}",
+"description": "{{ $.Site.Params.CorporationDescription}}", "url": "{{
+$.Site.BaseURL }}", "logo": { "@type": "ImageObject", "url": "{{
+$.Site.Params.Logo }}", "width": 300, "height": 300 }, "location": { "@type":
+"Place", "name": "{{ $.Site.Title }}", "address": { "@type": "PostalAddress",
+"streetAddress": "{{ $.Site.Params.street_address }}", "postalCode": "{{
+$.Site.Params.postal_code }}", "addressLocality": "{{ $.Site.Params.city }}",
+"addressCountry": "{{ $.Site.Params.country }}" } } }{{/* ".context" -> hack for
+HUGO & JSONDLD -> safeJS doesnt work :
+https://discourse.gohugo.io/t/how-to-pass-variables-to-a-partial-template/7321/11
+*/}}

@@ -1,21 +1,21 @@
-import { defineConfig } from "vite";
-import * as path from "path";
+import { defineConfig } from 'vite';
+import * as path from 'path';
 
 export default defineConfig({
   build: {
-    outDir: "static",
+    outDir: 'static',
     watch: {
-      include: ["assets/js/**"],
+      include: ['assets/js/**']
     },
     rollupOptions: {
       input: {
-        main: path.resolve(__dirname, "assets/js/main.ts"),
+        main: path.resolve(__dirname, 'assets/js/main.ts')
       },
       output: {
-        entryFileNames: "js/[name].js",
-        chunkFileNames: "js/[name].js",
-      },
-    },
+        entryFileNames: 'js/[name].js',
+        chunkFileNames: 'js/[name].js'
+      }
+    }
   },
-  plugins: [],
+  plugins: []
 });
