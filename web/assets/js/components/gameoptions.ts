@@ -335,12 +335,7 @@ const Gameoptions = class extends Component {
       this.timers[this.options.category].length - 1,
       Math.max(0, this.timer + dir)
     );
-    this._updateTimer('', 0);
-    gsap.to('.gameoptions-sprite', {
-      backgroundPosition: cat ? '100%' : '0',
-      ease: 'steps(9)',
-      duration: 0.4
-    });
+
     gsap.to(this.DOM.categorySwitch, { x: cat ? '100%' : '0' });
     gsap.to('#js-categoryWord', { x: cat ? '-60%' : '-15%' });
   }

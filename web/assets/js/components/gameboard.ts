@@ -148,16 +148,42 @@ const Gameboard = class extends Component {
     // rival made a move (event). You need to manually
     // poll the game state using "await Actions.getInstance().getGame(gameID)"
     // and seeing if the positions changed for the rival
-    throw new Error('not supported in this form, see comment');
 
-    // const rivalMove = await Action.getRivalMove(this.chess, true);
-    // const move = this.chess.move(rivalMove);
-    // this.board.position(this.chess.fen());
-    //
-    // if (move.captured) {
-    //     this.call("capturePawn", [move.captured], "gameplayers", move.color === this.color ? "me" : "rival");
-    // }
-    // this.engine();
+    const actions: Actions = await Actions.getInstance();
+
+    const checkRivalMove = async () => {
+      let tick;
+      const gameState = await actions.getGame(this.gameId);
+      const currentFen = gameState.position.fen;
+
+      if (this.chess.fen !== currentFen) {
+        clearTimeout(tick);
+        const move = this.chess.move(
+          gameState.position.moves[gameState.position.moves.length - 1]
+        );
+        this.board.position(this.chess.fen());
+
+        if (move.captured) {
+          this.call(
+            'capturePawn',
+            [move.captured],
+            'gameplayers',
+            move.color === this.color ? 'me' : 'rival'
+          );
+        }
+        this.engine();
+
+        //If moves doesnt work -> use load method
+        //   try {
+        //     this.chess.load(currentFen);
+        //   } catch (e) {
+        //     throw new Error(e + ' — Invalid fen');
+        //   }
+      }
+
+      tick = setTimeout(checkRivalMove, 1000);
+    };
+    checkRivalMove();
   }
 
   async promote(): Promise<Promotion> {

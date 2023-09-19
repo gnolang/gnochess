@@ -219,7 +219,7 @@ class Actions {
 
     // Parse the response
     return JSON.parse(gameResponse);
-  }
+}
 
   /**
    * Executes the move and returns the game state
