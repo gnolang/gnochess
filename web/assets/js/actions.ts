@@ -29,6 +29,7 @@ class Actions {
   static getFaucetToken() {
     throw new Error('Method not implemented.');
   }
+
   private static instance: Actions;
 
   private wallet: GnoWallet | null = null;
@@ -177,6 +178,9 @@ class Actions {
             game.black == (await this.wallet?.getAddress());
 
           const gameSettings: GameSettings = {
+            game: {
+              id: game.id
+            },
             me: {
               id: isBlack ? game.black : game.white,
               color: isBlack ? 'b' : 'w'
