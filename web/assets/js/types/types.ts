@@ -20,12 +20,6 @@ export type GameSettings = {
   rival: UserSettings;
 };
 
-export interface GamePromise {
-  id: number;
-
-  // TODO something else...?
-}
-
 export interface GameTime {
   time: number;
   increment: number;

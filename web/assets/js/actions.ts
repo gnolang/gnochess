@@ -4,7 +4,6 @@ import {
   defaultMnemonicKey,
   Game,
   type GameoverType,
-  GamePromise,
   type GameSettings,
   GameState,
   GameTime,
@@ -12,11 +11,8 @@ import {
   Promotion
 } from './types/types';
 import { GnoWallet, GnoWSProvider } from '@gnolang/gno-js-client';
-import { generateMnemonic } from './utils/crypto.ts';
-import {
-  BroadcastTxCommitResult,
-  TransactionEndpoint
-} from '@gnolang/tm2-js-client';
+import { BroadcastTxCommitResult, TransactionEndpoint } from '@gnolang/tm2-js-client';
+import { generateMnemonic } from './utils/crypto.ts'; // TODO move this out into an ENV variable that's loaded in
 
 // TODO move this out into an ENV variable that's loaded in
 const wsURL: string = 'ws://127.0.0.1:26657/websocket';
@@ -115,60 +111,84 @@ class Actions {
    */
   public async joinLobby(time: GameTime): Promise<GameSettings> {
     // Join the waiting lobby
-    const joinResponse: BroadcastTxCommitResult =
-      (await this.wallet?.callMethod(
+    await this.wallet?.callMethod(
+      chessRealm,
+      'LobbyJoin',
+      [time.time.toString(), time.increment.toString()],
+      TransactionEndpoint.BROADCAST_TX_COMMIT
+    );
+
+    try {
+      // Wait to be matched with an opponent
+      return await this.waitForGame();
+    } catch (e) {
+      // Unable to find the game, cancel the search
+      await this.wallet?.callMethod(
         chessRealm,
-        'JoinLobby', // TODO change when API is ready
-        [time.time.toString(), time.increment.toString()],
+        'LobbyQuit',
+        [],
         TransactionEndpoint.BROADCAST_TX_COMMIT
-      )) as BroadcastTxCommitResult;
+      );
 
-    // Parse the response from the node
-    const joinDataRaw: string | null =
-      joinResponse.deliver_tx.ResponseBase.Data;
-    if (!joinDataRaw) {
-      throw new Error('invalid join lobby response');
+      // Propagate the error
+      throw new Error('unable to find game');
     }
-
-    // Magically parse the response
-    const joinData: GamePromise = JSON.parse(joinDataRaw);
-
-    // Wait to be matched with an opponent
-    return await this.waitForGame(joinData.id);
   }
 
   /**
-   * Waits for the game with the specified ID to begin
-   * @param id the ID of the game
+   * Waits for the game to begin (lobby wait)
    * @param timeout the maximum wait time for a game
    * @private
    */
-  private async waitForGame(
-    id: number,
-    timeout?: number
-  ): Promise<GameSettings> {
+  private async waitForGame(timeout?: number): Promise<GameSettings> {
     return new Promise(async (resolve, reject) => {
       const exitTimeout = timeout ? timeout : 15000; // wait time is max 15s
 
       const fetchInterval = setInterval(async () => {
         try {
           // Check if the game is ready
-          const waitResponse: string = (await this.provider?.evaluateExpression(
-            chessRealm,
-            `IsGameReady(${id})` // TODO change when API is ready
-          )) as string;
+          const lobbyResponse: BroadcastTxCommitResult =
+            (await this.wallet?.callMethod(
+              chessRealm,
+              'LobbyGameFound',
+              [],
+              TransactionEndpoint.BROADCAST_TX_COMMIT
+            )) as BroadcastTxCommitResult;
 
           // Parse the response
-          const gameSettings: GameSettings = JSON.parse(waitResponse);
+          const lobbyWaitResponse: string | null =
+            lobbyResponse.deliver_tx.ResponseBase.Data;
+
+          if (lobbyWaitResponse == null || lobbyWaitResponse == '') {
+            return;
+          }
 
           // Clear the fetch interval
           clearInterval(fetchInterval);
+
+          // Parse the game data
+          const game: Game = JSON.parse(lobbyWaitResponse as string);
+
+          // Extract the game settings
+          const isBlack: boolean =
+            game.black == (await this.wallet?.getAddress());
+
+          const gameSettings: GameSettings = {
+            me: {
+              id: isBlack ? game.black : game.white,
+              color: isBlack ? 'b' : 'w'
+            },
+            rival: {
+              id: isBlack ? game.white : game.black,
+              color: isBlack ? 'w' : 'b'
+            }
+          };
 
           resolve(gameSettings);
         } catch (e) {
           // Game not ready, continue polling...
         }
-      }, 1000);
+      }, 3000); // 3s, since it's an expensive call
 
       setTimeout(() => {
         // Clear the fetch interval
