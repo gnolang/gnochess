@@ -6,6 +6,7 @@ import {
     type GameoverType,
     GamePromise,
     type GameSettings,
+    GameState,
     GameTime,
     Player,
     Promotion
@@ -237,8 +238,9 @@ class Actions {
     /**
      * Triggers the game draw process
      * @param gameID the ID of the running game
+     * @param timeout the requested timeout
      */
-    async requestDraw(gameID: string): Promise<Game> {
+    async requestDraw(gameID: string, timeout?: number): Promise<Game> {
         // Make the request
         const drawResponse: BroadcastTxCommitResult = await this.wallet?.callMethod(
             chessRealm,
@@ -255,8 +257,76 @@ class Actions {
             throw new Error("invalid draw response")
         }
 
-        // Magically parse the response
-        return JSON.parse(drawResponseRaw)
+        const game: Game = JSON.parse(drawResponseRaw)
+
+        // Check if the game is drawn
+        switch (game.state) {
+            case GameState.DRAWN_5_FOLD:
+            case GameState.DRAWN_75_MOVE:
+            case GameState.DRAWN_50_MOVE:
+            case GameState.DRAWN_3_FOLD:
+            case GameState.DRAWN_BY_AGREEMENT:
+                return game
+            default:
+        }
+
+        return this.waitForDraw(gameID, timeout ? timeout : 15000)
+    }
+
+    /**
+     * Waits for the game with the current ID to end in a draw
+     * @param gameID the ID of the current game
+     * @param timeout the timeout value (in ms)
+     * @private
+     */
+    private async waitForDraw(gameID: string, timeout: number): Promise<Game> {
+        return new Promise(async (resolve, reject) => {
+            const exitTimeout = timeout;
+
+            const fetchInterval = setInterval(async () => {
+                try {
+                    // Get the game
+                    const getGameResponse: string = await this.provider?.evaluateExpression(
+                        chessRealm,
+                        `GetGame(${gameID})`
+                    ) as string
+
+                    // Parse the response
+                    const game: Game = JSON.parse(getGameResponse)
+
+                    if (game.state === GameState.DRAWN_INSUFFICIENT) {
+                        // Clear the fetch interval
+                        clearInterval(fetchInterval)
+
+                        reject('draw rejected')
+                    }
+
+                    switch (game.state) {
+                        case GameState.DRAWN_5_FOLD:
+                        case GameState.DRAWN_75_MOVE:
+                        case GameState.DRAWN_50_MOVE:
+                        case GameState.DRAWN_3_FOLD:
+                        case GameState.DRAWN_BY_AGREEMENT:
+                            // Clear the fetch interval
+                            clearInterval(fetchInterval)
+
+                            resolve(game)
+
+                            return
+                        default:
+                    }
+                } catch (e) {
+                    // Game not drawn yet...
+                }
+            }, 1000);
+
+            setTimeout(() => {
+                // Clear the fetch interval
+                clearInterval(fetchInterval)
+
+                reject('wait timeout exceeded')
+            }, exitTimeout)
+        })
     }
 
     /**

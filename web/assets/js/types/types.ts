@@ -62,6 +62,13 @@ export enum GameState {
     DRAWN_BY_AGREEMENT = "drawn_by_agreement",
 }
 
+export type GameDrawnType =
+    GameState.DRAWN_5_FOLD
+    | GameState.DRAWN_75_MOVE
+    | GameState.DRAWN_50_MOVE
+    | GameState.DRAWN_3_FOLD
+    | GameState.DRAWN_BY_AGREEMENT;
+
 export interface Game {
     id: string
 
