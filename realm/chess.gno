@@ -221,6 +221,10 @@ func NewGame(opponentRaw string, seconds, increment int) string {
 	opponent := parsePlayer(opponentRaw)
 	caller := std.GetOrigCaller()
 
+	return newGame(caller, opponent, seconds, increment).json()
+}
+
+func newGame(caller, opponent std.Address, seconds, increment int) *Game {
 	val, exist := user2Games.Get(caller.String())
 	var games []*Game
 	if exist {
@@ -237,7 +241,7 @@ func NewGame(opponentRaw string, seconds, increment int) string {
 	gameIDCounter++
 	// id is zero-padded to work well with avl's alphabetic order.
 	id := zeroPad9(strconv.FormatUint(gameIDCounter, 10))
-	g := Game{
+	g := &Game{
 		ID:        id,
 		White:     caller,
 		Black:     opponent,
@@ -251,11 +255,11 @@ func NewGame(opponentRaw string, seconds, increment int) string {
 		g.White, g.Black = g.Black, g.White
 	}
 
-	gameStore.Set(g.ID, &g)
-	addToUser2Games(caller, &g)
-	addToUser2Games(opponent, &g)
+	gameStore.Set(g.ID, g)
+	addToUser2Games(caller, g)
+	addToUser2Games(opponent, g)
 
-	return g.json()
+	return g
 }
 
 const zeroes = "000000000"

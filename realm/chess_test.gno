@@ -19,6 +19,10 @@ func cleanup() {
 	user2Games = avl.Tree{}
 	playerStore = avl.Tree{}
 	leaderboard = leaderboardType{}
+	lobby = [tcLobbyMax][]lobbyPlayer{}
+	lobbyUpdatedAt = [tcLobbyMax]time.Time{}
+	playerGameID = avl.Tree{}
+	playerRatings = []*PlayerRating{}
 }
 
 func TestNewGame(t *testing.T) {
