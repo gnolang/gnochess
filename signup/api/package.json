@@ -1,0 +1,37 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm run serve",
+    "dev": "nodemon",
+    "build": "npm run build-ts",
+    "serve": "node dist/",
+    "build-ts": "rm -rf dist/ && tsc",
+    "build-ts-windows": "rd /s /q \"dist\" && tsc"
+  },
+  "author": "Milos Zivkovic",
+  "license": "MIT",
+  "dependencies": {
+    "@mailchimp/mailchimp_marketing": "^3.0.80",
+    "@mailchimp/mailchimp_transactional": "^1.0.50",
+    "@types/cors": "^2.8.14",
+    "@types/dotenv": "^8.2.0",
+    "@types/errorhandler": "^1.5.0",
+    "@types/mailchimp__mailchimp_marketing": "^3.0.11",
+    "@types/mailchimp__mailchimp_transactional": "^1.0.5",
+    "ajv": "^8.12.0",
+    "ajv-formats": "^2.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "errorhandler": "^1.5.1",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.17",
+    "@types/node": "^20.6.2",
+    "nodemon": "^3.0.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2"
+  }
+}
