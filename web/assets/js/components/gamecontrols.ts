@@ -128,7 +128,6 @@ const Gamecontrols = class extends Component {
         this.timer = 9;
         this.pendingDraw = null;
       } else {
-        //TODO: wait screen
         this.waitingTL.play();
         const isAccepted = await Action.requestDraw();
         if (isAccepted) {
