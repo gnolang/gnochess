@@ -21,22 +21,22 @@ const Gameoptions = class extends Component {
     this.timer = 0;
     this.timers = {
       rapid: [
-        [10, 0],
-        [10, 5],
-        [15, 10]
+        // [10, 0],
+        [10, 5]
+        // [15, 10]
       ],
       blitz: [
-        [3, 0],
-        [3, 2],
-        [5, 0],
-        [5, 3]
+        // [3, 0],
+        // [3, 2],
+        [5, 0]
+        // [5, 3]
       ]
     };
 
     this.options = {
       token: '',
       category: 'rapid',
-      timer: [10, 0]
+      timer: [10, 5]
     } as Options;
 
     this.events = {} as Events;
