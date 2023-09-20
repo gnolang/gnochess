@@ -4,22 +4,25 @@ additionalRepositories:
   - url: https://github.com/gnolang/gno
     checkoutLocation: gno
 
+# gnoland and gnoweb need to reference local files.
+# gnokey and gno don't, and they are versioned using their values
+# in go.mod
 tasks:
   - name: Gnoland
-    before: cd ../gno/gno.land/; git fetch --all; git switch patch/gnochess
-    init: go install ./cmd/gnoland
+    before: cd ../gno/gno.land/
+    init: |
+      git fetch --all
+      git switch patch/gnochess
+      go install ./cmd/gnoland ./cmd/gnoweb
     command: gnoland start
 
   - name: Gnoweb
-    before: cd ../gno/gno.land/; git fetch --all; git switch patch/gnochess
-    init: go install ./cmd/gnoweb
+    before: cd ../gno/gno.land/;
     command: gnoweb --bind=0.0.0.0:8888
 
   - name: Deps
-    before: cd ../gno/misc/devdeps; git fetch --all; git switch patch/gnochess
-    init: |
-        make install
-        echo "Deps installed."
+    before: cd ../gno/misc/devdeps; make install
+    init: echo "Deps installed."
 
   - name: Gno CLI
     init: |
@@ -28,9 +31,6 @@ tasks:
           github.com/gnolang/gno/gno.land/cmd/gnokey \
           github.com/gnolang/gno/gnovm/cmd/gno
     command: gno --help
-
-  #- name: faucet
-  #  ...
 
 ports:
   - name: gnoweb
@@ -52,6 +52,8 @@ github:
     addCheck: true
     addComment: true
     addBadge: true
+
+workspaceLocation: './tutorial'
 
 vscode:
   extensions:
