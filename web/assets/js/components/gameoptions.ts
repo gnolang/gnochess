@@ -310,12 +310,6 @@ const Gameoptions = class extends Component {
       duration: 0.4
     });
 
-    const dir: number = e ? (e.currentTarget.dataset.ctrl === '+' ? 1 : -1) : 0;
-    this.timer = Math.min(
-      this.timers[this.options.category].length - 1,
-      Math.max(0, this.timer + dir)
-    );
-
     gsap.to(this.DOM.categorySwitch, { x: cat ? '100%' : '0' });
     gsap.to('#js-categoryWord', { x: cat ? '-60%' : '-15%' });
   }
