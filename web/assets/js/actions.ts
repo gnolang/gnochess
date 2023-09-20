@@ -14,13 +14,13 @@ import {
 import { defaultTxFee, GnoWallet, GnoWSProvider } from '@gnolang/gno-js-client';
 import { BroadcastTxCommitResult, TransactionEndpoint } from '@gnolang/tm2-js-client';
 import { generateMnemonic } from './utils/crypto.ts';
-import Long from 'long'; // TODO move this out into an ENV variable that's loaded in
+import Long from 'long';
+import Config from './config.ts';
 
-// TODO move this out into an ENV variable that's loaded in
-const wsURL: string = 'ws://127.0.0.1:26657/websocket';
-const chessRealm: string = 'gno.land/r/gnochess';
-const faucetURL: string = 'http://127.0.0.1:8080';
-
+// ENV values //
+const wsURL: string = Config.GNO_WS_URL;
+const chessRealm: string = Config.GNO_CHESS_REALM;
+const faucetURL: string = Config.FAUCET_URL;
 const defaultGasWanted: Long = new Long(1000000); // 1M
 
 /**
