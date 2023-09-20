@@ -59,8 +59,6 @@ github:
     addComment: true
     addBadge: true
 
-workspaceLocation: '/workspace/gnochess/tutorial'
-
 vscode:
   extensions:
     - harry-hov.gno
