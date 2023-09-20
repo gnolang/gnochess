@@ -1,6 +1,18 @@
 version: "3.7"
 
 services:
+  web:
+    build: ../../web
+    networks:
+      - gnonode
+    ports:
+      - 1313:1313
+    restart: on-failure
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "10"
+        max-size: "100m"
   deployer:
     build: ./deployer
     networks:
