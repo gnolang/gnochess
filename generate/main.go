@@ -52,9 +52,6 @@ func generateKeyFromSeed(seed []byte, index uint32) crypto.PrivKey {
 	pathParams := hd.NewFundraiserParams(0, crypto.CoinType, index)
 
 	masterPriv, ch := hd.ComputeMastersFromSeed(seed)
-
-	//nolint:errcheck // This derivation can never error out, since the path params
-	// are always going to be valid
 	derivedPriv, _ := hd.DerivePrivateKeyForPath(masterPriv, ch, pathParams.String())
 
 	return secp256k1.PrivKeySecp256k1(derivedPriv)
