@@ -11,16 +11,16 @@ import {
   Player,
   Promotion
 } from './types/types';
-import { GnoWallet, GnoWSProvider } from '@gnolang/gno-js-client';
-import {
-  BroadcastTxCommitResult,
-  TransactionEndpoint
-} from '@gnolang/tm2-js-client';
-import { generateMnemonic } from './utils/crypto.ts'; // TODO move this out into an ENV variable that's loaded in
+import { defaultTxFee, GnoWallet, GnoWSProvider } from '@gnolang/gno-js-client';
+import { BroadcastTxCommitResult, TransactionEndpoint } from '@gnolang/tm2-js-client';
+import { generateMnemonic } from './utils/crypto.ts';
+import Long from 'long'; // TODO move this out into an ENV variable that's loaded in
 
 // TODO move this out into an ENV variable that's loaded in
 const wsURL: string = 'ws://127.0.0.1:26657/websocket';
 const chessRealm: string = 'gno.land/r/gnochess';
+
+const defaultGasWanted: Long = new Long(1000000); // 1M
 
 /**
  * Actions is a singleton logic bundler
@@ -30,10 +30,6 @@ const chessRealm: string = 'gno.land/r/gnochess';
  */
 // @ts-ignore
 class Actions {
-  static getFaucetToken() {
-    throw new Error('Method not implemented.');
-  }
-
   private static instance: Actions;
 
   private wallet: GnoWallet | null = null;
@@ -123,7 +119,12 @@ class Actions {
       chessRealm,
       'LobbyJoin',
       [time.time.toString(), time.increment.toString()],
-      TransactionEndpoint.BROADCAST_TX_COMMIT
+      TransactionEndpoint.BROADCAST_TX_COMMIT,
+      undefined,
+      {
+        gasFee: defaultTxFee,
+        gasWanted: defaultGasWanted
+      }
     );
 
     try {
@@ -135,7 +136,12 @@ class Actions {
         chessRealm,
         'LobbyQuit',
         [],
-        TransactionEndpoint.BROADCAST_TX_COMMIT
+        TransactionEndpoint.BROADCAST_TX_COMMIT,
+        undefined,
+        {
+          gasFee: defaultTxFee,
+          gasWanted: defaultGasWanted
+        }
       );
 
       // Propagate the error
@@ -160,7 +166,12 @@ class Actions {
               chessRealm,
               'LobbyGameFound',
               [],
-              TransactionEndpoint.BROADCAST_TX_COMMIT
+              TransactionEndpoint.BROADCAST_TX_COMMIT,
+              undefined,
+              {
+                gasFee: defaultTxFee,
+                gasWanted: defaultGasWanted
+              }
             )) as BroadcastTxCommitResult;
 
           // Parse the response
@@ -244,7 +255,12 @@ class Actions {
         chessRealm,
         'MakeMove',
         [gameID, from, to, promotion.toString()],
-        TransactionEndpoint.BROADCAST_TX_COMMIT
+        TransactionEndpoint.BROADCAST_TX_COMMIT,
+        undefined,
+        {
+          gasFee: defaultTxFee,
+          gasWanted: defaultGasWanted
+        }
       )) as BroadcastTxCommitResult;
 
     // Parse the response from the node
@@ -282,7 +298,12 @@ class Actions {
         chessRealm,
         'DrawOffer',
         [gameID],
-        TransactionEndpoint.BROADCAST_TX_COMMIT
+        TransactionEndpoint.BROADCAST_TX_COMMIT,
+        undefined,
+        {
+          gasFee: defaultTxFee,
+          gasWanted: defaultGasWanted
+        }
       )) as BroadcastTxCommitResult;
 
     // Parse the response from the node
@@ -379,7 +400,12 @@ class Actions {
         chessRealm,
         'Resign',
         [gameID],
-        TransactionEndpoint.BROADCAST_TX_COMMIT
+        TransactionEndpoint.BROADCAST_TX_COMMIT,
+        undefined,
+        {
+          gasFee: defaultTxFee,
+          gasWanted: defaultGasWanted
+        }
       )) as BroadcastTxCommitResult;
 
     // Parse the response from the node
@@ -404,7 +430,12 @@ class Actions {
         chessRealm,
         'DrawRefuse',
         [gameID],
-        TransactionEndpoint.BROADCAST_TX_COMMIT
+        TransactionEndpoint.BROADCAST_TX_COMMIT,
+        undefined,
+        {
+          gasFee: defaultTxFee,
+          gasWanted: defaultGasWanted
+        }
       )) as BroadcastTxCommitResult;
 
     // Parse the response from the node
@@ -429,7 +460,12 @@ class Actions {
         chessRealm,
         'Draw',
         [gameID],
-        TransactionEndpoint.BROADCAST_TX_COMMIT
+        TransactionEndpoint.BROADCAST_TX_COMMIT,
+        undefined,
+        {
+          gasFee: defaultTxFee,
+          gasWanted: defaultGasWanted
+        }
       )) as BroadcastTxCommitResult;
 
     // Parse the response from the node
