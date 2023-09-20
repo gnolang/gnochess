@@ -4,4 +4,7 @@
 
 package main
 
-import _ "github.com/gnolang/gno/gnovm/pkg/gnolang"
+import (
+	_ "github.com/gnolang/gno/gno.land/cmd/gnokey"
+	_ "github.com/gnolang/gno/gnovm/cmd/gno"
+)
