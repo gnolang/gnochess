@@ -65,8 +65,14 @@ type rootCfg struct {
 func (c *rootCfg) generateFaucetConfig() *config.Config {
 	// Create the default configuration
 	cfg := config.DefaultConfig()
-	cfg.CORSConfig = nil
 
+	// Set up the CORS config
+	corsConfig := config.DefaultCORSConfig()
+
+	// Allow a custom header field
+	corsConfig.AllowedHeaders = append(corsConfig.AllowedHeaders, tokenKey)
+
+	cfg.CORSConfig = corsConfig
 	cfg.ListenAddress = c.listenAddress
 	cfg.ChainID = c.chainID
 	cfg.Mnemonic = c.mnemonic
