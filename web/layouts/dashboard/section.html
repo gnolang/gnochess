@@ -37,7 +37,7 @@
       <article
         class="opacity-0 translate-y-20 col-span-1 bg-grey-50 rounded py-7 px-8 flex flex-col justify-between"
       >
-        <h2 class="mb-4 text-100 font-bold">Rapid rating</h2>
+        <h2 class="mb-4 text-100 font-bold">Rating</h2>
 
         <span class="text-600 font-bold text-grey-600"
           ><span class="text-750" id="js-dashboardRapidWins">0</span>wins</span
@@ -47,48 +47,47 @@
             <div class="flex items-center">
               <span class="inline-flex mr-2 w-6 justify-center items-center"
                 >{{- partial "icons/ico-lose.html" . -}}</span
-              ><span id="js-dashboardRapidLoses">0</span> Loses
+              ><span id="js-dashboardRapidLoses">0</span>&nbsp; Loses
             </div>
             <div class="flex items-center">
               <span class="inline-flex mr-2 w-6 justify-center items-center"
                 >{{- partial "icons/ico-flag.html" . -}}</span
-              ><span id="js-dashboardRapidDraws">0</span> Draws
+              ><span id="js-dashboardRapidDraws">0</span>&nbsp; Draws
             </div>
           </div>
-          <div><span id="js-dashboardRapidGames">0</span> Games</div>
+          <div><span id="js-dashboardRapidGames">0</span>&nbsp; Games</div>
         </div>
       </article>
       <article
         class="opacity-0 translate-y-20 col-span-1 bg-grey-50 rounded py-7 px-8 flex flex-col justify-between"
       >
-        <h2 class="mb-4 text-100 font-bold">Blitz rating</h2>
+        <h2 class="mb-4 text-100 font-bold">Position</h2>
 
         <span class="text-600 font-bold text-grey-600"
-          ><span class="text-750" id="js-dashboardBlitzWins">0</span>wins</span
+          >#<span class="text-750" id="js-dashboardPosition">0</span></span
         >
         <div class="flex justify-between items-end font-bold">
           <div>
-            <div class="flex items-center">
-              <span class="inline-flex mr-2 w-6 justify-center items-center"
-                >{{- partial "icons/ico-lose.html" . -}}</span
-              ><span id="js-dashboardBlitzLoses">0</span> Loses
-            </div>
-            <div class="flex items-center">
+            <div class="flex items-center opacity-0">
               <span class="inline-flex mr-2 w-6 justify-center items-center"
                 >{{- partial "icons/ico-flag.html" . -}}</span
-              ><span id="js-dashboardBlitzDraws">0</span> Draws
+              ><span id="js-dashboardBlitzLoses">0</span> Draws
+            </div>
+            <div class="flex items-center">
+              <span class="inline-flex mr-2 justify-center items-center"
+                >Score: </span
+              ><span id="js-dashboardScore">0</span>&nbsp;Points
             </div>
           </div>
-          <div><span id="js-dashboardBlitzGames">0</span> Games</div>
         </div>
       </article>
       <article
         class="opacity-0 translate-y-20 relative overflow-hidden sm:col-span-2 row-start-2 bg-grey-50 rounded py-7 px-8 flex flex-col justify-between min-h-[26vh]"
       >
-        <h2 class="mb-4 text-100 font-bold">Global rating</h2>
+        <h2 class="mb-4 text-100 font-bold">Stats</h2>
         <div
           id="dashboard-rank"
-          class="absolute w-48 h-48 bg-grey-400 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-circle flex justify-center items-center text-grey-600 after:absolute after:w-[75%] after:h-[75%] after:top-[12.5%] after:left-[12.5%] after:bg-grey-50 after:rounded-circle after:block"
+          class="absolute md:w-48 md:h-48 sm:w-40 sm:h-40 w-32 h-32 bg-grey-400 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-circle flex justify-center items-center text-grey-600 after:absolute after:w-[75%] after:h-[75%] after:top-[12.5%] after:left-[12.5%] after:bg-grey-50 after:rounded-circle after:block"
         ></div>
 
         <div class="flex justify-between items-end font-bold">
@@ -98,24 +97,24 @@
                 ><span
                   class="rounded-circle w-full aspect-square bg-grey-600"
                 ></span></span
-              ><span id="js-dashboardGlobalWins">0</span> Wins
+              ><span id="js-dashboardGlobalWins">0</span>% Wins
             </div>
             <div class="flex items-center mt-2">
               <span class="inline-flex mr-2 w-6 justify-center items-center"
                 ><span
                   class="rounded-circle w-full aspect-square bg-grey-400"
                 ></span></span
-              ><span id="js-dashboardGlobalLoses">0</span> Loses
+              ><span id="js-dashboardGlobalLoses">0</span>% Loses
             </div>
             <div class="flex items-center mt-2">
               <span class="inline-flex mr-2 w-6 justify-center items-center"
                 ><span
                   class="rounded-circle w-full aspect-square bg-grey-200"
                 ></span></span
-              ><span id="js-dashboardGlobalDraws">0</span> Draws
+              ><span id="js-dashboardGlobalDraws">0</span>% Draws
             </div>
           </div>
-          <div><span id="js-dashboardGlobalGames">0</span> Games</div>
+          <!-- <div><span id="js-dashboardGlobalGames">0</span> Games</div> -->
         </div>
         <img
           src="/img/images/trophy.png"

@@ -11,15 +11,18 @@ const Dashboard = class extends Component {
     super(opts);
   }
 
-  init() {
+  async init() {
     // automatically called at start
     console.log('Dashboard component init');
 
+    const player = await Actions.getFakePlayer();
+
     //TODO: login/logout - redir + deco wallet (in destroy)
 
-    this.userToken = Actions.getToken() ?? null;
+    this.userToken = Actions.getToken() ?? null; //TODO: players var too?
     this._feedUser(this.userToken);
-    this._feedRatings();
+    this._feedRatings(player);
+    this._feedPosition(player);
     this._feedLeaderbord();
   }
 
@@ -34,6 +37,12 @@ const Dashboard = class extends Component {
     //token
     const DOM = document.getElementById('js-dashtoken');
     if (DOM && token) DOM.innerHTML = truncateString(token, 4, 4);
+  }
+
+  _feedPosition(player: any) {
+    this.DOM.el.querySelector('#js-dashboardPosition').innerHTML =
+      player.position;
+    this.DOM.el.querySelector('#js-dashboardScore').innerHTML = player.score;
   }
 
   _createDomFunc(category: Categoy, rating: any) {
@@ -52,42 +61,50 @@ const Dashboard = class extends Component {
     return rating;
   }
 
-  async _feedUserBlitzRating() {
-    const rating = await Actions.getBlitzRating();
-    return this._createDomFunc('Blitz', rating);
-  }
-  async _feedUserRapidRating() {
-    const rating = await Actions.getRapidRating();
+  private async _feedUserRating(player: any) {
+    //TODO: Should Player type after
+    const { wins, loses, draws } = player;
+    const rating = {
+      wins,
+      loses,
+      draws
+    };
     return this._createDomFunc('Rapid', rating);
   }
-  _feedUserGlobalRating(globalRating: any) {
+  //   async _feedUserRapidRating() {
+  //     const rating = await Actions.getRapidRating();
+  //     return this._createDomFunc('Rapid', rating);
+  //   }
+  private _feedUserGlobalRating(globalRating: any) {
     return this._createDomFunc('Global', globalRating);
   }
 
-  async _feedRatings() {
-    const ratings = await Promise.all([
-      this._feedUserBlitzRating(),
-      this._feedUserRapidRating()
-    ]);
-    const globalRating = ratings.reduce((acc, curr) => {
-      curr.wins += acc.wins;
-      curr.loses += acc.loses;
-      curr.draws += acc.draws;
-      return curr;
-    });
-    this._createPie(globalRating);
+  private async _feedRatings(player: any) {
+    //Shoud be Player type after
+    this._feedUserRating(player);
 
-    this._feedUserGlobalRating(globalRating);
+    const percents = this._createPie(player);
+    this._feedUserGlobalRating(percents);
   }
 
-  _createPie(res: any) {
+  private _createPie(player: any) {
+    //TODO: should be player type
     //TODO: refactor to get interactive chart
-    const total = res.wins + res.loses + res.draws;
+    const { wins, loses, draws } = player;
+    const total = wins + loses + draws;
+    console.log(total);
     const calc = (i: number) => Math.round((i / total) * 100);
-    const percents = [calc(res.wins), calc(res.loses), calc(res.draws)];
+    const percents = [calc(wins), calc(loses), calc(draws)];
     const pieEl = this.DOM.el.querySelector('#dashboard-rank');
     pieEl.style.background = `conic-gradient(#777777 0% ${percents[0]}%, #b4b4b4 ${percents[0]}% ${percents[1]}%, #d9d9d9 ${percents[1]}% ${percents[2]}%)`;
     pieEl.innerHTML = `<span class="dashbord-global-rank-value">${percents[0]}<span class="text-200">%</span> <br><span class="text-300">Wins</span></span>`;
+
+    return {
+      wins: percents[0],
+      loses: percents[1],
+      draws: percents[2],
+      games: total
+    };
   }
 
   _feedLeaderbord() {
@@ -103,8 +120,8 @@ const Dashboard = class extends Component {
                 )})"></div><img src="/img/mini-gopher.png" alt="avatar"/></div>
                 <div class="dashboard-avatar_info">${truncateString(
                   lead.token,
-                  4,
-                  4
+                  2,
+                  2
                 )}</div>
           </li>`;
         })

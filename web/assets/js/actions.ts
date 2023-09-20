@@ -209,6 +209,17 @@ export default new (class {
     ];
   }
 
+  getFakePlayer() {
+    return {
+      address: 'blablabl',
+      username: 'azertyuiop',
+      wins: 5,
+      loses: 2,
+      draws: 1,
+      score: 1896,
+      position: 12
+    };
+  }
   //...
 
   //close WS and Gno-Client
