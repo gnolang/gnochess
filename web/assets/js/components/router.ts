@@ -24,7 +24,7 @@ const Router = class extends Component {
       dashboardView
     ];
     this.loadedTransition = [
-      playTransition(this),
+      ...playTransition(this),
       ...homeTransition(this),
       ...aboutTransition(this),
       ...genericTransition(this),

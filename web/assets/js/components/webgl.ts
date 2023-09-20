@@ -270,9 +270,9 @@ const Webgl = class extends Component {
     }
   }
 
-  appear() {
+  appear(instant = false) {
     gsap.to(this.DOM.canvas, { autoAlpha: 1 });
-    this.move1TL.reverse();
+    if (!instant) this.move1TL.reverse();
   }
   disappear(immediate = false) {
     if (this.model && !immediate) this.move3TL.play();
