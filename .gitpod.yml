@@ -13,16 +13,22 @@ tasks:
     init: |
       git fetch --all
       git switch patch/gnochess
+      touch /.init.switch
       go install ./cmd/gnoland ./cmd/gnoweb
+      touch /.init.install
     command: gnoland start
 
   - name: Gnoweb
+    init: while [ ! -f /.init.install ]; do sleep 1; done
     before: cd ../gno/gno.land/;
     command: gnoweb --bind=0.0.0.0:8888
 
   - name: Deps
-    before: cd ../gno/misc/devdeps; make install
-    init: echo "Deps installed."
+    before: cd ../gno/misc/devdeps
+    init: |
+      while [ ! -f /.init.switch ]; do sleep 1; done
+      make install
+      echo "Deps installed."
 
   - name: Gno CLI
     init: |
