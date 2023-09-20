@@ -1,11 +1,12 @@
 import { Component } from 'sevejs';
 import { gsap } from 'gsap';
-import Action from '../actions';
+import { GameTime } from '../types/types.ts';
+import Actions from '../actions.ts';
 
 type Options = {
   token: string;
   category: 'rapid' | 'blitz';
-  timer: number[];
+  timer: GameTime;
 };
 type Events = Record<string, any>;
 
@@ -36,7 +37,10 @@ const Gameoptions = class extends Component {
     this.options = {
       token: '',
       category: 'rapid',
-      timer: [10, 5]
+      timer: {
+        time: 10,
+        increment: 5
+      }
     } as Options;
 
     this.events = {} as Events;
@@ -140,14 +144,18 @@ const Gameoptions = class extends Component {
       });
 
     //actions
-    this.DOM.timerDisplay.innerHTML = this.options.timer[0];
-    this.DOM.timerIncrement.innerHTML = this.options.timer[1];
+    this.DOM.timerDisplay.innerHTML = this.options.timer.time;
+    this.DOM.timerIncrement.innerHTML = this.options.timer.increment;
 
     //checkstep
-    if (Action.getToken()) {
-      this._clickOnCtrl1(null, true);
-    }
-    this.appear();
+    Actions.getInstance().then((actions) => {
+      // TODO @Alexis please check that the semantics are right here
+      if (actions.getFaucetToken()) {
+        this._clickOnCtrl1(null, true);
+      }
+
+      this.appear();
+    });
   }
 
   _clickOnCtrl0() {
@@ -161,6 +169,7 @@ const Gameoptions = class extends Component {
       this.call('goTo', ['/'], 'Router');
     }
   }
+
   private _pressOnCtrl1(e: any) {
     let keyCode = e.keyCode ? e.keyCode : e.which;
 
@@ -169,74 +178,95 @@ const Gameoptions = class extends Component {
       this._clickOnCtrl1(e);
     }
   }
+
   async _clickOnCtrl1(_e: any, immediate = false) {
     this.currentState++;
 
-    if (this.currentState === 1) {
-      this.options.token = this._inputToken();
-      this.DOM.ctrl1.innerHTML = this.states[this.currentState].ctrls[1];
-      this.switchAnimation1[immediate ? 'progress' : 'play'](immediate ? 1 : 0);
-    } else if (this.currentState === 2) {
-      this.switchAnimation2.play();
+    const actions: Actions = await Actions.getInstance();
 
-      this.call('changeStatus', ['action'], 'webgl');
-      this.call('moveScene', [''], 'webgl');
+    switch (this.currentState) {
+      case 1: {
+        this.options.token = await this._inputToken();
+        this.DOM.ctrl1.innerHTML = this.states[this.currentState].ctrls[1]; //todo: animation
+        this.switchAnimation1[immediate ? 'progress' : 'play'](
+          immediate ? 1 : 0
+        );
 
-      //TODO: error system
-      //setup game
-      this.lookingForRival = true;
-      const gameSetting = await Action.createGame(this.options.timer);
-      console.log(gameSetting);
-
-      //check if game has not been cancelled after the wait
-      if (this.lookingForRival) {
-        this.call('disappear', [], 'webgl');
-        this.call('setCategory', [this.options.category], 'gamecategory');
-
-        this.disappear().then((_) => {
-          this.call(
-            'config',
-            [
-              this.options.timer,
-              gameSetting.me.color,
-              gameSetting.me.id,
-              this.options.category
-            ],
-            'gameplayers',
-            'me'
-          );
-          this.call(
-            'config',
-            [
-              this.options.timer,
-              gameSetting.rival.color,
-              gameSetting.rival.id,
-              this.options.category
-            ],
-            'gameplayers',
-            'rival'
-          );
-
-          gsap.set('#js-background', { transformOrigin: 'center' });
-          gsap.to('#js-background', { scale: 1.1, duration: 1.4 });
-          this.call('appear', [], 'gamecategory');
-
-          this.call('appear', '', 'gameplayers', 'me');
-          this.call('appear', '', 'gameplayers', 'rival');
-          this.call('appear', '', 'gamecontrols');
-          this.call('appear', '', 'gameboard');
-          this.call('startGame', gameSetting.me.color, 'gameboard');
-        });
+        break;
       }
+      case 2: {
+        this.switchAnimation2.play();
+
+        this.call('changeStatus', ['action'], 'webgl');
+        this.call('moveScene', [''], 'webgl');
+
+        //TODO: error system
+        //setup game
+        this.lookingForRival = true;
+        const gameSetting = await actions.joinLobby(this.options.timer);
+        console.log(gameSetting);
+        console.log('Logging');
+
+        //check if game has not been cancelled after the wait
+        if (this.lookingForRival) {
+          this.call('disappear', [], 'webgl');
+          this.call('setCategory', [this.options.category], 'gamecategory');
+
+          this.disappear().then((_) => {
+            this.call(
+              'config',
+              [
+                this.options.timer,
+                gameSetting.me.color,
+                gameSetting.me.id,
+                this.options.category
+              ],
+              'gameplayers',
+              'me'
+            );
+            this.call(
+              'config',
+              [
+                this.options.timer,
+                gameSetting.rival.color,
+                gameSetting.rival.id,
+                this.options.category
+              ],
+              'gameplayers',
+              'rival'
+            );
+
+            gsap.set('#js-background', { transformOrigin: 'center' });
+            gsap.to('#js-background', { scale: 1.1, duration: 1.4 });
+            this.call('appear', [], 'gamecategory');
+
+            this.call('appear', '', 'gameplayers', 'me');
+            this.call('appear', '', 'gameplayers', 'rival');
+            this.call('appear', [gameSetting.game.id], 'gamecontrols');
+            this.call(
+              'startGame',
+              [gameSetting.game.id, gameSetting.me.color],
+              'gameboard'
+            );
+            this.call('appear', '', 'gameboard');
+          });
+        }
+        break;
+      }
+      default:
     }
   }
 
-  _inputToken() {
+  async _inputToken() {
     const token =
       this.DOM.el.querySelector('#id-gameoptions-token').value || '';
-    if (!Action.getToken()) {
-      Action.setToken(token);
+
+    const actions: Actions = await Actions.getInstance();
+
+    if (!actions.getFaucetToken()) {
+      await actions.setFaucetToken(token);
     }
+
     return token;
   }
 
@@ -265,8 +295,8 @@ const Gameoptions = class extends Component {
 
     this.options.timer = this.timers[this.options.category][this.timer];
 
-    this.DOM.timerDisplay.innerHTML = this.options.timer[0];
-    this.DOM.timerIncrement.innerHTML = this.options.timer[1];
+    this.DOM.timerDisplay.innerHTML = this.options.timer.time;
+    this.DOM.timerIncrement.innerHTML = this.options.timer.increment;
   }
 
   _updateCategory(e: any) {
@@ -279,6 +309,7 @@ const Gameoptions = class extends Component {
       ease: 'steps(9)',
       duration: 0.4
     });
+
     gsap.to(this.DOM.categorySwitch, { x: cat ? '100%' : '0' });
     gsap.to('#js-categoryWord', { x: cat ? '-60%' : '-15%' });
   }
@@ -286,6 +317,7 @@ const Gameoptions = class extends Component {
   appear() {
     gsap.to(this.DOM.el, { autoAlpha: 1 });
   }
+
   disappear() {
     const tl = gsap.timeline();
     tl.to('#gameoptions-actions', { autoAlpha: 0, duration: 0.3 });

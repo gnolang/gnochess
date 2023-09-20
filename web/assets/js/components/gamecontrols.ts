@@ -1,10 +1,11 @@
 import { Component } from 'sevejs';
 import { gsap } from 'gsap';
-import Action from '../actions';
 import Events from '../utils/events';
+import Actions from '../actions.ts';
+import { Game, GameState, drawRequestTimer } from '../types/types.ts';
 
 type Events = Record<string, any>;
-type Actions = 'void' | 'draw' | 'resign' | 'offer';
+type GameAction = 'void' | 'draw' | 'resign' | 'offer';
 const Gamecontrols = class extends Component {
   constructor(opts: any) {
     super(opts);
@@ -16,9 +17,12 @@ const Gamecontrols = class extends Component {
     console.log('PlayControls component init');
 
     //Vars
-    this.action = 'void' as Actions;
+    this.action = 'void' as GameAction;
     this.pendingDraw = false;
-    this.timer = 9;
+    this.timer = drawRequestTimer;
+    this.drawRequestAdress = null;
+    this.drawAllowed = true;
+    this.watcher = null;
 
     this.contents = {
       resign: {
@@ -102,6 +106,7 @@ const Gamecontrols = class extends Component {
         boxShadow: '0px 0px 0px 0px rgba(255,255,255,0)'
       });
   }
+
   _switchIconBtn(btn: Element) {
     return gsap
       .timeline({ paused: true })
@@ -109,20 +114,28 @@ const Gamecontrols = class extends Component {
       .to(btn.querySelector('.js-cross'), { autoAlpha: 1 }, '<');
   }
 
-  _updateContent(action: Actions) {
+  _updateContent(action: GameAction) {
     this.DOM.title.innerHTML = this.contents[action].title;
     this.DOM.content.innerHTML = this.contents[action].content;
     this.DOM.ctrConfirmContent.innerHTML = this.contents[action].btn;
   }
 
-  _clickOnCtr(action: Actions, direct: boolean) {
+  async _clickOnCtr(action: GameAction, direct: boolean) {
     if (this.action === 'void') {
       this._updateContent(action);
       this.action = action === 'offer' ? 'draw' : action;
 
-      this[action === 'resign' ? 'disableCtr1TL' : 'disableCtr0TL'].play();
-      this[action === 'resign' ? 'swithCtr0TL' : 'swithCtr1TL'].play();
-      this.validationTL.play();
+      if (this.drawAllowed) {
+        // draw allowed - can be a draw or a resign request
+        this[action === 'resign' ? 'disableCtr1TL' : 'disableCtr0TL'].play();
+        this[action === 'resign' ? 'swithCtr0TL' : 'swithCtr1TL'].play();
+        this.validationTL.play();
+      } else {
+        // if draw not allowed - can only be resign
+        this.disableCtr1TL.play();
+        this.swithCtr0TL.play();
+        this.validationTL.play();
+      }
     } else if (this.action === action && direct) {
       if (this.pendingDraw) {
         // if pending draw refused
@@ -140,23 +153,34 @@ const Gamecontrols = class extends Component {
     }
   }
 
-  async _clickOnConfirm() {
+  private async _clickOnConfirm() {
+    const actions: Actions = await Actions.getInstance();
+
     if (this.action === 'resign') {
-      Action.requestResign();
+      await actions.requestResign(this.gameId);
       this.call('goTo', ['/'], 'router');
     }
     if (this.action === 'draw') {
       if (this.pendingDraw) {
         clearInterval(this.pendingDraw);
-        this.timer = 9;
-        this.pendingDraw = null;
-      } else {
-        this.waitingTL.play();
-        const isAccepted = await Action.requestDraw();
-        if (isAccepted) {
+
+        const isSent = await actions.acceptDraw(this.gameId);
+        if (isSent) {
           this.call('engine', [false, 'draw'], 'gameboard');
         }
         this.waitingTL.reverse();
+
+        this.timer = drawRequestTimer;
+        this.pendingDraw = null;
+      } else {
+        this.waitingTL.play();
+
+        this.drawAllowed = false;
+        const game: Game = await actions.requestDraw(this.gameId);
+        if (game.state === GameState.DRAWN_BY_AGREEMENT) {
+          this.call('engine', [false, 'draw'], 'gameboard');
+          this.waitingTL.reverse();
+        }
       }
     }
 
@@ -171,14 +195,16 @@ const Gamecontrols = class extends Component {
     this.action = 'void';
   }
 
-  _declineOffer() {
-    Action.declineDraw();
+  async _declineOffer() {
+    const actions: Actions = await Actions.getInstance();
+
+    await actions.declineDraw(this.gameId);
     clearInterval(this.pendingDraw);
-    this.timer = 9;
+    this.timer = drawRequestTimer;
     this.pendingDraw = null;
   }
 
-  _getDrawProposition() {
+  private _getDrawProposition() {
     gsap.set(this.DOM.timer, { autoAlpha: 1, display: 'inline-block' });
 
     this.pendingDraw = setInterval(() => {
@@ -187,16 +213,38 @@ const Gamecontrols = class extends Component {
 
       if (this.timer <= 0) {
         this._clickOnCtr('draw', true);
-        this.timer = 9;
+        this.timer = drawRequestTimer;
+        clearInterval(this.pendingDraw);
       }
     }, 1000);
     this._clickOnCtr('offer', false);
     console.log('propal received');
   }
 
-  appear() {
+  private async _actionWatcher() {
+    const watcherFunc = async () => {
+      const actions: Actions = await Actions.getInstance();
+      const game = await actions.getGame(this.gameId);
+      if (this.drawRequestAdress !== game.draw_offerer) {
+        this.drawRequestAdress = game.draw_offerer;
+        this.drawAllowed = true;
+        this._getDrawProposition();
+      }
+
+      if (game.state === 'resigned') {
+        clearInterval(this.watcher);
+        this.call('engine', [false, 'resigned'], 'gameboard');
+      }
+    };
+    this.watcher = setInterval(watcherFunc, 1000);
+  }
+
+  appear(gameId: string) {
+    this.gameId = gameId;
+    this._actionWatcher();
     gsap.to(this.DOM.el, { autoAlpha: 1, display: 'flex' });
   }
+
   disappear() {
     return gsap.to(this.DOM.el, {
       autoAlpha: 0,
@@ -208,6 +256,7 @@ const Gamecontrols = class extends Component {
   destroy() {
     Events.off('drawPropal');
     clearInterval(this.pendingDraw);
+    clearInterval(this.watcher);
     this.validationTL.kill();
     this.disableCtr0TL.kill();
     this.disableCtr1TL.kill();

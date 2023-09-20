@@ -3,10 +3,12 @@ import { truncateString } from '../utils/truncate';
 import { avatarize } from '../utils/avatar';
 
 import Actions from '../actions';
+
 type Categoy = 'Blitz' | 'Rapid' | 'Global';
 
 const Dashboard = class extends Component {
   userToken: string | undefined | null;
+
   constructor(opts: any) {
     super(opts);
   }
@@ -15,15 +17,28 @@ const Dashboard = class extends Component {
     // automatically called at start
     console.log('Dashboard component init');
 
-    const player = await Actions.getFakePlayer();
-
     //TODO: login/logout - redir + deco wallet (in destroy)
 
-    this.userToken = Actions.getToken() ?? null; //TODO: players var too?
-    this._feedUser(this.userToken);
-    this._feedRatings(player);
-    this._feedPosition(player);
-    this._feedLeaderbord();
+    Actions.getInstance()
+      .then(async (actions: Actions) => {
+        const userToken = actions.getFaucetToken();
+        if (!userToken) {
+          // TODO handle
+          throw new Error('user token not present');
+        }
+
+        this.userToken = userToken;
+        this._feedUser(this.userToken);
+
+        const player = await actions.getUserData();
+        this._feedRatings(player);
+        this._feedPosition(player);
+        this._feedLeaderbord();
+      })
+      .catch(() => {
+        console.error('Error: Dashboard component init issue');
+        // TODO handle error
+      });
   }
 
   private _feedUser(token: string) {
@@ -104,8 +119,13 @@ const Dashboard = class extends Component {
   }
 
   _feedLeaderbord() {
-    const leaders = [Actions.getBlitzLeaders(), Actions.getRapidLeaders()];
+    // TODO @Alexis
+    // There is no Blitz / Rapid leaderboard,
+    // only the actual leaderboard that is fetch-able by
+    // await Actions.getInstance().getLeaderboard()
+    const leaders: any[] = [];
 
+    //TODO: check tailwind classes
     const leaderMapped = leaders.map((leadmap) => {
       return leadmap
         .map((lead: any) => {
@@ -121,7 +141,7 @@ const Dashboard = class extends Component {
                 )}</div>
           </li>`;
         })
-        .reduce((acc, curr) => acc + curr);
+        .reduce((acc: any, curr: any) => acc + curr);
     });
 
     const DOMrapid = document.getElementById('js-dashrapidleaderboard');

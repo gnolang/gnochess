@@ -111,9 +111,10 @@ typings/
 
 #hugo ressources
 web/resources/_gen/assets
+
+web/public/js/**/*.js
+web/public/css/**/*.css
 web/public/**/*.html
-web/public/**/*.js
-web/public/**/*.css
 web/public/**/*.xml
 
 
