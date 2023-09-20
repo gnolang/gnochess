@@ -14,7 +14,7 @@ type lobbyPlayer struct {
 	lo, hi   float64
 }
 
-func (l lobbyPlayer) r() float64 { return l.player.Rating.Rating }
+func (l lobbyPlayer) r(cat Category) float64 { return l.player.CategoryInfo[cat].Rating }
 
 // time control lobby divisions. N+M -> tcLobbyNpM
 const (
@@ -22,6 +22,15 @@ const (
 	tcLobby10p5
 	tcLobbyMax
 )
+
+func tcCategory(tc int) Category {
+	switch tc {
+	case tcLobby5p0:
+		return Blitz
+	default:
+		return Rapid
+	}
+}
 
 var (
 	lobby          [tcLobbyMax][]lobbyPlayer
@@ -66,6 +75,7 @@ func refreshLobby(tc int) {
 	// determine sub lobby
 	sublob := lobby[tc]
 	now := time.Now()
+	cat := tcCategory(tc)
 
 	// check if time passed; if so update leaderboard lo/hi's.
 	// check if we have someone "timed out" and match them to the closest
@@ -75,7 +85,7 @@ func refreshLobby(tc int) {
 	if !lobbyUpdatedAt[tc].Equal(now) {
 		firstTimeout := -1
 		for pos, player := range sublob {
-			rat := player.r()
+			rat := player.r(cat)
 			wait := now.Sub(player.joinedAt) / time.Second
 			if wait >= 20 {
 				if firstTimeout < 0 {
@@ -91,8 +101,8 @@ func refreshLobby(tc int) {
 		lobbyUpdatedAt[tc] = now
 
 		if firstTimeout >= 0 && len(sublob) >= 2 {
-			ftr := sublob[firstTimeout].r()
-			pos := lobbyClosest(sublob, ftr, firstTimeout)
+			ftr := sublob[firstTimeout].r(cat)
+			pos := lobbyClosest(sublob, cat, ftr, firstTimeout)
 			lobbyMatch(tc, firstTimeout, pos)
 		}
 	}
@@ -116,26 +126,26 @@ func refreshLobby(tc int) {
 		// perform nothing, player not found
 		return
 	}
-	closestPos := lobbyClosest(sublob, caller.r(), callerPos)
+	closestPos := lobbyClosest(sublob, cat, caller.r(cat), callerPos)
 	closest := sublob[closestPos]
 
 	// ensure each is the other's bracket,
 	// OR one of them has been waiting 20s+
 	if now.Sub(caller.joinedAt) >= time.Second*20 ||
 		now.Sub(closest.joinedAt) >= time.Second*20 ||
-		(closest.r() >= caller.lo && closest.r() <= caller.hi &&
-			caller.r() >= closest.lo && caller.r() <= closest.hi) {
+		(closest.r(cat) >= caller.lo && closest.r(cat) <= caller.hi &&
+			caller.r(cat) >= closest.lo && caller.r(cat) <= closest.hi) {
 		lobbyMatch(tc, callerPos, closestPos)
 	}
 }
 
-func lobbyClosest(sublob []lobbyPlayer, rating float64, skip int) (idx int) {
+func lobbyClosest(sublob []lobbyPlayer, cat Category, rating float64, skip int) (idx int) {
 	delta := math.Inf(1)
 	for i, pl := range sublob {
 		if i == skip {
 			continue
 		}
-		if cd := math.Abs(rating - pl.r()); cd < delta {
+		if cd := math.Abs(rating - pl.r(cat)); cd < delta {
 			delta, idx = cd, i
 		}
 	}
