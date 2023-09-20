@@ -1,0 +1,72 @@
+# http://gitpod.io/#github.com/gnolang/gnochess
+
+additionalRepositories:
+  - url: https://github.com/gnolang/gno
+    checkoutLocation: gno
+
+# gnoland and gnoweb need to reference local files.
+# gnokey and gno don't, and they are versioned using their values
+# in go.mod
+tasks:
+  - name: Gnoland
+    before: cd ../gno/gno.land/
+    init: |
+      git fetch --all
+      git switch patch/gnochess
+      touch /workspace/.init.switch
+      go install ./cmd/gnoland ./cmd/gnoweb
+      touch /workspace/.init.install
+    command: gnoland start
+
+  - name: Gnoweb
+    init: while [ ! -f /workspace/.init.install ]; do sleep 1; done
+    before: cd ../gno/gno.land/;
+    command: gnoweb --bind=0.0.0.0:8888
+    openMode: split-right
+
+  - name: Deps
+    before: cd ../gno/misc/devdeps
+    init: |
+      while [ ! -f /workspace/.init.switch ]; do sleep 1; done
+      make install
+      echo "Deps installed."
+    openMode: split-right
+
+  - name: Gno CLI
+    init: |
+        go mod download
+        go install \
+          github.com/gnolang/gno/gno.land/cmd/gnokey \
+          github.com/gnolang/gno/gnovm/cmd/gno
+    command: |
+      url () { echo $GITPOD_WORKSPACE_URL | sed 's#://#://8888-#'; }
+      echo "Get started with the tutorial"
+      echo "  > https://github.com/gnolang/gnochess/blob/main/tutorial/01_getting_started/README.md"
+      echo "Open up gnoweb"
+      echo "  > $(url)"
+      echo "  > Pull it back up with command 'url'"
+
+ports:
+  - name: gnoweb
+    description: "the Gno.land web server"
+    port: 8888
+    onOpen: notify
+
+  - name: "gnoland RPC"
+    description: "the RPC server, managed by tendermint2"
+    port: 36657
+    onOpen: notify
+
+github:
+  prebuilds:
+    master: true
+    branches: true
+    pullRequests: true
+    pullRequestsFromForks: true
+    addCheck: true
+    addComment: true
+    addBadge: true
+
+vscode:
+  extensions:
+    - harry-hov.gno

@@ -189,7 +189,7 @@ rationale: give brackets in an exponential range between
 
 	5000=x^c+50 (when x = 19)
 
-which comes out to be ln(delta)/ln(steps).
+which comes out to be ln(delta)/ln(steps), delta = 5000-50, steps = 19.
 */
 var bracketSize = [...]float64{
 	50.0,

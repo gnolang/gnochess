@@ -1,9 +1,11 @@
 baseURL = "https://gnochess.com/"
 DefaultContentLanguage = "en"
 title = "GnoChess"
-enableGitInfo = true
+enableGitInfo = false
 enableRobotsTXT = true
 disableKinds = ["taxonomy"]
+ignoreErrors = ["error-disable-taxonomy"]
+
 [params]
     themeColor = "#363636"
     cover =  "/img/og.png"
