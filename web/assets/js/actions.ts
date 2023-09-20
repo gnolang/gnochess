@@ -12,7 +12,10 @@ import {
   Promotion
 } from './types/types';
 import { defaultTxFee, GnoWallet, GnoWSProvider } from '@gnolang/gno-js-client';
-import { BroadcastTxCommitResult, TransactionEndpoint } from '@gnolang/tm2-js-client';
+import {
+  BroadcastTxCommitResult,
+  TransactionEndpoint
+} from '@gnolang/tm2-js-client';
 import { generateMnemonic } from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
