@@ -26,8 +26,7 @@ const Dashboard = class extends Component {
     this._feedLeaderbord();
   }
 
-  _feedUserSocial() {}
-  _feedUser(token: string) {
+  private _feedUser(token: string) {
     //avatar
     const bg = document.createElement('DIV');
     bg.style.filter = `brightness(${avatarize(token)}`;
@@ -39,13 +38,13 @@ const Dashboard = class extends Component {
     if (DOM && token) DOM.innerHTML = truncateString(token, 4, 4);
   }
 
-  _feedPosition(player: any) {
+  private _feedPosition(player: any) {
     this.DOM.el.querySelector('#js-dashboardPosition').innerHTML =
       player.position;
     this.DOM.el.querySelector('#js-dashboardScore').innerHTML = player.score;
   }
 
-  _createDomFunc(category: Categoy, rating: any) {
+  private _createDomFunc(category: Categoy, rating: any) {
     const kinds = ['wins', 'draws', 'loses', 'game'];
     const games = document.getElementById(`js-dashboard${category}Games`);
 
@@ -71,10 +70,7 @@ const Dashboard = class extends Component {
     };
     return this._createDomFunc('Rapid', rating);
   }
-  //   async _feedUserRapidRating() {
-  //     const rating = await Actions.getRapidRating();
-  //     return this._createDomFunc('Rapid', rating);
-  //   }
+
   private _feedUserGlobalRating(globalRating: any) {
     return this._createDomFunc('Global', globalRating);
   }
