@@ -235,7 +235,7 @@ By writing your key name in the `My address:` input, you
 can get an auto-generated command to execute the `Add()` transaction on the
 chain. Try it out!
 
-![gnoweb-screenshot.png](A screenshot of gnoweb on the realm help page.)
+![A screenshot of gnoweb on the realm help page.](gnoweb-screenshot.png)
 
 Let's try calling `Add()`:
 
