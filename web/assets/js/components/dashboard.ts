@@ -3,6 +3,7 @@ import { truncateString } from '../utils/truncate';
 import { avatarize } from '../utils/avatar';
 
 import Actions from '../actions';
+import { Player, PlayerRating } from '../types/types.ts';
 
 type Categoy = 'Blitz' | 'Rapid' | 'Global';
 
@@ -30,7 +31,7 @@ const Dashboard = class extends Component {
         this.userToken = userToken;
         this._feedUser(this.userToken);
 
-        const player = await actions.getUserData();
+        const player: Player = await actions.getUserData();
         this._feedRatings(player);
         this._feedPosition(player);
         this._feedLeaderbord();
@@ -75,14 +76,15 @@ const Dashboard = class extends Component {
     return rating;
   }
 
-  private async _feedUserRating(player: any) {
-    //TODO: Should Player type after
-    const { wins, loses, draws } = player;
+  private _feedUserRating(player: Player) {
+    const playerRating: PlayerRating = player.rapid;
+
     const rating = {
-      wins,
-      loses,
-      draws
+      wins: playerRating.wins,
+      loses: playerRating.losses,
+      draws: playerRating.draws
     };
+
     return this._createDomFunc('Rapid', rating);
   }
 
@@ -90,8 +92,7 @@ const Dashboard = class extends Component {
     return this._createDomFunc('Global', globalRating);
   }
 
-  private async _feedRatings(player: any) {
-    //Shoud be Player type after
+  private async _feedRatings(player: Player) {
     this._feedUserRating(player);
 
     const percents = this._createPie(player);

@@ -8,7 +8,6 @@ export type GameoverType =
   | 'insufficientMaterial'
   | 'drawn_5_fold'
   | 'drawn_75_move'
-  | 'drawn_5_fold'
   | 'drawn_50_move'
   | 'drawn_3_fold'
   | 'resigned';
@@ -108,12 +107,22 @@ export const defaultMnemonicKey = 'private-key-mnemonic';
 export const defaultFaucetTokenKey = 'faucet-token';
 export const drawRequestTimer = 15;
 
+export interface PlayerRating {
+  wins: number;
+  losses: number;
+  draws: number;
+  rating: {
+    rating: number;
+    deviation: number;
+    volatility: number;
+  };
+  position: number;
+}
+
 export interface Player {
   address: string;
-  username: string | null;
-  wins: number;
-  loses: number;
-  draws: number;
-  score: number;
-  position: number; // leaderboard position
+  username: string;
+  blitz: PlayerRating;
+  rapid: PlayerRating;
+  correspondence: PlayerRating;
 }
