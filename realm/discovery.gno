@@ -16,7 +16,7 @@ import (
 
 // realm state
 var (
-	playerStore avl.Tree // std.Address -> Player
+	playerStore avl.Tree // std.Address -> *Player
 	leaderboard leaderboardType
 )
 
@@ -26,7 +26,7 @@ func GetPlayer(player string) string {
 	if !ok {
 		panic("player not found: " + player)
 	}
-	b, err := v.(Player).MarshalJSON()
+	b, err := v.(*Player).MarshalJSON()
 	if err != nil {
 		panic(err)
 	}
@@ -37,11 +37,12 @@ func GetPlayer(player string) string {
 type Player struct {
 	Address             std.Address
 	Wins, Losses, Draws int
+	Rating              *PlayerRating
 }
 
 // Score for determining leaderboards.
-func (p Player) Score() int {
-	return p.Wins - p.Losses
+func (p Player) Score() float64 {
+	return p.Rating.Rating
 }
 
 // Leaderboard position, 0 indexed.
@@ -69,40 +70,72 @@ func (p Player) MarshalJSON() ([]byte, error) {
 	buf.WriteString(`"wins":` + strconv.Itoa(p.Wins) + ",")
 	buf.WriteString(`"losses":` + strconv.Itoa(p.Losses) + ",")
 	buf.WriteString(`"draws":` + strconv.Itoa(p.Draws) + ",")
-	buf.WriteString(`"score":` + strconv.Itoa(p.Score()) + ",")
+	buf.WriteString(`"rating":`)
+	if res, err := p.Rating.MarshalJSON(); err != nil {
+		return nil, err
+	} else {
+		buf.Write(res)
+	}
+	buf.WriteByte(',')
 	buf.WriteString(`"position":` + strconv.Itoa(p.LeaderboardPosition()))
 
 	buf.WriteByte('}')
 	return buf.Bytes(), nil
 }
 
-// result: 1 win, 0 draw, -1 loss
-func reportPlayerScore(addr std.Address, result int) {
+func saveGameResult(g *Game) {
+	w, b := getPlayer(g.White), getPlayer(g.Black)
+
+	// Get numeric result for glicko2.
+	var result float64
+	switch g.Winner {
+	case WinnerWhite:
+		w.Wins++
+		b.Losses++
+		result = 1
+	case WinnerBlack:
+		w.Losses++
+		b.Wins++
+		result = 0
+	case WinnerDraw:
+		w.Draws++
+		b.Draws++
+		result = 0.5
+	default:
+		return // TODO: maybe panic
+	}
+
+	// Call glicko 2 rating calculator.
+	owr, obr := w.Rating.Rating, b.Rating.Rating
+	updateRatings(playerRatings, []RatingScore{{
+		White: g.White,
+		Black: g.Black,
+		Score: result,
+	}})
+
+	// Save in playerStore.
+	playerStore.Set(w.Address.String(), w)
+	playerStore.Set(b.Address.String(), b)
+	if g.Winner != WinnerDraw {
+		leaderboard, _ = leaderboard.push(g.White, owr, w.Rating.Rating)
+		leaderboard, _ = leaderboard.push(g.Black, obr, b.Rating.Rating)
+	}
+}
+
+func getPlayer(addr std.Address) *Player {
 	praw, ok := playerStore.Get(addr.String())
-	var p Player
 	if ok {
-		p = praw.(Player)
-	} else {
-		p = Player{Address: addr}
+		return praw.(*Player)
 	}
-	oscore := p.Score() // o' score 🤌
-	switch result {
-	case 1:
-		p.Wins++
-	case 0:
-		p.Draws++
-	case -1:
-		p.Losses++
-	}
+	p := &Player{Address: addr, Rating: NewPlayerRating(addr)}
+	playerRatings = append(playerRatings, p.Rating)
 	playerStore.Set(addr.String(), p)
-	if result != 0 {
-		leaderboard, _ = leaderboard.push(addr, oscore, oscore+result)
-	}
+	return p
 }
 
 type lbEntry struct {
 	addr  std.Address
-	score int
+	score float64
 }
 
 type leaderboardType []lbEntry
@@ -114,7 +147,7 @@ type leaderboardType []lbEntry
 //
 // The index will be 0 if the score is higher than any other on the leaderboard,
 // and len(leaderboards) if it is lower than any other.
-func (lb leaderboardType) find(score int, addr std.Address) (int, bool) {
+func (lb leaderboardType) find(score float64, addr std.Address) (int, bool) {
 	i := sort.Search(len(lb), func(i int) bool {
 		return lb[i].score <= score
 	})
@@ -131,7 +164,7 @@ func (lb leaderboardType) find(score int, addr std.Address) (int, bool) {
 
 // push adds or modifies the player's position in the leaderboard.
 // the new leaderboard, and the new position of the player in the leaderboard is returned (0-indexed)
-func (lb leaderboardType) push(player std.Address, oldScore, newScore int) (leaderboardType, int) {
+func (lb leaderboardType) push(player std.Address, oldScore, newScore float64) (leaderboardType, int) {
 	// determine where the player is, currently
 	oldPos, found := lb.find(oldScore, player)
 	if found && (oldScore == newScore) {

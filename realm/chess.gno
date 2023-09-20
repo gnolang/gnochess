@@ -147,16 +147,6 @@ func (w Winner) MarshalJSON() ([]byte, error) {
 	return nil, errors.New("invalid winner value")
 }
 
-func (w Winner) Scores() (wscore, bscore int) {
-	switch w {
-	case WinnerWhite:
-		return 1, -1
-	case WinnerBlack:
-		return -1, 1
-	}
-	return
-}
-
 // GameState represents the current game state.
 type GameState byte
 
@@ -231,6 +221,10 @@ func NewGame(opponentRaw string, seconds, increment int) string {
 	opponent := parsePlayer(opponentRaw)
 	caller := std.GetOrigCaller()
 
+	return newGame(caller, opponent, seconds, increment).json()
+}
+
+func newGame(caller, opponent std.Address, seconds, increment int) *Game {
 	val, exist := user2Games.Get(caller.String())
 	var games []*Game
 	if exist {
@@ -247,7 +241,7 @@ func NewGame(opponentRaw string, seconds, increment int) string {
 	gameIDCounter++
 	// id is zero-padded to work well with avl's alphabetic order.
 	id := zeroPad9(strconv.FormatUint(gameIDCounter, 10))
-	g := Game{
+	g := &Game{
 		ID:        id,
 		White:     caller,
 		Black:     opponent,
@@ -261,11 +255,11 @@ func NewGame(opponentRaw string, seconds, increment int) string {
 		g.White, g.Black = g.Black, g.White
 	}
 
-	gameStore.Set(g.ID, &g)
-	addToUser2Games(caller, &g)
-	addToUser2Games(opponent, &g)
+	gameStore.Set(g.ID, g)
+	addToUser2Games(caller, g)
+	addToUser2Games(opponent, g)
 
-	return g.json()
+	return g
 }
 
 const zeroes = "000000000"
@@ -372,9 +366,7 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 			} else {
 				g.Winner = WinnerWhite
 			}
-			wscore, bscore := g.Winner.Scores()
-			reportPlayerScore(g.White, wscore)
-			reportPlayerScore(g.Black, bscore)
+			saveGameResult(g)
 			return g.json()
 		}
 	}
@@ -427,9 +419,7 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 		g.Winner = WinnerDraw
 	}
 	g.DrawOfferer = nil
-	wscore, bscore := g.Winner.Scores()
-	reportPlayerScore(g.White, wscore)
-	reportPlayerScore(g.Black, bscore)
+	saveGameResult(g)
 
 	return g.json()
 }
@@ -470,9 +460,7 @@ func ClaimTimeout(gameID string) string {
 		g.Winner = WinnerWhite
 	}
 	g.DrawOfferer = nil
-	wscore, bscore := g.Winner.Scores()
-	reportPlayerScore(g.White, wscore)
-	reportPlayerScore(g.Black, bscore)
+	saveGameResult(g)
 
 	return g.json()
 }
@@ -514,9 +502,7 @@ func Resign(gameID string) string {
 		panic("you are not involved in this game")
 	}
 	g.DrawOfferer = nil
-	wscore, bscore := g.Winner.Scores()
-	reportPlayerScore(g.White, wscore)
-	reportPlayerScore(g.Black, bscore)
+	saveGameResult(g)
 
 	return g.json()
 }
@@ -578,10 +564,10 @@ func Draw(gameID string) string {
 	// accepted draw offer (do early to avoid gas for g.Position.IsFinished())
 	if g.DrawOfferer != nil && *g.DrawOfferer != caller {
 		g.State = GameStateDrawnByAgreement
+		g.Winner = WinnerDraw
 		g.Concluder = &caller
 
-		reportPlayerScore(g.Black, 0)
-		reportPlayerScore(g.White, 0)
+		saveGameResult(g)
 
 		return g.json()
 	}
@@ -600,8 +586,8 @@ func Draw(gameID string) string {
 	g.Concluder = &caller
 	g.Winner = WinnerDraw
 	g.DrawOfferer = nil
-	reportPlayerScore(g.Black, 0)
-	reportPlayerScore(g.White, 0)
+
+	saveGameResult(g)
 
 	return g.json()
 }
