@@ -1,0 +1,45 @@
+<section
+  data-component="gameboard"
+  class="opacity-0 invisible col-span-12 sm:col-span-10 sm:col-start-2"
+>
+  <div
+    id="js-game"
+    class="chess-board relative md:absolute md:top-[55vh] md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[40vw] w-full md:h-[40vw] h-full"
+  ></div>
+  <div
+    id="js-promote-modal"
+    class="opacity-0 invisible absolute top-[55vh] left-1/2 w-3/4 -translate-x-1/2 -translate-y-1/2 flex flex-col justify-center items-center bg-grey-50 shadow p-16 rounded-r-full rounded-l-full"
+  >
+    <h2 class="font-termina mb-16 text-500">Promotion</h2>
+    <ul class="flex space-x-9">
+      <li class="js-topromote" data-topromote="q">
+        <img
+          src="/img/images/pieces/staunton/basic/wQ.png"
+          class="w-16"
+          alt="Queen"
+        />
+      </li>
+      <li class="js-topromote" data-topromote="n">
+        <img
+          src="/img/images/pieces/staunton/basic/wN.png"
+          class="w-16"
+          alt="Knight"
+        />
+      </li>
+      <li class="js-topromote" data-topromote="r">
+        <img
+          src="/img/images/pieces/staunton/basic/wR.png"
+          class="w-16"
+          alt="Rook"
+        />
+      </li>
+      <li class="js-topromote" data-topromote="b">
+        <img
+          src="/img/images/pieces/staunton/basic/wB.png"
+          class="w-16"
+          alt="Bishop"
+        />
+      </li>
+    </ul>
+  </div>
+</section>
