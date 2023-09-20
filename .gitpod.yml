@@ -13,20 +13,20 @@ tasks:
     init: |
       git fetch --all
       git switch patch/gnochess
-      touch /.init.switch
+      touch /workspace/.init.switch
       go install ./cmd/gnoland ./cmd/gnoweb
-      touch /.init.install
+      touch /workspace/.init.install
     command: gnoland start
 
   - name: Gnoweb
-    init: while [ ! -f /.init.install ]; do sleep 1; done
+    init: while [ ! -f /workspace/.init.install ]; do sleep 1; done
     before: cd ../gno/gno.land/;
     command: gnoweb --bind=0.0.0.0:8888
 
   - name: Deps
     before: cd ../gno/misc/devdeps
     init: |
-      while [ ! -f /.init.switch ]; do sleep 1; done
+      while [ ! -f /workspace/.init.switch ]; do sleep 1; done
       make install
       echo "Deps installed."
 
@@ -59,7 +59,7 @@ github:
     addComment: true
     addBadge: true
 
-workspaceLocation: './tutorial'
+workspaceLocation: '/workspace/gnochess/tutorial'
 
 vscode:
   extensions:
