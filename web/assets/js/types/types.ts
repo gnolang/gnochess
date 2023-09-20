@@ -126,3 +126,10 @@ export interface Player {
   rapid: PlayerRating;
   correspondence: PlayerRating;
 }
+
+export interface Rating {
+  wins: number;
+  loses: number;
+  draws: number;
+  games: number;
+}
