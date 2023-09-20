@@ -21,12 +21,10 @@ const subscribeUserSchema = {
     },
     githubHandle: {
       type: 'string',
-      minLength: 1,
       maxLength: 40
     },
     socialHandle: {
       type: 'string',
-      minLength: 1,
       maxLength: 40
     },
     interests: {
