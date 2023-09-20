@@ -33,7 +33,7 @@ const Dashboard = class extends Component {
 
         const player: Player = await actions.getUserData();
         this._feedRatings(player);
-        // this._feedLeaderbord();
+        console.log(this._feedLeaderbord());
       })
       .catch(() => {
         console.error('Error: Dashboard component init issue');
