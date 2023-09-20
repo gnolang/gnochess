@@ -1,6 +1,6 @@
 module github.com/gnolang/gnochess-generate
 
-go 1.21.1
+go 1.20
 
 require github.com/gnolang/gno v0.0.0-20230918160905-61f3adaaa758
 
