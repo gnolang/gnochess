@@ -1,6 +1,6 @@
 <h1>
 	GnoChess
-	<a href="https://gitpod.io/new/#https://github.com/gnolang/getting-started" target="_blank">
+	<a href="https://gitpod.io/new/#https://github.com/gnolang/gnochess">
 	<img alt="Open in Gitpod" src="https://gitpod.io/button/open-in-gitpod.svg">
 	</a>
 </h1>
