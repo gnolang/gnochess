@@ -75,10 +75,10 @@ const Webgl = class extends Component {
      * Models
      */
     const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath('/models/dracos/');
+    dracoLoader.setDecoderPath('./models/dracos/');
     const gltfLoader = new GLTFLoader();
     gltfLoader.setDRACOLoader(dracoLoader);
-    gltfLoader.load('/models/gnochess-7.gltf', (gltf) => {
+    gltfLoader.load('./models/gnochess-7.gltf', (gltf) => {
       this.model = gltf.scene;
 
       this.model.scale.set(0.4, 0.4, 0.4);

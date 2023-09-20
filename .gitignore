@@ -111,6 +111,7 @@ web/resources/_gen/assets
 web/dist
 web/assets/dir/
 web/static/staging/
+web/public
 
 realm/*.go
 *.vim
