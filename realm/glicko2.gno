@@ -10,7 +10,7 @@ import (
 // http://www.glicko.net/glicko/glicko2.pdf
 
 // realm global variable containing player ratings.
-var playerRatings []*PlayerRating
+var playerRatings [CategoryMax][]*PlayerRating
 
 const (
 	// Step 1.

@@ -18,11 +18,11 @@ func cleanup() {
 	gameIDCounter = 0
 	user2Games = avl.Tree{}
 	playerStore = avl.Tree{}
-	leaderboard = leaderboardType{}
+	leaderboard = [CategoryMax]leaderboardType{}
 	lobby = [tcLobbyMax][]lobbyPlayer{}
 	lobbyUpdatedAt = [tcLobbyMax]time.Time{}
 	playerGameID = avl.Tree{}
-	playerRatings = []*PlayerRating{}
+	playerRatings = [CategoryMax][]*PlayerRating{}
 }
 
 func TestNewGame(t *testing.T) {
@@ -115,7 +115,7 @@ var commandTests = [...]string{
 		game # equal #moveres
 		# contains "state":"checkmated" "winner":"white"
 		# containssp r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4
-		player white
+		player white # contains mammata
 		# contains "address":"g1white" "position":0 "wins":1 "losses":0 "draws":0
 		player black
 		# contains "address":"g1black" "position":1 "wins":0 "losses":1 "draws":0
