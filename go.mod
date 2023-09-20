@@ -2,7 +2,7 @@ module github.com/gnolang/gnochess
 
 go 1.20
 
-require github.com/gnolang/gno v0.0.0-20230906141608-4bd17897bd7f
+require github.com/gnolang/gno v0.0.0-20230920163030-d1193a234f2e
 
 require (
 	github.com/btcsuite/btcd/btcutil v1.0.0 // indirect
@@ -30,7 +30,7 @@ require (
 	go.opencensus.io v0.22.5 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
-	golang.org/x/net v0.14.0 // indirect
+	golang.org/x/net v0.15.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect

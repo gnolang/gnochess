@@ -53,6 +53,10 @@ github.com/gdamore/tcell/v2 v2.1.0/go.mod h1:vSVL/GV5mCSlPC6thFP5kfOFdM9MGZcalip
 github.com/gnolang/cors v1.8.1/go.mod h1:g7HJhHH+N1r+oRrb7ckR2J6xp5es4EizpAP0JpfgVgU=
 github.com/gnolang/gno v0.0.0-20230906141608-4bd17897bd7f h1:kjOY8BKoyWHCYost6QF594X2HOTS5kqGOa7fn0AwZAg=
 github.com/gnolang/gno v0.0.0-20230906141608-4bd17897bd7f/go.mod h1:lZ9ZH++G10ebzroJKlriJf/WM8EHrBVTgtlRiOg68e8=
+github.com/gnolang/gno v0.0.0-20230919211656-a75bbc5c3b27 h1:xc9W3SGWC6IY5q6X7mdmSSSNeQp7dKnIR5bK6CB348Y=
+github.com/gnolang/gno v0.0.0-20230919211656-a75bbc5c3b27/go.mod h1:dtwSoPiPCcGxACg4y2iJVWZ/vuU133n4kwF28mx6Krg=
+github.com/gnolang/gno v0.0.0-20230920163030-d1193a234f2e h1:wQRLV4qn7XTk0gpW+yA+NTMDnZDhpYWZhgsTtRpGYH8=
+github.com/gnolang/gno v0.0.0-20230920163030-d1193a234f2e/go.mod h1:dtwSoPiPCcGxACg4y2iJVWZ/vuU133n4kwF28mx6Krg=
 github.com/gnolang/goleveldb v0.0.9 h1:Q7rGko9oXMKtQA+Apeeed5a3sjba/mcDhzJGoTVLCKE=
 github.com/gnolang/goleveldb v0.0.9/go.mod h1:Dz6p9bmpy/FBESTgduiThZt5mToVDipcHGzj/zUOo8E=
 github.com/gnolang/overflow v0.0.0-20170615021017-4d914c927216 h1:GKvsK3oLWG9B1GL7WP/VqwM6C92j5tIvB844oggL9Lk=
@@ -186,6 +190,7 @@ golang.org/x/net v0.0.0-20200226121028-0de0cce0169b/go.mod h1:z5CRVTTTmAJ677TzLL
 golang.org/x/net v0.0.0-20201021035429-f5854403a974/go.mod h1:sp8m0HH+o8qH0wwXwYZr8TS3Oi6o0r6Gce1SSxlDquU=
 golang.org/x/net v0.14.0 h1:BONx9s002vGdD9umnlX1Po8vOZmrgH34qlHcD1MfK14=
 golang.org/x/net v0.14.0/go.mod h1:PpSgVXXLK0OxS0F31C1/tv6XNguvCrnXIDrFMspZIUI=
+golang.org/x/net v0.15.0/go.mod h1:idbUs1IY1+zTqbi8yxTbhexhEEk5ur9LInksu6HrEpk=
 golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be/go.mod h1:N/0e6XlmueqKjAGxoOufVs8QHGRruUQn6yWY3a++T0U=
 golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181108010431-42b317875d0f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=

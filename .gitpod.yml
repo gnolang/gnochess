@@ -1,0 +1,58 @@
+# http://gitpod.io/#github.com/gnolang/gnochess
+
+additionalRepositories:
+  - url: https://github.com/gnolang/gno
+    checkoutLocation: gno
+
+tasks:
+  - name: Gnoland
+    before: cd ../gno/gno.land/; git checkout patch/gnochess
+    init: go install ./cmd/gnoland
+    command: gnoland start
+
+  - name: Gnoweb
+    before: cd ../gno/gno.land/; git checkout patch/gnochess
+    init: go install ./cmd/gnoweb
+    command: gnoweb --bind=0.0.0.0:8888
+
+  - name: Deps
+    before: cd ../gno/misc/devdeps; git checkout patch/gnochess
+    init: |
+        make install
+        echo "Deps installed."
+
+  - name: Gno CLI
+    init: |
+        go mod download
+        go install \
+          github.com/gnolang/gno/gno.land/cmd/gnokey \
+          github.com/gnolang/gno/gnovm/cmd/gno
+    command: gno --help
+
+  #- name: faucet
+  #  ...
+
+ports:
+  - name: gnoweb
+    description: "the Gno.land web server"
+    port: 8888
+    onOpen: open-preview
+
+  - name: "gnoland RPC"
+    description: "the RPC server, managed by tendermint2"
+    port: 36657
+    onOpen: notify
+
+github:
+  prebuilds:
+    master: true
+    branches: true
+    pullRequests: true
+    pullRequestsFromForks: true
+    addCheck: true
+    addComment: true
+    addBadge: true
+
+vscode:
+  extensions:
+    - harry-hov.gno
