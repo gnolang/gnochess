@@ -22,36 +22,15 @@ const Gameoptions = class extends Component {
     this.timer = 0;
     this.timers = {
       rapid: [
-        {
-          time: 10,
-          increment: 0
-        },
-        {
-          time: 10,
-          increment: 5
-        },
-        {
-          time: 15,
-          increment: 10
-        }
+        // [10, 0],
+        [10, 5]
+        // [15, 10]
       ],
       blitz: [
-        {
-          time: 3,
-          increment: 0
-        },
-        {
-          time: 3,
-          increment: 2
-        },
-        {
-          time: 5,
-          increment: 0
-        },
-        {
-          time: 5,
-          increment: 3
-        }
+        // [3, 0],
+        // [3, 2],
+        [5, 0]
+        // [5, 3]
       ]
     };
 
@@ -60,7 +39,7 @@ const Gameoptions = class extends Component {
       category: 'rapid',
       timer: {
         time: 10,
-        increment: 0
+        increment: 5
       }
     } as Options;
 
