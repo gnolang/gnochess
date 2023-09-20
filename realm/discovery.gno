@@ -14,10 +14,67 @@ import (
 	"gno.land/r/demo/users"
 )
 
+type Category byte
+
+const (
+	// blanks are reserved for future use (bullet and classic)
+	_ Category = iota
+	Blitz
+	Rapid
+	_
+	Correspondence
+	CategoryMax
+)
+
+var categoryList = [...]Category{Blitz, Rapid, Correspondence}
+
+func (c Category) String() string {
+	// TODO: convert to array map, for both string and FromString
+	switch c {
+	case Blitz:
+		return "blitz"
+	case Rapid:
+		return "rapid"
+	case Correspondence:
+		return "correspondence"
+	}
+	panic("invalid category")
+}
+
+func CategoryFromString(s string) Category {
+	switch s {
+	case "blitz":
+		return Blitz
+	case "rapid":
+		return Rapid
+	case "correspondence":
+		return Correspondence
+	}
+	panic("invalid category")
+}
+
+func (tc *TimeControl) Category() Category {
+	// https://lichess.org/faq#time-controls
+	if tc == nil {
+		return Correspondence
+	}
+
+	totalTime := tc.Seconds + tc.Increment*40
+	switch {
+	case tc.Seconds <= 0 || tc.Increment < 0:
+		// should not happen
+		return Correspondence
+	case totalTime < 60*8:
+		return Blitz
+	default:
+		return Rapid
+	}
+}
+
 // realm state
 var (
 	playerStore avl.Tree // std.Address -> *Player
-	leaderboard leaderboardType
+	leaderboard [CategoryMax]leaderboardType
 )
 
 func GetPlayer(player string) string {
@@ -35,20 +92,24 @@ func GetPlayer(player string) string {
 
 // Player contains game-related player information.
 type Player struct {
-	Address             std.Address
+	Address      std.Address
+	CategoryInfo [CategoryMax]CategoryInfo
+}
+
+type CategoryInfo struct {
 	Wins, Losses, Draws int
-	Rating              *PlayerRating
+	*PlayerRating
 }
 
 // Score for determining leaderboards.
-func (p Player) Score() float64 {
-	return p.Rating.Rating
+func (p Player) Score(cat Category) float64 {
+	return p.CategoryInfo[cat].Rating
 }
 
 // Leaderboard position, 0 indexed.
 // Dynamically calculated to avoid having to shift positions when LB changes.
-func (p Player) LeaderboardPosition() int {
-	pos, ok := leaderboard.find(p.Score(), p.Address)
+func (p Player) LeaderboardPosition(cat Category) int {
+	pos, ok := leaderboard[cat].find(p.Score(cat), p.Address)
 	if !ok {
 		return -1
 	}
@@ -67,17 +128,26 @@ func (p Player) MarshalJSON() ([]byte, error) {
 	} else {
 		buf.WriteString(`"username":"` + u.Name() + `",`)
 	}
-	buf.WriteString(`"wins":` + strconv.Itoa(p.Wins) + ",")
-	buf.WriteString(`"losses":` + strconv.Itoa(p.Losses) + ",")
-	buf.WriteString(`"draws":` + strconv.Itoa(p.Draws) + ",")
-	buf.WriteString(`"rating":`)
-	if res, err := p.Rating.MarshalJSON(); err != nil {
-		return nil, err
-	} else {
-		buf.Write(res)
+
+	for idx, cat := range categoryList {
+		stat := p.CategoryInfo[cat]
+		buf.WriteString(`"` + cat.String() + `":{`)
+		buf.WriteString(`"wins":` + strconv.Itoa(stat.Wins) + ",")
+		buf.WriteString(`"losses":` + strconv.Itoa(stat.Losses) + ",")
+		buf.WriteString(`"draws":` + strconv.Itoa(stat.Draws) + ",")
+		buf.WriteString(`"rating":`)
+		if res, err := stat.PlayerRating.MarshalJSON(); err != nil {
+			return nil, err
+		} else {
+			buf.Write(res)
+		}
+		buf.WriteByte(',')
+		buf.WriteString(`"position":` + strconv.Itoa(p.LeaderboardPosition(cat)))
+		buf.WriteByte('}')
+		if idx != len(categoryList)-1 {
+			buf.WriteByte(',')
+		}
 	}
-	buf.WriteByte(',')
-	buf.WriteString(`"position":` + strconv.Itoa(p.LeaderboardPosition()))
 
 	buf.WriteByte('}')
 	return buf.Bytes(), nil
@@ -86,28 +156,30 @@ func (p Player) MarshalJSON() ([]byte, error) {
 func saveGameResult(g *Game) {
 	w, b := getPlayer(g.White), getPlayer(g.Black)
 
+	cat := g.Time.Category()
+
 	// Get numeric result for glicko2.
 	var result float64
 	switch g.Winner {
 	case WinnerWhite:
-		w.Wins++
-		b.Losses++
+		w.CategoryInfo[cat].Wins++
+		b.CategoryInfo[cat].Losses++
 		result = 1
 	case WinnerBlack:
-		w.Losses++
-		b.Wins++
+		w.CategoryInfo[cat].Losses++
+		b.CategoryInfo[cat].Wins++
 		result = 0
 	case WinnerDraw:
-		w.Draws++
-		b.Draws++
+		w.CategoryInfo[cat].Draws++
+		b.CategoryInfo[cat].Draws++
 		result = 0.5
 	default:
 		return // TODO: maybe panic
 	}
 
 	// Call glicko 2 rating calculator.
-	owr, obr := w.Rating.Rating, b.Rating.Rating
-	updateRatings(playerRatings, []RatingScore{{
+	owr, obr := w.CategoryInfo[cat].Rating, b.CategoryInfo[cat].Rating
+	updateRatings(playerRatings[cat], []RatingScore{{
 		White: g.White,
 		Black: g.Black,
 		Score: result,
@@ -117,8 +189,8 @@ func saveGameResult(g *Game) {
 	playerStore.Set(w.Address.String(), w)
 	playerStore.Set(b.Address.String(), b)
 	if g.Winner != WinnerDraw {
-		leaderboard, _ = leaderboard.push(g.White, owr, w.Rating.Rating)
-		leaderboard, _ = leaderboard.push(g.Black, obr, b.Rating.Rating)
+		leaderboard[cat], _ = leaderboard[cat].push(g.White, owr, w.CategoryInfo[cat].Rating)
+		leaderboard[cat], _ = leaderboard[cat].push(g.Black, obr, b.CategoryInfo[cat].Rating)
 	}
 }
 
@@ -127,8 +199,14 @@ func getPlayer(addr std.Address) *Player {
 	if ok {
 		return praw.(*Player)
 	}
-	p := &Player{Address: addr, Rating: NewPlayerRating(addr)}
-	playerRatings = append(playerRatings, p.Rating)
+	p := &Player{Address: addr}
+	for _, cat := range categoryList {
+		pr := NewPlayerRating(addr)
+		p.CategoryInfo[cat] = CategoryInfo{
+			PlayerRating: pr,
+		}
+		playerRatings[cat] = append(playerRatings[cat], pr)
+	}
 	playerStore.Set(addr.String(), p)
 	return p
 }
@@ -199,17 +277,19 @@ func (lb leaderboardType) push(player std.Address, oldScore, newScore float64) (
 }
 
 // Leaderboard returns a list of all users, ordered by their position in the leaderboard.
-func Leaderboard() string {
+// category is one of blitz, rapid or correspondence.
+func Leaderboard(category string) string {
+	cat := CategoryFromString(category)
 	var buf bytes.Buffer
 	buf.WriteByte('[')
-	for idx, entry := range leaderboard {
+	for idx, entry := range leaderboard[cat] {
 		p, _ := playerStore.Get(entry.addr.String())
 		d, err := p.(Player).MarshalJSON()
 		if err != nil {
 			panic(err)
 		}
 		buf.Write(d)
-		if idx != len(leaderboard)-1 {
+		if idx != len(leaderboard[cat])-1 {
 			buf.WriteByte(',')
 		}
 	}
