@@ -221,7 +221,8 @@ GAS USED:   439393
 
 ## Visiting and calling the realm
 
-Try out visiting the realm: <http://localhost:8888/r/demo/getting_started>
+Try out visiting the realm: use `url` in your shell to get the link to your
+gnoweb, then append `/r/demo/getting_started` to the URL.
 
 You should see the output of the `Render()` function, including the value of our
 counter set to 0.
