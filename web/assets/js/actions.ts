@@ -19,6 +19,7 @@ import Long from 'long'; // TODO move this out into an ENV variable that's loade
 // TODO move this out into an ENV variable that's loaded in
 const wsURL: string = 'ws://127.0.0.1:26657/websocket';
 const chessRealm: string = 'gno.land/r/gnochess';
+const faucetURL: string = 'http://127.0.0.1:8080';
 
 const defaultGasWanted: Long = new Long(1000000); // 1M
 
@@ -85,6 +86,9 @@ class Actions {
     if (faucetToken && faucetToken !== '') {
       // Faucet token initialized
       this.faucetToken = faucetToken;
+
+      // Attempt to fund the account
+      await this.fundAccount();
     }
   }
 
@@ -92,10 +96,13 @@ class Actions {
    * Saves the faucet token to local storage
    * @param token the faucet token
    */
-  public setFaucetToken(token: string) {
+  public async setFaucetToken(token: string) {
     this.faucetToken = token;
 
     localStorage.setItem(defaultFaucetTokenKey, token);
+
+    // Attempt to fund the account
+    await this.fundAccount();
   }
 
   /**
@@ -534,6 +541,33 @@ class Actions {
 
     // Close out the WS connection
     this.provider.closeConnection();
+  }
+
+  /**
+   * Pings the faucet to fund the account before playing
+   * @private
+   */
+  private async fundAccount(): Promise<void> {
+    // Prepare the request options
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'faucet-token': this.faucetToken as string
+      },
+      body: JSON.stringify({
+        to: await this.wallet?.getAddress()
+      })
+    };
+
+    // TODO @Alexis do we want this to propagate the error?
+    // The error can be that the user is funded already
+    try {
+      // Execute the request
+      await fetch(faucetURL, requestOptions);
+    } catch (e) {
+      console.log(`Unable to fund account: ${e}`);
+    }
   }
 }
 

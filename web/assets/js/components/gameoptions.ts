@@ -186,7 +186,7 @@ const Gameoptions = class extends Component {
 
     switch (this.currentState) {
       case 1: {
-        this.options.token = this._inputToken();
+        this.options.token = await this._inputToken();
         this.DOM.ctrl1.innerHTML = this.states[this.currentState].ctrls[1]; //todo: animation
         this.switchAnimation1[immediate ? 'progress' : 'play'](
           immediate ? 1 : 0
@@ -257,15 +257,16 @@ const Gameoptions = class extends Component {
     }
   }
 
-  _inputToken() {
+  async _inputToken() {
     const token =
       this.DOM.el.querySelector('#id-gameoptions-token').value || '';
 
-    Actions.getInstance().then((actions) => {
-      if (!actions.getFaucetToken()) {
-        actions.setFaucetToken(token);
-      }
-    });
+    const actions: Actions = await Actions.getInstance();
+
+    if (!actions.getFaucetToken()) {
+      await actions.setFaucetToken(token);
+    }
+
     return token;
   }
 
