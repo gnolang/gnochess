@@ -120,7 +120,6 @@ const Dashboard = class extends Component {
   }
 
   private _createPie(rate: Rating) {
-    //TODO: should be player type
     //TODO: refactor to get interactive chart
     const { wins, loses, draws, games } = rate;
 
@@ -152,7 +151,6 @@ const Dashboard = class extends Component {
         );
         const leaders = [blitzRanking, rapidRanking];
 
-        //TODO: check tailwind classes
         const leaderMapped = leaders.map((leadmap) => {
           return leadmap
             .map((lead: any) => {
