@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "concurrently \"hugo server -D\" \"tsc && vite build --config ./vite.config.server.js \"",
-    "build": "tsc && vite build && hugo --gc",
+    "build": " hugo --gc && tsc && vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
