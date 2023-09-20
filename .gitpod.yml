@@ -6,17 +6,17 @@ additionalRepositories:
 
 tasks:
   - name: Gnoland
-    before: cd ../gno/gno.land/; git checkout patch/gnochess
+    before: cd ../gno/gno.land/; git switch patch/gnochess
     init: go install ./cmd/gnoland
     command: gnoland start
 
   - name: Gnoweb
-    before: cd ../gno/gno.land/; git checkout patch/gnochess
+    before: cd ../gno/gno.land/; git switch patch/gnochess
     init: go install ./cmd/gnoweb
     command: gnoweb --bind=0.0.0.0:8888
 
   - name: Deps
-    before: cd ../gno/misc/devdeps; git checkout patch/gnochess
+    before: cd ../gno/misc/devdeps; git switch patch/gnochess
     init: |
         make install
         echo "Deps installed."

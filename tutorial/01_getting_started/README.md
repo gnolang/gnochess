@@ -254,7 +254,7 @@ GAS WANTED: 2000000
 GAS USED:   105451
 ```
 
-If you now try refreshing the page you loaded, you should see the value of
+If you now try refreshing the first page you loaded, you should see the value of
 `Counter` updated to 1.
 
 ## Recap
