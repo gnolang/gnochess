@@ -139,37 +139,48 @@ const Dashboard = class extends Component {
     };
   }
 
-  _feedLeaderbord() {
-    // TODO @Alexis
-    // There is no Blitz / Rapid leaderboard,
-    // only the actual leaderboard that is fetch-able by
-    // await Actions.getInstance().getLeaderboard()
-    const leaders: any[] = [];
+  private async _feedLeaderbord() {
+    Actions.getInstance()
+      .then(async (actions: Actions) => {
+        const leaderboard = await actions.getLeaderboard();
 
-    //TODO: check tailwind classes
-    const leaderMapped = leaders.map((leadmap) => {
-      return leadmap
-        .map((lead: any) => {
-          avatarize(lead.token);
-          return `<li class="dashboard-avatar">
-                <div class="dashboard-avatar_img"><div class="dashboard-avatar_bg" style="filter: brightness(${avatarize(
-                  lead.token
-                )})"></div><img src="/img/mini-gopher.png" alt="avatar"/></div>
-                <div class="dashboard-avatar_info">${truncateString(
-                  lead.token,
-                  2,
-                  2
-                )}</div>
-          </li>`;
-        })
-        .reduce((acc: any, curr: any) => acc + curr);
-    });
+        const blitzRanking = leaderboard.sort(
+          (a, b) => a.blitz.position - b.blitz.position
+        );
+        const rapidRanking = leaderboard.sort(
+          (a, b) => a.rapid.position - b.rapid.position
+        );
+        const leaders = [blitzRanking, rapidRanking];
 
-    const DOMrapid = document.getElementById('js-dashrapidleaderboard');
-    const DOMblitz = document.getElementById('js-dashblitzleaderboard');
+        //TODO: check tailwind classes
+        const leaderMapped = leaders.map((leadmap) => {
+          return leadmap
+            .map((lead: any) => {
+              avatarize(lead.token);
+              return `<li class="dashboard-avatar">
+                    <div class="dashboard-avatar_img"><div class="dashboard-avatar_bg" style="filter: brightness(${avatarize(
+                      lead.token
+                    )})"></div><img src="/img/mini-gopher.png" alt="avatar"/></div>
+                    <div class="dashboard-avatar_info">${truncateString(
+                      lead.token,
+                      2,
+                      2
+                    )}</div>
+              </li>`;
+            })
+            .reduce((acc: any, curr: any) => acc + curr);
+        });
 
-    if (DOMblitz) DOMblitz.innerHTML = leaderMapped[0];
-    if (DOMrapid) DOMrapid.innerHTML = leaderMapped[1];
+        const DOMrapid = document.getElementById('js-dashrapidleaderboard');
+        const DOMblitz = document.getElementById('js-dashblitzleaderboard');
+
+        if (DOMblitz) DOMblitz.innerHTML = leaderMapped[0];
+        if (DOMrapid) DOMrapid.innerHTML = leaderMapped[1];
+      })
+      .catch(() => {
+        console.error('Error: Dashboard method _feedLeaderbord issue');
+        // TODO handle error
+      });
   }
 
   destroy() {}
