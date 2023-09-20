@@ -9,10 +9,6 @@ DS_Store
 .DS_Store
 Thumbs.db
 
-#hugo ressources
-web/resources/_gen/assets
-web/static
-
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
@@ -112,11 +108,9 @@ typings/
 #hugo ressources
 web/resources/_gen/assets
 
-web/public/js/**/*.js
-web/public/css/**/*.css
-web/public/**/*.html
-web/public/**/*.xml
-
+web/dist
+web/assets/dir/
+web/static/staging/
 
 realm/*.go
 *.vim

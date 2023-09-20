@@ -3,7 +3,7 @@ import * as path from 'path';
 
 export default defineConfig({
   build: {
-    outDir: 'static',
+    outDir: 'static/staging',
     watch: {
       include: ['assets/js/**']
     },

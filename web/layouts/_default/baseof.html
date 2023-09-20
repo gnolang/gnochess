@@ -8,7 +8,16 @@
     <main data-barba="container" data-barba-namespace="{{ .Params.namespace }}">
       {{ block "main" . }}{{ end }}
     </main>
-    <script type="module" src="./js/main.js"></script>
+
+    {{ if hugo.IsProduction }} {{ $js := resources.Get "dir/main.js" |
+    resources.Fingerprint "sha256"}}
+    <script src="{{ $js.RelPermalink }}"></script>
+    {{ else }}
+    <script src="/staging/js/main.js"></script>
+
+    {{ end }}
+
+    <!-- <script type="module" src="./js/main.js"></script> -->
     <script
       src="https://code.jquery.com/jquery-3.5.1.min.js"
       integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2"

@@ -3,6 +3,7 @@ DefaultContentLanguage = "en"
 title = "GnoChess"
 enableGitInfo = true
 enableRobotsTXT = true
+publishDir = "dist"
 disableKinds = ["taxonomy"]
 [params]
     themeColor = "#363636"
