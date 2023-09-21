@@ -39,6 +39,7 @@ class Actions {
   private wallet: GnoWallet | null = null;
   private provider: GnoWSProvider | null = null;
   private faucetToken: string | null = null;
+  private isInTheLobby = false;
 
   private constructor() {}
 
@@ -161,16 +162,26 @@ class Actions {
   }
 
   /**
+   * Leave the waiting lobby for the game
+   */
+  public quitLobby() {
+    this.isInTheLobby = false;
+  }
+
+  /**
    * Waits for the game to begin (lobby wait)
    * @param timeout the maximum wait time for a game
    * @private
    */
   private async waitForGame(timeout?: number): Promise<GameSettings> {
+    this.isInTheLobby = true;
     return new Promise(async (resolve, reject) => {
       const exitTimeout = timeout ? timeout : drawRequestTimer * 1000; // wait time is max 15s
 
       const fetchInterval = setInterval(async () => {
         try {
+          if (!this.isInTheLobby) reject('Leaved the lobby');
+
           // Check if the game is ready
           const lobbyResponse: BroadcastTxCommitResult =
             (await this.wallet?.callMethod(
@@ -224,7 +235,7 @@ class Actions {
       }, 3000); // 3s, since it's an expensive call
 
       setTimeout(() => {
-        // Clear the fetch interval
+        this.isInTheLobby = false;
         clearInterval(fetchInterval);
 
         reject('wait timeout exceeded');

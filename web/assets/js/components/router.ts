@@ -76,6 +76,8 @@ const Router = class extends Component {
         : null;
 
       loadedView.beforeLeave = () => {
+        Actions.getInstance().then((actions) => actions.quitLobby());
+
         viewBeforeFunc && viewBeforeFunc();
 
         // Other general actions...

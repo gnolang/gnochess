@@ -64,6 +64,8 @@ const Gameoptions = class extends Component {
     }
   };
 
+  private panelSize: number = 0;
+
   init() {
     // automatically called at start
     console.log('PlayControls component init');
@@ -73,6 +75,8 @@ const Gameoptions = class extends Component {
     this.DOM.paneCategory = this.DOM.el.querySelector('#js-category');
     this.DOM.paneTimer = this.DOM.el.querySelector('#js-timer');
     this.DOM.paneLoader = this.DOM.el.querySelector('#js-paneloader');
+    this.DOM.paneBtns = this.DOM.el.querySelector('#gameoptions-actions');
+    this.DOM.screen2 = this.DOM.el.querySelector('#js-secondscreen');
     this.DOM.categoryBtns = [
       ...this.DOM.el.querySelectorAll('.js-categoryUpdate')
     ];
@@ -106,31 +110,45 @@ const Gameoptions = class extends Component {
     });
 
     //tl
+    this.panelSize = this._getPanelSize();
+    gsap.set(this.DOM.paneCategory, { display: 'none' });
+    gsap.set(this.DOM.paneTimer, { display: 'none' });
+
     this.switchAnimation1 = gsap
       .timeline({ paused: true })
-      .to(this.DOM.paneConnection, {
-        autoAlpha: 0,
-        display: 'none',
-        duration: 0.6
-      })
+      .to(this.DOM.el, { height: this.panelSize, duration: 0.4 })
+      .to(
+        this.DOM.paneConnection,
+        {
+          autoAlpha: 0,
+          display: 'none',
+          duration: 0.4
+        },
+        '<'
+      )
       .to(this.DOM.paneCategory, {
         autoAlpha: 1,
         display: 'flex',
-        duration: 0.6
+        duration: 1
       })
       .to(
         this.DOM.paneTimer,
-        { autoAlpha: 1, display: 'flex', duration: 0.6 },
+        { autoAlpha: 1, display: 'flex', duration: 1 },
         '<'
       );
 
     this.switchAnimation2 = gsap
       .timeline({ paused: true })
-      .to(this.DOM.paneCategory, {
-        autoAlpha: 0,
-        display: 'none',
-        duration: 0.6
-      })
+      .set(this.DOM.el, { height: this.panelSize })
+      .to(
+        this.DOM.paneCategory,
+        {
+          autoAlpha: 0,
+          display: 'none',
+          duration: 0.6
+        },
+        '<'
+      )
       .to(
         this.DOM.paneTimer,
         { autoAlpha: 0, display: 'none', duration: 0.6 },
@@ -149,7 +167,6 @@ const Gameoptions = class extends Component {
 
     //checkstep
     Actions.getInstance().then((actions) => {
-      // TODO @Alexis please check that the semantics are right here
       if (actions.getFaucetToken()) {
         this._clickOnCtrl1(null, true);
       }
@@ -158,10 +175,23 @@ const Gameoptions = class extends Component {
     });
   }
 
-  private _clickOnCtrl0() {
+  private _getPanelSize() {
+    const compStyles = window.getComputedStyle(this.DOM.el);
+    return (
+      this.DOM.screen2.getBoundingClientRect().height +
+      this.DOM.paneBtns.getBoundingClientRect().height +
+      parseInt(compStyles.getPropertyValue('padding-bottom').slice(0, -2)) +
+      parseInt(compStyles.getPropertyValue('padding-top').slice(0, -2))
+    );
+  }
+
+  private async _clickOnCtrl0() {
     this.currentState--;
 
     if (this.currentState === 1) {
+      const actions: Actions = await Actions.getInstance();
+      actions.quitLobby();
+
       this.switchAnimation2.reverse();
       this.lookingForRival = false;
       //TODO: stop WS rival finding -> this.lookingForRival
@@ -262,7 +292,7 @@ const Gameoptions = class extends Component {
               'toast'
             );
             return;
-          }, 1000);
+          }, 10000);
         }
 
         break;
