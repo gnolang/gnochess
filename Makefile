@@ -52,3 +52,14 @@
     -tokens 783xSVRGbI \
     -mnemonic "piano aim fashion palace key scrap write garage avocado royal lounge lumber remove frozen sketch maze tree model half team cook burden pattern choice" \
     -num-accounts 10
+
+3_run_web:
+	cd web; npm install
+	( \
+	  echo "VITE_GNO_WS_URL=ws://127.0.0.1:26657/websocket"; \
+	  echo "VITE_GNO_CHESS_REALM=gno.land/p/demo/chess"; \
+	  echo "VITE_FAUCET_URL=http://127.0.0.1:8545"; \
+	) > web/.env
+	cp web/.env web/assets/js/.env
+	cd web; npm run build
+	cd web; npm run dev
