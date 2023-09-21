@@ -1,5 +1,5 @@
 0_setup_gnokey:
-	printf '\n\n%s\n\n' "mushroom glare again depart damage joke eager become vicious search annual wash ship click uphold school huge humor dust element theory warm wet response" | gnokey add --recover --insecure-password-stdin DeployKey || true
+	printf '\n\n%s\n\n' "source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast" | gnokey add --recover --insecure-password-stdin DeployKey || true
 	gnokey list | grep DeployKey
 
 1_run_gnoland:
@@ -57,9 +57,12 @@
 	cd web; npm install
 	( \
 	  echo "VITE_GNO_WS_URL=ws://127.0.0.1:26657/websocket"; \
-	  echo "VITE_GNO_CHESS_REALM=gno.land/p/demo/chess"; \
+	  echo "VITE_GNO_CHESS_REALM=gno.land/r/demo/chess"; \
 	  echo "VITE_FAUCET_URL=http://127.0.0.1:8545"; \
 	) > web/.env
 	cp web/.env web/assets/js/.env
 	cd web; npm run build
 	cd web; npm run dev
+
+4_deploy_realm:
+	echo | gnokey maketx addpkg --insecure-password-stdin --gas-wanted 20000000 --gas-fee 1ugnot --pkgpath gno.land/r/demo/chess --pkgdir ./realm --broadcast DeployKey
