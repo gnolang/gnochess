@@ -51,9 +51,10 @@ class Actions {
       Actions.instance = new Actions();
 
       await Actions.instance.initialize();
+      return Actions.instance;
+    } else {
+      return Actions.instance;
     }
-
-    return Actions.instance;
   }
 
   /**
@@ -112,7 +113,7 @@ class Actions {
    * Fetches the saved faucet token, if any
    */
   public getFaucetToken(): string | null {
-    return this.faucetToken;
+    return this.faucetToken || localStorage.getItem(defaultFaucetTokenKey);
   }
 
   /****************
@@ -569,7 +570,7 @@ class Actions {
       // Execute the request
       await fetch(faucetURL, requestOptions);
     } catch (e) {
-      console.log(`Unable to fund account: ${e}`);
+      console.error(`Unable to fund account: ${e}`);
     }
   }
 }

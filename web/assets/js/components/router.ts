@@ -6,6 +6,7 @@ import { homeTransition, homeView } from '../routes/home.ts';
 import { genericTransition, genericView } from '../routes/generic.ts';
 import { aboutTransition, aboutView } from '../routes/about.ts';
 import { dashboardTransition, dashboardView } from '../routes/dashboard.ts';
+import Actions from '../actions.ts';
 
 type RouterType = 'views' | 'transitions';
 
@@ -15,6 +16,7 @@ const Router = class extends Component {
   }
 
   init() {
+    Actions.getInstance();
     // automatically called at start
     this.loadedViews = [
       playView,
