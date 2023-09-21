@@ -1,3 +1,7 @@
+0_setup_gnokey:
+	printf '\n\n%s\n\n' "mushroom glare again depart damage joke eager become vicious search annual wash ship click uphold school huge humor dust element theory warm wet response" | gnokey add --recover --insecure-password-stdin DeployKey || true
+	gnokey list | grep DeployKey
+
 1_run_gnoland:
 	rm -rf .tmp/gnoland
 	mkdir -p .tmp/gnoland
