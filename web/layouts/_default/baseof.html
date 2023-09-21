@@ -3,8 +3,8 @@
   {{ partial "head/head.html" . }} {{ block "meta" . }}{{ end }}
   <body data-barba="wrapper" data-component="router" class="min-h-screen">
     {{ block "header" . }}{{ partial "header/header.html" .}}{{ end }} {{ block
-    "canvas" . }}{{ partial "canvas/canvas.html" .}}{{ end }}
-
+    "canvas" . }}{{ partial "canvas/canvas.html" .}}{{ end }} {{ partial
+    "gui/toast.html" .}}
     <main data-barba="container" data-barba-namespace="{{ .Params.namespace }}">
       {{ block "main" . }}{{ end }}
     </main>

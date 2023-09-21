@@ -24,20 +24,31 @@ const Dashboard = class extends Component {
       .then(async (actions: Actions) => {
         const userToken = actions.getFaucetToken();
         if (!userToken) {
-          // TODO handle
           throw new Error('user token not present');
         }
 
         this.userToken = userToken;
         this._feedUser(this.userToken);
 
-        const player: Player = await actions.getUserData();
-        this._feedRatings(player);
-        console.log(this._feedLeaderbord());
+        try {
+          const player: Player = await actions.getUserData();
+          this._feedRatings(player);
+          console.log(this._feedLeaderbord());
+        } catch (e) {
+          this.call(
+            'appear',
+            ['Error: Cannot retrieve data, try later', 'error'],
+            'toast'
+          );
+        }
       })
       .catch(() => {
         console.error('Error: Dashboard component init issue');
-        // TODO handle error
+        this.call(
+          'appear',
+          ['Connect your token to get your data', 'warning'],
+          'toast'
+        );
       });
   }
 
@@ -177,7 +188,11 @@ const Dashboard = class extends Component {
       })
       .catch(() => {
         console.error('Error: Dashboard method _feedLeaderbord issue');
-        // TODO handle error
+        this.call(
+          'appear',
+          ['Error: Leaderboard unreachable, try again later', 'error'],
+          'toast'
+        );
       });
   }
 

@@ -6,11 +6,36 @@
 <div
   class="max-w-screen-xxl mx-auto xl:px-16 md:px-8 px-8 min-h-[calc(100vh_-_theme(space.24))] grid grid-cols-12 gap-4 pt-[15vmax]"
 >
-  <div class="relative grid grid-cols-5 gap-4 col-span-5">
+  <div class="relative grid grid-cols-5 gap-4 md:col-span-5 col-span-12">
     <!-- prettier-ignore -->
-    <h1 class="js-title font-termina opacity-0 col-span-4 font-bold text-800 leading-[.9] whitespace-break-spaces">{{.Title}}</h1>
-    <div class="content | js-content col-span-4 pb-24 opacity-0 text-grey-600">
-      <p class="">{{.Content}}</p>
+    <h1 class="js-title font-termina opacity-0 md:col-span-4 col-span-5 font-bold md:text-800 text-700 leading-[.9] whitespace-break-spaces">{{.Title}}</h1>
+    <div
+      class="content | js-content md:col-span-4 col-span-5 pb-24 opacity-0 text-grey-600"
+    >
+      {{.Content}}
+      <div class="mt-10 md:col-span-4 col-span-5">
+        <p>
+          Discover more about Gno.land and stay in touch with our news and
+          updates:
+        </p>
+        <ul class="flex space-x-5 items-center mt-4">
+          <li>
+            <a href="https://gno.land/"
+              >{{- partial "icons/ico-link.html" . -}}</a
+            >
+          </li>
+          <li>
+            <a href="https://twitter.com/_gnoland"
+              >{{- partial "icons/ico-twitter.html" . -}}</a
+            >
+          </li>
+          <li>
+            <a href="https://discord.com/invite/S8nKUqwkPn"
+              >{{- partial "icons/ico-discord.html" . -}}</a
+            >
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </div>

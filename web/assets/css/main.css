@@ -117,8 +117,20 @@ body {
 }
 
 /* content */
+.content {
+  text-shadow: 0 0 20px rgba(255, 255, 255, 1);
+}
 .content p {
-  margin-top: 2rem;
+  @apply pt-6 lg:text-200 text-300;
+}
+
+.content h1,
+.content h2 {
+  @apply font-termina pt-10 text-400 md:text-200 text-grey-800;
+}
+
+.content a {
+  @apply underline hover:text-grey-400;
 }
 
 /* Animations */
