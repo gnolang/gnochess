@@ -158,7 +158,7 @@ const Gameoptions = class extends Component {
     });
   }
 
-  _clickOnCtrl0() {
+  private _clickOnCtrl0() {
     this.currentState--;
 
     if (this.currentState === 1) {
@@ -200,57 +200,71 @@ const Gameoptions = class extends Component {
         this.call('changeStatus', ['action'], 'webgl');
         this.call('moveScene', [''], 'webgl');
 
-        //TODO: error system
         //setup game
         this.lookingForRival = true;
-        const gameSetting = await actions.joinLobby(this.options.timer);
-        console.log(gameSetting);
-        console.log('Logging');
+        try {
+          const gameSetting = await actions.joinLobby(this.options.timer);
+          console.log('Logging');
 
-        //check if game has not been cancelled after the wait
-        if (this.lookingForRival) {
-          this.call('disappear', [], 'webgl');
-          this.call('setCategory', [this.options.category], 'gamecategory');
+          //check if game has not been cancelled after the wait
+          if (this.lookingForRival) {
+            this.call('disappear', [], 'webgl');
+            this.call('setCategory', [this.options.category], 'gamecategory');
 
-          this.disappear().then((_) => {
+            this.disappear().then((_) => {
+              this.call(
+                'config',
+                [
+                  this.options.timer,
+                  gameSetting.me.color,
+                  gameSetting.me.id,
+                  this.options.category
+                ],
+                'gameplayers',
+                'me'
+              );
+              this.call(
+                'config',
+                [
+                  this.options.timer,
+                  gameSetting.rival.color,
+                  gameSetting.rival.id,
+                  this.options.category
+                ],
+                'gameplayers',
+                'rival'
+              );
+
+              gsap.set('#js-background', { transformOrigin: 'center' });
+              gsap.to('#js-background', { scale: 1.1, duration: 1.4 });
+              this.call('appear', [], 'gamecategory');
+
+              this.call('appear', '', 'gameplayers', 'me');
+              this.call('appear', '', 'gameplayers', 'rival');
+              this.call('appear', [gameSetting.game.id], 'gamecontrols');
+              this.call(
+                'startGame',
+                [gameSetting.game.id, gameSetting.me.color],
+                'gameboard'
+              );
+              this.call('appear', '', 'gameboard');
+            });
+          }
+        } catch (e) {
+          console.error(e);
+          //timeout for UX if immediate error
+          setTimeout(() => {
+            this._clickOnCtrl0();
+            this.lookingForRival = false;
             this.call(
-              'config',
-              [
-                this.options.timer,
-                gameSetting.me.color,
-                gameSetting.me.id,
-                this.options.category
-              ],
-              'gameplayers',
-              'me'
+              'appear',
+              ['Leaved game lobby, try again.', 'warning'],
+              'toast'
             );
-            this.call(
-              'config',
-              [
-                this.options.timer,
-                gameSetting.rival.color,
-                gameSetting.rival.id,
-                this.options.category
-              ],
-              'gameplayers',
-              'rival'
-            );
-
-            gsap.set('#js-background', { transformOrigin: 'center' });
-            gsap.to('#js-background', { scale: 1.1, duration: 1.4 });
-            this.call('appear', [], 'gamecategory');
-
-            this.call('appear', '', 'gameplayers', 'me');
-            this.call('appear', '', 'gameplayers', 'rival');
-            this.call('appear', [gameSetting.game.id], 'gamecontrols');
-            this.call(
-              'startGame',
-              [gameSetting.game.id, gameSetting.me.color],
-              'gameboard'
-            );
-            this.call('appear', '', 'gameboard');
-          });
+            return;
+          }, 1000);
         }
+
         break;
       }
       default:

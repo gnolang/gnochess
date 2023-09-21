@@ -7,3 +7,4 @@ export { Gameboard } from './components/gameboard';
 export { Webgl } from './components/webgl';
 export { Dashboard } from './components/dashboard';
 export { Gamecategory } from './components/gamecategory';
+export { Toast } from './components/toast';
