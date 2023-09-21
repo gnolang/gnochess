@@ -24,7 +24,7 @@ import Config from './config.ts';
 const wsURL: string = Config.GNO_WS_URL;
 const chessRealm: string = Config.GNO_CHESS_REALM;
 const faucetURL: string = Config.FAUCET_URL;
-const defaultGasWanted: Long = new Long(1000000); // 1M
+const defaultGasWanted: Long = new Long(5_000_000);
 
 /**
  * Actions is a singleton logic bundler
