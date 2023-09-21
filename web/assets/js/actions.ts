@@ -1,22 +1,22 @@
-import {saveToLocalStorage} from './utils/localstorage';
+import { saveToLocalStorage } from './utils/localstorage';
 import {
-    defaultFaucetTokenKey,
-    defaultMnemonicKey,
-    drawRequestTimer,
-    Game,
-    type GameoverType,
-    type GameSettings,
-    GameState,
-    GameTime,
-    Player,
-    Promotion
+  defaultFaucetTokenKey,
+  defaultMnemonicKey,
+  drawRequestTimer,
+  Game,
+  type GameoverType,
+  type GameSettings,
+  GameState,
+  GameTime,
+  Player,
+  Promotion
 } from './types/types';
-import {defaultTxFee, GnoWallet, GnoWSProvider} from '@gnolang/gno-js-client';
-import {BroadcastTxCommitResult, TransactionEndpoint} from '@gnolang/tm2-js-client';
-import {generateMnemonic} from './utils/crypto.ts';
+import { defaultTxFee, GnoWallet, GnoWSProvider } from '@gnolang/gno-js-client';
+import { BroadcastTxCommitResult, TransactionEndpoint } from '@gnolang/tm2-js-client';
+import { generateMnemonic } from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
-import {constructFaucetError} from './utils/errors.ts';
+import { constructFaucetError } from './utils/errors.ts';
 
 // ENV values //
 const wsURL: string = Config.GNO_WS_URL;
@@ -39,7 +39,7 @@ class Actions {
   private faucetToken: string | null = null;
   private isInTheLobby = false;
 
-  private constructor() {}
+  private constructor() { }
 
   /**
    * Fetches the Actions instance. If no instance is
@@ -181,7 +181,7 @@ class Actions {
 
       const fetchInterval = setInterval(async () => {
         try {
-          if (!this.isInTheLobby) reject('Leaved the lobby');
+          if (!this.isInTheLobby) reject('Left the lobby');
 
           // Check if the game is ready
           const lobbyResponse: BroadcastTxCommitResult =
