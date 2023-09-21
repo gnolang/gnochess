@@ -104,6 +104,9 @@ func refreshLobby(tc int) {
 			ftr := sublob[firstTimeout].r(cat)
 			pos := lobbyClosest(sublob, cat, ftr, firstTimeout)
 			lobbyMatch(tc, firstTimeout, pos)
+			// update sublob value, as lobbyMatch will have
+			// updated lobby[tc].
+			sublob = lobby[tc]
 		}
 	}
 
