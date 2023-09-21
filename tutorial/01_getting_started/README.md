@@ -146,9 +146,9 @@ While you are in a development context like this one, you can jump straight to
 importing our predefined key, `test1` which is set up in the default "genesis
 block" to contain 10^13 ugnot.
 
->_ugnot_, where u stands in for µ, is a millionth of Gno.land's native token,
->the $GNOT. ugnot is to gnot what [satoshi](https://www.investopedia.com/terms/s/satoshi.asp)
->is to bitcoin; the smallest, indivisible denomination of the token.
+> _ugnot_, where u stands in for µ, is a millionth of Gno.land's native token,
+> the $GNOT. ugnot is to gnot what [satoshi](https://www.investopedia.com/terms/s/satoshi.asp)
+> is to bitcoin; the smallest, indivisible denomination of the token.
 
 Execute the following command, and input the mnemonic below:
 
@@ -199,20 +199,20 @@ GAS USED:   439393
 <details>
 <summary>Flag breakdown</summary>
 
-* `--gas-wanted`: running smart contracts, as well as publishing packages, will
+- `--gas-wanted`: running smart contracts, as well as publishing packages, will
   typically use a varying number of VM cycles to execute. Here we should
   indicate how many we "expect" to need.\
   The number of VM cycles will be eventually used to calculate, together with
   other factors, how much the caller should "pay" (in terms of `ugnot`) for
   their transaction.
-* `--gas-fee`: unused here, but must be non-zero <!-- TODO: improve? -->
-* `--pkgpath`: equivalent of Go's import path. Will be used to call our realm,
+- `--gas-fee`: unused here, but must be non-zero <!-- TODO: improve? -->
+- `--pkgpath`: equivalent of Go's import path. Will be used to call our realm,
   as well as by other realms to import us. \
   In Gno, all pkgpaths are prefixed by `gno.land/(p|r)`. Changing the "domain" is
   reserved for future [communication with other blockchains,](https://ibcprotocol.org/)
   while p and r specify whether we're publishing a **p**ackage or a **r**ealm.
-* `--pkgdir`: where the package or realm is in our filesystem.
-* `--broadcast`: making a transaction could technically be done by creating the
+- `--pkgdir`: where the package or realm is in our filesystem.
+- `--broadcast`: making a transaction could technically be done by creating the
   transaction on one machine, signing it, and then with the signed transaction
   sending it to the chain from another machine. `--broadcast` tells `gnokey` to
   immediately send the transaction after creating it and signing it.
@@ -302,5 +302,3 @@ $ gnokey generate
 stone wrestle craft chuckle lonely response eternal steak sausage mesh snow steel recycle lounge pizza true trap reject trip spell october panther novel clown
 $ gnokey add mykey --recover # ...
 ```
-
-

@@ -34,10 +34,10 @@ tasks:
 
   - name: Gno CLI
     init: |
-        go mod download
-        go install \
-          github.com/gnolang/gno/gno.land/cmd/gnokey \
-          github.com/gnolang/gno/gnovm/cmd/gno
+      go mod download
+      go install \
+        github.com/gnolang/gno/gno.land/cmd/gnokey \
+        github.com/gnolang/gno/gnovm/cmd/gno
     command: |
       url () { echo $GITPOD_WORKSPACE_URL | sed 's#://#://8888-#'; }
       echo "Get started with the tutorial"
