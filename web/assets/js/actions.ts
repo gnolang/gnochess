@@ -205,7 +205,7 @@ class Actions {
           }
 
           // Clear the fetch interval
-          if (fetchInterval) clearInterval(fetchInterval);
+          clearInterval(fetchInterval);
 
           // Parse the game data
           const game: Game = JSON.parse(lobbyWaitResponse as string);
