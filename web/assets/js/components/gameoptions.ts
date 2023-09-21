@@ -225,7 +225,6 @@ const Gameoptions = class extends Component {
         break;
       }
       case 2: {
-        console.log(this.DOM.el.getBoundingClientRect().height);
         this.switchAnimation2.play();
 
         this.call('changeStatus', ['action'], 'webgl');
@@ -289,7 +288,7 @@ const Gameoptions = class extends Component {
             this.lookingForRival = false;
             this.call(
               'appear',
-              ['Leaved game lobby, try again.', 'warning'],
+              ['Leaved game lobbyx, try again.', 'warning'],
               'toast'
             );
             return;

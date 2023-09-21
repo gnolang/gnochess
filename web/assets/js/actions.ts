@@ -236,7 +236,6 @@ class Actions {
 
       setTimeout(() => {
         this.isInTheLobby = false;
-
         clearInterval(fetchInterval);
 
         reject('wait timeout exceeded');
