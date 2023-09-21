@@ -125,11 +125,14 @@ class Actions {
    * @param time
    */
   public async joinLobby(time: GameTime): Promise<GameSettings> {
+    // Backend expects seconds.
+    const seconds = time.time * 60;
+
     // Join the waiting lobby
     await this.wallet?.callMethod(
       chessRealm,
       'LobbyJoin',
-      [time.time.toString(), time.increment.toString()],
+      [seconds.toString(), time.increment.toString()],
       TransactionEndpoint.BROADCAST_TX_COMMIT,
       undefined,
       {
