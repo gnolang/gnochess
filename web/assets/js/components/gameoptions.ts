@@ -217,7 +217,7 @@ const Gameoptions = class extends Component {
     switch (this.currentState) {
       case 1: {
         this.options.token = await this._inputToken();
-        this.DOM.ctrl1.innerHTML = this.states[this.currentState].ctrls[1]; //todo: animation
+        this.DOM.ctrl1.innerHTML = this.states[this.currentState].ctrls[1];
         this.switchAnimation1[immediate ? 'progress' : 'play'](
           immediate ? 1 : 0
         );
@@ -225,6 +225,7 @@ const Gameoptions = class extends Component {
         break;
       }
       case 2: {
+        this.currentState++;
         this.switchAnimation2.play();
 
         this.call('changeStatus', ['action'], 'webgl');
@@ -302,13 +303,22 @@ const Gameoptions = class extends Component {
   }
 
   async _inputToken() {
+    console.log('blabla');
     const token =
       this.DOM.el.querySelector('#id-gameoptions-token').value || '';
 
     const actions: Actions = await Actions.getInstance();
+    console.log('in2');
 
     if (!actions.getFaucetToken()) {
-      await actions.setFaucetToken(token);
+      console.log('in');
+      try {
+        await actions.setFaucetToken(token);
+        console.log('okok');
+      } catch (e) {
+        this.currentState = 0;
+        this.call('appear', ['Invalid token', 'error'], 'toast');
+      }
     }
 
     return token;

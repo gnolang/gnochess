@@ -1,22 +1,25 @@
-import {saveToLocalStorage} from './utils/localstorage';
+import { saveToLocalStorage } from './utils/localstorage';
 import {
-    defaultFaucetTokenKey,
-    defaultMnemonicKey,
-    drawRequestTimer,
-    Game,
-    type GameoverType,
-    type GameSettings,
-    GameState,
-    GameTime,
-    Player,
-    Promotion
+  defaultFaucetTokenKey,
+  defaultMnemonicKey,
+  drawRequestTimer,
+  Game,
+  type GameoverType,
+  type GameSettings,
+  GameState,
+  GameTime,
+  Player,
+  Promotion
 } from './types/types';
-import {defaultTxFee, GnoWallet, GnoWSProvider} from '@gnolang/gno-js-client';
-import {BroadcastTxCommitResult, TransactionEndpoint} from '@gnolang/tm2-js-client';
-import {generateMnemonic} from './utils/crypto.ts';
+import { defaultTxFee, GnoWallet, GnoWSProvider } from '@gnolang/gno-js-client';
+import {
+  BroadcastTxCommitResult,
+  TransactionEndpoint
+} from '@gnolang/tm2-js-client';
+import { generateMnemonic } from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
-import {constructFaucetError} from './utils/errors.ts';
+import { constructFaucetError } from './utils/errors.ts';
 
 // ENV values //
 const wsURL: string = Config.GNO_WS_URL;
@@ -102,10 +105,13 @@ class Actions {
   public async setFaucetToken(token: string) {
     this.faucetToken = token;
 
-    localStorage.setItem(defaultFaucetTokenKey, token);
-
     // Attempt to fund the account
-    await this.fundAccount();
+    try {
+      await this.fundAccount();
+      localStorage.setItem(defaultFaucetTokenKey, token);
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   /**
@@ -607,7 +613,7 @@ class Actions {
 
     // Execute the request
     const fundResponse = await fetch(faucetURL, requestOptions);
-
+    console.log(fundResponse);
     if (!fundResponse.ok) {
       throw constructFaucetError(await fundResponse.text());
     }
