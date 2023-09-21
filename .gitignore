@@ -120,3 +120,5 @@ web/public/**/*.xml
 
 realm/*.go
 *.vim
+
+.tmp/
