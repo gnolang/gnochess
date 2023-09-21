@@ -288,7 +288,7 @@ const Gameoptions = class extends Component {
             this.lookingForRival = false;
             this.call(
               'appear',
-              ['Leaved game lobbyx, try again.', 'warning'],
+              ['Leaved game lobby, try again.', 'warning'],
               'toast'
             );
             return;
