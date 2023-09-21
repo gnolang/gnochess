@@ -139,7 +139,7 @@ const Dashboard = class extends Component {
 
     const pieEl = this.DOM.el.querySelector('#dashboard-rank');
     pieEl.style.background = `conic-gradient(#777777 0% ${percents[0]}%, #b4b4b4 ${percents[0]}% ${percents[1]}%, #d9d9d9 ${percents[1]}% ${percents[2]}%)`;
-    pieEl.innerHTML = `<span class="dashbord-global-rank-value">${percents[0]}<span class="text-200">%</span> <br><span class="text-300">Wins</span></span>`;
+    pieEl.innerHTML = `<span class="dashboard-global-rank-value">${percents[0]}<span class="text-200">%</span> <br><span class="text-300">Wins</span></span>`;
 
     return {
       wins: percents[0],
