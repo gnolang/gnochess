@@ -1,7 +1,7 @@
 import { Component } from 'sevejs';
 import { gsap } from 'gsap';
 
-type MessageType = 'warning' | 'info';
+type MessageType = 'warning' | 'info' | 'error';
 const Toast = class extends Component {
   constructor(opts: any) {
     super(opts);
