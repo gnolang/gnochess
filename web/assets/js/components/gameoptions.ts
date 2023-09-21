@@ -19,6 +19,7 @@ const Gameoptions = class extends Component {
     ];
     this.lookingForRival = false;
     this.currentState = 0;
+    this.disabled = false;
     this.timer = 0;
     this.timers = {
       rapid: [
@@ -188,6 +189,11 @@ const Gameoptions = class extends Component {
   private async _clickOnCtrl0() {
     this.currentState--;
 
+    if (this.disabled === true) {
+      console.log('error');
+      return;
+    }
+
     if (this.currentState === 1) {
       const actions: Actions = await Actions.getInstance();
       actions.quitLobby();
@@ -210,14 +216,21 @@ const Gameoptions = class extends Component {
   }
 
   async _clickOnCtrl1(_e: any, immediate = false) {
+    if (this.disabled === true) {
+      console.log('error');
+      return;
+    }
     this.currentState++;
 
     const actions: Actions = await Actions.getInstance();
 
     switch (this.currentState) {
       case 1: {
-        this.options.token = await this._inputToken();
+        if (!immediate) {
+          this.options.token = await this._inputToken();
+        }
         this.DOM.ctrl1.innerHTML = this.states[this.currentState].ctrls[1];
+
         this.switchAnimation1[immediate ? 'progress' : 'play'](
           immediate ? 1 : 0
         );
@@ -303,20 +316,22 @@ const Gameoptions = class extends Component {
   }
 
   async _inputToken() {
-    console.log('blabla');
     const token =
       this.DOM.el.querySelector('#id-gameoptions-token').value || '';
-
+    gsap.to(this.DOM.ctrl1, { background: '#D9D9D9', color: '#FFFFFF' });
+    this.DOM.ctrl1.innerHTML = 'Waiting...';
+    this.disabled = true;
     const actions: Actions = await Actions.getInstance();
-    console.log('in2');
 
     if (!actions.getFaucetToken()) {
-      console.log('in');
       try {
         await actions.setFaucetToken(token);
-        console.log('okok');
+        this.disabled = false;
+
+        gsap.to(this.DOM.ctrl1, { background: '#FFF', color: '#000' });
       } catch (e) {
         this.currentState = 0;
+        this.DOM.el.querySelector('#id-gameoptions-token').value = '';
         this.call('appear', ['Invalid token', 'error'], 'toast');
       }
     }
