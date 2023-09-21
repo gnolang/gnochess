@@ -2,6 +2,7 @@ export type Colors = 'w' | 'b';
 export type GameoverType =
   | 'checkmate'
   | 'timeout'
+  | 'noMove'
   | 'draw'
   | 'stalemate'
   | 'threefoldRepetition'

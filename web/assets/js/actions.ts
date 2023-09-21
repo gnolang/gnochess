@@ -244,6 +244,16 @@ class Actions {
   }
 
   /**
+   * Gate timeout state
+   * used inside a loop to check timeout state
+   * @param gameID the ID of the running game
+   */
+  public getTimeoutState(gameId: string) {
+    console.log(gameId);
+    return false;
+  }
+
+  /**
    * Fetches the active game state. Should be called
    * within a loop and checked.
    * @param gameID the ID of the running game

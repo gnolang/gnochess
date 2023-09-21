@@ -18,6 +18,9 @@ const Gameboard = class extends Component {
     this.promotion = [];
     this.allowedToMove = false;
     this.pomotionEvents = [];
+    this.initMove = true;
+    this.initMoveTimer = null;
+    this.checkTimeoutTimer = null;
 
     this.DOM.board = this.DOM.el.querySelector('#js-game');
     this.DOM.promotionBtns = [...this.DOM.el.querySelectorAll('.js-topromote')];
@@ -51,6 +54,7 @@ const Gameboard = class extends Component {
         cb: this.selectCell.bind(this)
       });
     });
+    this.intervalCheckForTimeout();
   }
 
   showScoreBoard(winner: Colors) {
@@ -90,14 +94,20 @@ const Gameboard = class extends Component {
 
       if (gameover === 'timeout' || gameState.state === 'timeout') {
         status = 'timeout';
-        const valid = await actions.isGameOver(this.gameId, 'timeout');
-        if (valid)
-          this.call(
-            'finishGame',
-            ['winner', status],
-            'gameplayers',
-            this.color === this.chess.turn() ? 'rival' : 'me'
-          );
+        clearTimeout(this.checkTimeoutTimer);
+        const game = await actions.getGame(this.gameId);
+        if (game.winner == 'none') {
+          this.call('finishGame', ['abandon', status], 'gameplayers', 'rival');
+        } else {
+          const valid = await actions.isGameOver(this.gameId, 'timeout');
+          if (valid)
+            this.call(
+              'finishGame',
+              ['winner', status],
+              'gameplayers',
+              this.color === this.chess.turn() ? 'rival' : 'me'
+            );
+        }
       }
 
       if (this.chess.isCheckmate() || gameState.state === 'checkmated') {
@@ -148,16 +158,36 @@ const Gameboard = class extends Component {
     }
 
     //game turn update
+
     if (this.color === this.chess.turn()) {
-      this.call('stopTimer', [init], 'gameplayers', 'rival');
-      this.call('startTimer', [init], 'gameplayers', 'me');
       this.allowedToMove = true;
+      this.call('stopTimer', [init], 'gameplayers', 'rival');
+
+      if (this.initMove) {
+        this.initMove = false;
+        this.initMoveTimer = setTimeout(() => {
+          console.warn('no 1 move');
+          //TODO: call action claimTimeout @Miloš / @Morgan
+        }, 30000); //30sec first move
+      } else {
+        this.call('startTimer', [init], 'gameplayers', 'me');
+      }
     } else {
+      clearTimeout(this.initMoveTimer);
       this.call('stopTimer', [init], 'gameplayers', 'me');
       this.call('startTimer', [init], 'gameplayers', 'rival');
       this.allowedToMove = false;
       this.rivalMove();
     }
+  }
+
+  private async intervalCheckForTimeout() {
+    const actions: Actions = await Actions.getInstance();
+    this.checkTimeoutTimer = setInterval(async () => {
+      const timeoutState = await actions.getTimeoutState(this.gameId);
+
+      if (timeoutState) this.call(this.engine(false, 'timeout'));
+    }, 1000);
   }
 
   async rivalMove() {
@@ -317,6 +347,8 @@ const Gameboard = class extends Component {
   }
 
   destroy() {
+    clearTimeout(this.initMoveTimer);
+    clearInterval(this.checkTimeoutTimer);
     this.chess.clear();
     this.board.destroy();
     //wS deco
