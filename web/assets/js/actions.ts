@@ -126,11 +126,14 @@ class Actions {
    * @param time
    */
   public async joinLobby(time: GameTime): Promise<GameSettings> {
+    // Backend expects seconds.
+    const seconds = time.time * 60;
+
     // Join the waiting lobby
     await this.wallet?.callMethod(
       chessRealm,
       'LobbyJoin',
-      [time.time.toString(), time.increment.toString()],
+      [seconds.toString(), time.increment.toString()],
       TransactionEndpoint.BROADCAST_TX_COMMIT,
       undefined,
       {
@@ -251,7 +254,7 @@ class Actions {
   public async getGame(gameID: string): Promise<Game> {
     const gameResponse: string = (await this.provider?.evaluateExpression(
       chessRealm,
-      `GetGame(${gameID})`
+      `GetGame("${gameID}")`
     )) as string;
 
     // Parse the response
@@ -501,6 +504,35 @@ class Actions {
     return JSON.parse(acceptResponseRaw);
   }
 
+  /**
+   * Claim that a timeout has occurred on the given game.
+   * @param gameID the ID of the running game
+   */
+  async claimTimeout(gameID: string): Promise<Game> {
+    // Make the request
+    const response: BroadcastTxCommitResult = (await this.wallet?.callMethod(
+      chessRealm,
+      'ClaimTimeout',
+      [gameID],
+      TransactionEndpoint.BROADCAST_TX_COMMIT,
+      undefined,
+      {
+        gasFee: defaultTxFee,
+        gasWanted: defaultGasWanted
+      }
+    )) as BroadcastTxCommitResult;
+
+    // Parse the response from the node
+    const claimTimeoutRaw: string | null =
+      response.deliver_tx.ResponseBase.Data;
+    if (!claimTimeoutRaw) {
+      throw new Error('invalid draw refuse response');
+    }
+
+    // Magically parse the response
+    return JSON.parse(claimTimeoutRaw);
+  }
+
   /****************
    * DASHBOARD
    ****************/
@@ -538,7 +570,7 @@ class Actions {
   async getPlayer(playerID: string): Promise<Player> {
     const playerResponse: string = (await this.provider?.evaluateExpression(
       chessRealm,
-      `GetPlayer(${playerID})`
+      `GetPlayer("${playerID}")`
     )) as string;
 
     // Parse the response
