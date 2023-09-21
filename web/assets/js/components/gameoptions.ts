@@ -185,10 +185,13 @@ const Gameoptions = class extends Component {
     );
   }
 
-  private _clickOnCtrl0() {
+  private async _clickOnCtrl0() {
     this.currentState--;
 
     if (this.currentState === 1) {
+      const actions: Actions = await Actions.getInstance();
+      actions.quitLobby();
+
       this.switchAnimation2.reverse();
       this.lookingForRival = false;
       //TODO: stop WS rival finding -> this.lookingForRival
