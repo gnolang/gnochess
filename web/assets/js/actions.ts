@@ -1,24 +1,22 @@
-import { saveToLocalStorage } from './utils/localstorage';
+import {saveToLocalStorage} from './utils/localstorage';
 import {
-  defaultFaucetTokenKey,
-  defaultMnemonicKey,
-  drawRequestTimer,
-  Game,
-  type GameoverType,
-  type GameSettings,
-  GameState,
-  GameTime,
-  Player,
-  Promotion
+    defaultFaucetTokenKey,
+    defaultMnemonicKey,
+    drawRequestTimer,
+    Game,
+    type GameoverType,
+    type GameSettings,
+    GameState,
+    GameTime,
+    Player,
+    Promotion
 } from './types/types';
-import { defaultTxFee, GnoWallet, GnoWSProvider } from '@gnolang/gno-js-client';
-import {
-  BroadcastTxCommitResult,
-  TransactionEndpoint
-} from '@gnolang/tm2-js-client';
-import { generateMnemonic } from './utils/crypto.ts';
+import {defaultTxFee, GnoWallet, GnoWSProvider} from '@gnolang/gno-js-client';
+import {BroadcastTxCommitResult, TransactionEndpoint} from '@gnolang/tm2-js-client';
+import {generateMnemonic} from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
+import {constructFaucetError} from './utils/errors.ts';
 
 // ENV values //
 const wsURL: string = Config.GNO_WS_URL;
@@ -607,13 +605,11 @@ class Actions {
       })
     };
 
-    // TODO @Alexis do we want this to propagate the error?
-    // The error can be that the user is funded already
-    try {
-      // Execute the request
-      await fetch(faucetURL, requestOptions);
-    } catch (e) {
-      console.error(`Unable to fund account: ${e}`);
+    // Execute the request
+    const fundResponse = await fetch(faucetURL, requestOptions);
+
+    if (!fundResponse.ok) {
+      throw constructFaucetError(await fundResponse.text());
     }
   }
 }
