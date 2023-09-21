@@ -174,7 +174,9 @@ const Home: FC<IHomeProps> = () => {
           </Box>
           <Box display={'flex'} flexDirection={'column'} mt={6}>
             <FormControl
-              isInvalid={!!formik.errors.githubHandle && formik.touched.githubHandle}
+              isInvalid={
+                !!formik.errors.githubHandle && formik.touched.githubHandle
+              }
             >
               <FormLabel>GitHub handle</FormLabel>
               <Input
@@ -191,7 +193,9 @@ const Home: FC<IHomeProps> = () => {
           </Box>
           <Box display={'flex'} flexDirection={'column'} mt={6}>
             <FormControl
-              isInvalid={!!formik.errors.socialHandle && formik.touched.socialHandle}
+              isInvalid={
+                !!formik.errors.socialHandle && formik.touched.socialHandle
+              }
             >
               <FormLabel>Social handle</FormLabel>
               <Input
@@ -228,7 +232,9 @@ const Home: FC<IHomeProps> = () => {
           </Box>
           <Box mt={6}>
             <FormControl
-              isInvalid={!!formik.errors.receiveNews && formik.touched.receiveNews}
+              isInvalid={
+                !!formik.errors.receiveNews && formik.touched.receiveNews
+              }
             >
               <Checkbox
                 size={'lg'}
@@ -240,9 +246,11 @@ const Home: FC<IHomeProps> = () => {
               >
                 Do you want to receive news on Gno.land?
               </Checkbox>
-              <FormHelperText>Note: By filling out this form you agree for New Tendermint Inc and AiB Inc. to use your
-                registration email to send you updates on its projects and products as well as future
-                events</FormHelperText>
+              <FormHelperText>
+                Note: By filling out this form you agree for New Tendermint Inc
+                and AiB Inc. to use your registration email to send you updates
+                on its projects and products as well as future events
+              </FormHelperText>
               <FormErrorMessage>{formik.errors.receiveNews}</FormErrorMessage>
             </FormControl>
           </Box>
@@ -260,7 +268,10 @@ const Home: FC<IHomeProps> = () => {
           </Box>
           <Box my={6}>
             <FormControl
-              isInvalid={!!formik.errors.termsAndConditions && formik.touched.termsAndConditions}
+              isInvalid={
+                !!formik.errors.termsAndConditions &&
+                formik.touched.termsAndConditions
+              }
             >
               <Checkbox
                 size={'lg'}
@@ -270,22 +281,33 @@ const Home: FC<IHomeProps> = () => {
                 onChange={formik.handleChange}
                 isChecked={formik.values.termsAndConditions}
               >
-                Please confirm you accept the <a href={'https://hackmd.io'} target={'_blank'} style={{
-                textDecoration: 'underline'
-              }}>Terms and Conditions </a>
+                Please confirm you accept the{' '}
+                <a
+                  href={'https://hackmd.io'}
+                  target={'_blank'}
+                  style={{
+                    textDecoration: 'underline'
+                  }}
+                >
+                  Terms and Conditions{' '}
+                </a>
               </Checkbox>
-              <FormHelperText>Note: Required if participating in GnoChess</FormHelperText>
-              <FormErrorMessage>{formik.errors.termsAndConditions}</FormErrorMessage>
+              <FormHelperText>
+                Note: Required if participating in GnoChess
+              </FormHelperText>
+              <FormErrorMessage>
+                {formik.errors.termsAndConditions}
+              </FormErrorMessage>
             </FormControl>
           </Box>
           <Box>
             <Button
               rightIcon={<BsSend />}
-              variant='outline'
+              variant="outline"
               padding={6}
               isLoading={submitting}
               loadingText={'Submitting'}
-              spinner={<Spinner size={'md'} color='green' />}
+              spinner={<Spinner size={'md'} color="green" />}
               spinnerPlacement={'end'}
               type={'submit'}
             >

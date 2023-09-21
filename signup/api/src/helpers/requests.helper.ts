@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Response } from "express";
 
 class RequestHelper {
   static sendSuccess(response: Response, payload: any) {

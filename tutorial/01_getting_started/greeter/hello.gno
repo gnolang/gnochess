@@ -8,7 +8,7 @@ import (
 // Hello greets s, returning different greetings throughout the day.
 func Hello(s string) string {
 	n := time.Now()
-	v := "The time is " + n.Format(time.StampMilli) + ".\n\n"
+	v := "The time is " + time.Now().Format("Mon Jan _2 15:04:05.00000 MST 2006") + ".\n\n"
 	hour := n.Hour()
 	switch {
 	default:
