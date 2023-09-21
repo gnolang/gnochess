@@ -165,9 +165,15 @@ const Gameboard = class extends Component {
 
       if (this.initMove) {
         this.initMove = false;
-        this.initMoveTimer = setTimeout(() => {
-          console.warn('no 1 move');
-          //TODO: call action claimTimeout @Miloš / @Morgan
+        this.initMoveTimer = setTimeout(async () => {
+          try {
+            // Claim timeout. If no error, timeout succeeded
+            await actions.claimTimeout(this.gameId);
+          } catch (e) {
+            // Timeout request is invalid
+            // TODO @Alexis, handle on the frontend
+            // for the user (I assume fire event to end game)
+          }
         }, 30000); //30sec first move
       } else {
         this.call('startTimer', [init], 'gameplayers', 'me');

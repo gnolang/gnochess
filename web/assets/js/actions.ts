@@ -1,4 +1,4 @@
-import { saveToLocalStorage } from './utils/localstorage';
+import {saveToLocalStorage} from './utils/localstorage';
 import {
   defaultFaucetTokenKey,
   defaultMnemonicKey,
@@ -11,12 +11,9 @@ import {
   Player,
   Promotion
 } from './types/types';
-import { defaultTxFee, GnoWallet, GnoWSProvider } from '@gnolang/gno-js-client';
-import {
-  BroadcastTxCommitResult,
-  TransactionEndpoint
-} from '@gnolang/tm2-js-client';
-import { generateMnemonic } from './utils/crypto.ts';
+import {defaultTxFee, GnoWallet, GnoWSProvider} from '@gnolang/gno-js-client';
+import {BroadcastTxCommitResult, TransactionEndpoint} from '@gnolang/tm2-js-client';
+import {generateMnemonic} from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
 
@@ -244,13 +241,14 @@ class Actions {
   }
 
   /**
-   * Gate timeout state
-   * used inside a loop to check timeout state
+   * Checks if the given game timed out
    * @param gameID the ID of the running game
    */
-  public getTimeoutState(gameId: string) {
-    console.log(gameId);
-    return false;
+  public async getTimeoutState(gameID: string) {
+    // Fetch the game
+    const game: Game = await this.getGame(gameID)
+
+    return game.state === GameState.TIMEOUT;
   }
 
   /**
@@ -362,6 +360,41 @@ class Actions {
       gameID,
       timeout ? timeout : drawRequestTimer * 1000
     );
+  }
+
+  /**
+   * Claims that the game timed out.
+   * Errors out if the claim timeout request is invalid,
+   * and returns the game object if the request is valid (game ended)
+   * @param gameID
+   */
+  async claimTimeout(gameID: string): Promise<Game> {
+    // Make the request
+    const timeoutResponse: BroadcastTxCommitResult =
+      (await this.wallet?.callMethod(
+        chessRealm,
+        'ClaimTimeout',
+        [gameID],
+        TransactionEndpoint.BROADCAST_TX_COMMIT,
+        undefined,
+        {
+          gasFee: defaultTxFee,
+          gasWanted: defaultGasWanted
+        }
+      )) as BroadcastTxCommitResult;
+
+    // Parse the response from the node
+    const timeoutResponseRaw: string | null =
+      timeoutResponse.deliver_tx.ResponseBase.Data;
+    if (!timeoutResponseRaw) {
+      throw new Error('invalid claim timeout request');
+    }
+
+    // TODO @Alexis, not sure what we need exactly in terms of a response.
+    // the backend returns the game object if the claim timeout
+    // request is valid, so we can assume if it doesn't error out,
+    // the request was valid and game is over (this object will contain game over data)
+    return JSON.parse(timeoutResponseRaw);
   }
 
   /**
