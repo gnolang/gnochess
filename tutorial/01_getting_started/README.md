@@ -1,11 +1,21 @@
 # Getting started
 
+> _Disclaimer: the following tutorial expects you to be running commands within our
+> "ready-to-code" Gitpod environment, available from the
+> [top-level readme](../../README.md)._
+
 Let's run some basic commands, and set you up with a test key you'll use to do
 deployments!
 
-We'll be using two commands in this tutorial, `gno` and `gnokey`. `gno` is what
-we will be using to run and test our Gno programs. It has many similar commands
-to the `go` command. Try the next few commands out!
+We'll be using two commands in this tutorial, `gno` and `gnokey`.
+
+* `gno` is what we'll use to run and test our Gno programs. It has many
+  similar commands to the `go` command, such as `gno doc` and `gno run`.
+* `gnokey` is what we'll use to interact with the Gno.land blockchain. We
+  automatically set up a local "test node" for you on Gitpod, and gnokey will
+  by default try to contact that.
+
+Try the next few commands out!
 
 ```console
 $ gno --help
@@ -94,7 +104,7 @@ latter have some unique characteristics that distinguish them:
    the program. Every time a function is called, its state is recovered, and
    then saved from the previous execution.
 3. As a consequence of being callable from end users, as well as non-blockchain
-   code, our web2 frontend `gnoweb` allows you to view the result of any
+   code, our frontend `gnoweb` allows you to view the result of any
    function with signature `func Render(path string) string` as rendered
    markdown.
 4. They can still be imported and called normally by other realms, however they cannot be
@@ -146,9 +156,9 @@ While you are in a development context like this one, you can jump straight to
 importing our predefined key, `test1` which is set up in the default "genesis
 block" to contain 10^13 ugnot.
 
-> _ugnot_, where u stands in for µ, is a millionth of Gno.land's native token,
-> the $GNOT. ugnot is to gnot what [satoshi](https://www.investopedia.com/terms/s/satoshi.asp)
-> is to bitcoin; the smallest, indivisible denomination of the token.
+>_ugnot_, where u stands in for µ, is a millionth of Gno.land's native token,
+>the $GNOT. ugnot is to gnot what [satoshi](https://www.investopedia.com/terms/s/satoshi.asp)
+>is to bitcoin; the smallest, indivisible denomination of the token.
 
 Execute the following command, and input the mnemonic below:
 
@@ -199,20 +209,20 @@ GAS USED:   439393
 <details>
 <summary>Flag breakdown</summary>
 
-- `--gas-wanted`: running smart contracts, as well as publishing packages, will
+* `--gas-wanted`: running smart contracts, as well as publishing packages, will
   typically use a varying number of VM cycles to execute. Here we should
   indicate how many we "expect" to need.\
   The number of VM cycles will be eventually used to calculate, together with
   other factors, how much the caller should "pay" (in terms of `ugnot`) for
   their transaction.
-- `--gas-fee`: unused here, but must be non-zero <!-- TODO: improve? -->
-- `--pkgpath`: equivalent of Go's import path. Will be used to call our realm,
+* `--gas-fee`: unused here, but must be non-zero <!-- TODO: improve? -->
+* `--pkgpath`: equivalent of Go's import path. Will be used to call our realm,
   as well as by other realms to import us. \
   In Gno, all pkgpaths are prefixed by `gno.land/(p|r)`. Changing the "domain" is
   reserved for future [communication with other blockchains,](https://ibcprotocol.org/)
   while p and r specify whether we're publishing a **p**ackage or a **r**ealm.
-- `--pkgdir`: where the package or realm is in our filesystem.
-- `--broadcast`: making a transaction could technically be done by creating the
+* `--pkgdir`: where the package or realm is in our filesystem.
+* `--broadcast`: making a transaction could technically be done by creating the
   transaction on one machine, signing it, and then with the signed transaction
   sending it to the chain from another machine. `--broadcast` tells `gnokey` to
   immediately send the transaction after creating it and signing it.
@@ -302,3 +312,62 @@ $ gnokey generate
 stone wrestle craft chuckle lonely response eternal steak sausage mesh snow steel recycle lounge pizza true trap reject trip spell october panther novel clown
 $ gnokey add mykey --recover # ...
 ```
+
+## Extra: Deterministic time, and qeval
+
+As you may have noticed, there is an additional package within this tutorial's
+directory: `greeter`. Let's try to publish it.
+
+```console
+$ gnokey maketx addpkg --gas-wanted 1000000 --gas-fee 1ugnot \
+	--pkgpath gno.land/r/demo/greeter --pkgdir ./greeter --broadcast test1
+Enter password.
+
+OK!
+GAS WANTED: 1000000
+GAS USED:   371195
+```
+
+This realm doesn't have a `Render()` function, so trying to visit on gnoweb
+won't work. We can still use it to get to the `[help]` page, but there's a free
+way to execute the realm's functions without performing a transaction:
+
+```
+$ gnokey query vm/qeval --data 'gno.land/r/demo/greeter'$'\n''Hello("Morgan")'
+height: 0
+data: ("The time is Thu Sep 21 10:49:06.00000 UTC 2023.\n\nGood morning, Morgan" string)
+```
+
+> Note: we use the `$'\n'` syntax in the above example to write a literal newline
+> into the `--data` argument. This may not be available in all shells, so if it
+> doesn't work for you, we recommend switching to `bash`.
+
+This is what the `gnoweb` frontend uses under the hood to get the data to
+display; with the difference that instead of calling `Hello`, it calls `Render`.
+
+As you may have noticed, `vm/qeval` doesn't require us to pass a key, and is
+more instantaneous than `gnokey maketx`. This is because it's not actually
+performing a transaction, but rather just a simple "query": it's executing the
+code with the blockchain's current state, but it's not recording any global
+variable modifications into its state. (So if we called the previous `Add`
+method using `vm/qeval`, the counter would not be increased).
+
+This is something we're using for the [Gnochess website](https://gnochess.com)
+for many places where we don't need to modify the realm's state, but just get
+some existing information. In web2 REST terms, you could say we are using `qeval` for
+GET requests, and `maketx` for POST requests.
+
+There's one further thing to note: the `Hello` function returns a time, and will
+greet you differently on the time of day. An attentive reader might note that
+this seems to contradict what we said about determinism: that because blockchain
+transactions are to be verified by every node participating in it ("validators"),
+then it should not be possible to obtain a measure of the current time, which is
+inevitably different with each machine that executes it.
+
+The trick here is that the displayed time is not the system time, but rather the
+block time. When you call `time.Now()`, it does not return the system time, but
+rather a well-defined variable which is agreed upon by the blockchain validators
+before executing the code. This will generally be in increments of N seconds
+(our official testnets are configured on a 5 second block time, while for
+gnochess it is reduced to 1), which is why the millisecond part in the displayed
+time is zero.

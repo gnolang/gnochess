@@ -11,9 +11,16 @@ frontend and a faucet for ease of participation, and the backend and frontend
 implement many features commonly found in chess servers (full ruleset
 implementation, leaderboards, time controls, Glicko2 ratings).
 
-You can learn how to make this yourself by following the guides in the
-`tutorial` section (at the time of writing, still being developed!).
+This repository hosts both the source code for the [GnoChess realm and
+website](https://gnochess.com), as well as a dedicted tutorial section,
+originally planned to accompany a talk for Gophercon 2023.
+
+## Workshop tutorial
+
+You can learn how to make a Gno chess server yourself by following the guides
+in the `tutorial` section (at the time of writing, still being developed!).
 The tutorials are designed to be performed in a GitPod workspace. By clicking
 the above button, you can access GitPod and start hacking straight away!
 
-Or, check out the [first tutorial](./tutorial/01_getting_started/README.md).
+After you've done that, click here to jump to the
+[first tutorial](./tutorial/01_getting_started/README.md).
