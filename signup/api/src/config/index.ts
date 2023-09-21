@@ -1,10 +1,10 @@
-import * as dotenv from 'dotenv';
+import * as dotenv from "dotenv";
 
 const env = dotenv.config();
 
 export enum ApplicationEnv {
-  PRODUCTION = 'production',
-  DEVELOPMENT = 'development',
+  PRODUCTION = "production",
+  DEVELOPMENT = "development",
 }
 
 const {
@@ -16,7 +16,7 @@ const {
   MAILCHIMP_AUDIENCE_ID,
   MAILCHIMP_JOURNEY_ID,
   MAILCHIMP_JOURNEY_STEP,
-  TOKEN_LIST
+  TOKEN_LIST,
 } = process.env;
 
 const ENV: ApplicationEnv =
@@ -31,5 +31,5 @@ export const CONFIG = {
   TOKEN_LIST,
   NODE_PORT,
   NODE_HOST,
-  NODE_ENV: ENV
+  NODE_ENV: ENV,
 };

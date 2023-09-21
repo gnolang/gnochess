@@ -16,22 +16,17 @@ const formValidationSchema = yup.object({
     .email('Email is not valid')
     .max(40)
     .required('Last name is required'),
-  githubHandle: yup
-    .string()
-    .max(40),
-  socialHandle: yup
-    .string()
-    .max(40),
-  interests: yup
-    .string()
-    .max(40)
-    .required('Interests are required'),
+  githubHandle: yup.string().max(40),
+  socialHandle: yup.string().max(40),
+  interests: yup.string().max(40).required('Interests are required'),
   participate: yup.boolean().required('Participation not defined'),
   receiveNews: yup.boolean().required('Receive news not defined'),
   termsAndConditions: yup.boolean().when('participate', {
     is: (participate: boolean) => participate,
-    then: schema => schema.isTrue('You must accept the terms and conditions').required(),
-    otherwise: schema => schema.isFalse('You must opt-in to GnoChess').required()
+    then: (schema) =>
+      schema.isTrue('You must accept the terms and conditions').required(),
+    otherwise: (schema) =>
+      schema.isFalse('You must opt-in to GnoChess').required()
   })
 });
 

@@ -1,4 +1,4 @@
-import tokenList from '../config/token.config';
+import tokenList from "../config/token.config";
 
 /**
  * Fetches a random token from the token list

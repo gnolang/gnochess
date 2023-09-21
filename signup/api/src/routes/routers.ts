@@ -1,5 +1,3 @@
-import subscribeRouter from '../routes/subscribe.router';
+import subscribeRouter from "../routes/subscribe.router";
 
-export {
-  subscribeRouter
-};
+export { subscribeRouter };
