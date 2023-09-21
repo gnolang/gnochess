@@ -1,4 +1,4 @@
-import {saveToLocalStorage} from './utils/localstorage';
+import { saveToLocalStorage } from './utils/localstorage';
 import {
   defaultFaucetTokenKey,
   defaultMnemonicKey,
@@ -11,17 +11,21 @@ import {
   Player,
   Promotion
 } from './types/types';
-import {defaultTxFee, GnoWallet, GnoWSProvider} from '@gnolang/gno-js-client';
-import {BroadcastTxCommitResult, TransactionEndpoint} from '@gnolang/tm2-js-client';
-import {generateMnemonic} from './utils/crypto.ts';
+import { defaultTxFee, GnoWallet, GnoWSProvider } from '@gnolang/gno-js-client';
+import {
+  BroadcastTxCommitResult,
+  TransactionEndpoint
+} from '@gnolang/tm2-js-client';
+import { generateMnemonic } from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
+import { constructFaucetError } from './utils/errors.ts';
 
 // ENV values //
 const wsURL: string = Config.GNO_WS_URL;
 const chessRealm: string = Config.GNO_CHESS_REALM;
 const faucetURL: string = Config.FAUCET_URL;
-const defaultGasWanted: Long = new Long(1000000); // 1M
+const defaultGasWanted: Long = new Long(5_000_000);
 
 /**
  * Actions is a singleton logic bundler
@@ -123,11 +127,14 @@ class Actions {
    * @param time
    */
   public async joinLobby(time: GameTime): Promise<GameSettings> {
+    // Backend expects seconds.
+    const seconds = time.time * 60;
+
     // Join the waiting lobby
     await this.wallet?.callMethod(
       chessRealm,
       'LobbyJoin',
-      [time.time.toString(), time.increment.toString()],
+      [seconds.toString(), time.increment.toString()],
       TransactionEndpoint.BROADCAST_TX_COMMIT,
       undefined,
       {
@@ -177,7 +184,7 @@ class Actions {
 
       const fetchInterval = setInterval(async () => {
         try {
-          if (!this.isInTheLobby) reject('Leaved the lobby');
+          if (!this.isInTheLobby) reject('Left the lobby');
 
           // Check if the game is ready
           const lobbyResponse: BroadcastTxCommitResult =
@@ -246,7 +253,7 @@ class Actions {
    */
   public async getTimeoutState(gameID: string) {
     // Fetch the game
-    const game: Game = await this.getGame(gameID)
+    const game: Game = await this.getGame(gameID);
 
     return game.state === GameState.TIMEOUT;
   }
@@ -259,7 +266,7 @@ class Actions {
   public async getGame(gameID: string): Promise<Game> {
     const gameResponse: string = (await this.provider?.evaluateExpression(
       chessRealm,
-      `GetGame(${gameID})`
+      `GetGame("${gameID}")`
     )) as string;
 
     // Parse the response
@@ -581,7 +588,7 @@ class Actions {
   async getPlayer(playerID: string): Promise<Player> {
     const playerResponse: string = (await this.provider?.evaluateExpression(
       chessRealm,
-      `GetPlayer(${playerID})`
+      `GetPlayer("${playerID}")`
     )) as string;
 
     // Parse the response
@@ -618,13 +625,11 @@ class Actions {
       })
     };
 
-    // TODO @Alexis do we want this to propagate the error?
-    // The error can be that the user is funded already
-    try {
-      // Execute the request
-      await fetch(faucetURL, requestOptions);
-    } catch (e) {
-      console.error(`Unable to fund account: ${e}`);
+    // Execute the request
+    const fundResponse = await fetch(faucetURL, requestOptions);
+
+    if (!fundResponse.ok) {
+      throw constructFaucetError(await fundResponse.text());
     }
   }
 }
