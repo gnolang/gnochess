@@ -3,6 +3,7 @@
 	gnokey list | grep DeployKey
 
 1_run_gnoland:
+	go mod download -x
 	rm -rf .tmp/gnoland
 	mkdir -p .tmp/gnoland
 	cp -rf `go list -m -mod=mod -f '{{.Dir}}' github.com/gnolang/gno`/gno.land .tmp/gnoland/gno.land
