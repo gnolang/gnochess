@@ -2,21 +2,55 @@ import { Component } from 'sevejs';
 import { gsap } from 'gsap';
 import { GameTime } from '../types/types.ts';
 import Actions from '../actions.ts';
+import Events from '../utils/events.ts';
 
-type Options = {
+enum GameType {
+  BLITZ = 'blitz',
+  RAPID = 'rapid'
+}
+
+interface Options {
   token: string;
-  category: 'rapid' | 'blitz';
+  category: GameType;
   timer: GameTime;
-};
+}
+
 type Events = Record<string, any>;
 
+interface State {
+  name: string;
+  panels: string[];
+  ctrls: string[];
+}
+
+interface Timer {
+  time: number;
+  increment: number;
+}
+
+interface Timers {
+  rapid: Timer[];
+  blitz: Timer[];
+}
+
 const Gameoptions = class extends Component {
+  private states: State[];
+  private lookingForRival: boolean;
+  private currentState: number;
+  private timer: number;
+  private readonly timers: Timers;
+  private readonly options: Options;
+  private readonly events: Events;
+  private panelSize: number = 0;
+
   constructor(opts: any) {
     super(opts);
+
     this.states = [
       { name: 'token', panels: ['token'], ctrls: ['cross', 'Connection'] },
       { name: 'token', panels: ['game'], ctrls: ['arrow', 'Play'] }
     ];
+
     this.lookingForRival = false;
     this.currentState = 0;
     this.disabled = false;
@@ -37,12 +71,12 @@ const Gameoptions = class extends Component {
 
     this.options = {
       token: '',
-      category: 'rapid',
+      category: GameType.RAPID,
       timer: {
         time: 10,
         increment: 5
       }
-    } as Options;
+    };
 
     this.events = {} as Events;
   }
@@ -64,8 +98,6 @@ const Gameoptions = class extends Component {
       cb: this._clickOnCtrl0.bind(this)
     }
   };
-
-  private panelSize: number = 0;
 
   init() {
     // automatically called at start
@@ -189,10 +221,7 @@ const Gameoptions = class extends Component {
   private async _clickOnCtrl0() {
     this.currentState--;
 
-    if (this.disabled === true) {
-      console.log('error');
-      return;
-    }
+    if (this.disabled === true) return;
 
     if (this.currentState === 1) {
       const actions: Actions = await Actions.getInstance();
@@ -200,7 +229,6 @@ const Gameoptions = class extends Component {
 
       this.switchAnimation2.reverse();
       this.lookingForRival = false;
-      //TODO: stop WS rival finding -> this.lookingForRival
     } else {
       this.call('goTo', ['/'], 'Router');
     }
@@ -216,18 +244,22 @@ const Gameoptions = class extends Component {
   }
 
   async _clickOnCtrl1(_e: any, immediate = false) {
-    if (this.disabled === true) {
-      console.log('error');
-      return;
-    }
+    if (this.disabled === true) return;
     this.currentState++;
 
     const actions: Actions = await Actions.getInstance();
 
+    console.log(this.currentState);
     switch (this.currentState) {
       case 1: {
+        console.log('in ggod place');
         if (!immediate) {
+          console.log('immediate');
           this.options.token = await this._inputToken();
+          if (this.options.token === null) {
+            this.currentState--;
+            return;
+          }
         }
         this.DOM.ctrl1.innerHTML = this.states[this.currentState].ctrls[1];
 
@@ -302,7 +334,7 @@ const Gameoptions = class extends Component {
             this.lookingForRival = false;
             this.call(
               'appear',
-              ['Leaved game lobby, try again.', 'warning'],
+              ['Left game lobby, try again.', 'warning'],
               'toast'
             );
             return;
@@ -322,34 +354,38 @@ const Gameoptions = class extends Component {
     this.DOM.ctrl1.innerHTML = 'Waiting...';
     this.disabled = true;
     const actions: Actions = await Actions.getInstance();
+    let isTokenError = false;
 
     if (!actions.getFaucetToken()) {
       try {
+        console.log('inside');
         await actions.setFaucetToken(token);
-        this.disabled = false;
-
         gsap.to(this.DOM.ctrl1, { background: '#FFF', color: '#000' });
       } catch (e) {
-        this.currentState = 0;
+        console.error(e);
+        isTokenError = true;
         this.DOM.el.querySelector('#id-gameoptions-token').value = '';
+        this.DOM.ctrl1.innerHTML = 'Connection';
         this.call('appear', ['Invalid token', 'error'], 'toast');
       }
     }
+    this.disabled = false;
 
-    return token;
+    gsap.to(this.DOM.ctrl1, { background: '#FFF', color: '#000' });
+
+    return isTokenError ? null : token;
   }
 
-  _inputCategory() {
+  _inputCategory(): GameType {
     const arry = [
       ...document.getElementsByName('category')
     ] as HTMLInputElement[];
-    return arry.filter((el) => el.checked)[0].value;
+    return arry.filter((el) => el.checked)[0].value as GameType;
   }
 
   _updateTimer(e: any, init?: number) {
-    if (init !== undefined || null) {
-      const index = init ?? 0;
-      this.timer = index;
+    if (init) {
+      this.timer = init ?? 0;
     } else {
       const dir: number = e
         ? e.currentTarget.dataset.ctrl === '+'
@@ -409,9 +445,6 @@ const Gameoptions = class extends Component {
   }
 
   destroy() {
-    for (const prop of Object.getOwnPropertyNames(this.options)) {
-      delete this.options[prop];
-    }
     this.switchAnimation1.kill();
     this.switchAnimation2.kill();
   }

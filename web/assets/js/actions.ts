@@ -25,7 +25,7 @@ import { constructFaucetError } from './utils/errors.ts';
 const wsURL: string = Config.GNO_WS_URL;
 const chessRealm: string = Config.GNO_CHESS_REALM;
 const faucetURL: string = Config.FAUCET_URL;
-const defaultGasWanted: Long = new Long(5_000_000);
+const defaultGasWanted: Long = new Long(10_000_000);
 
 /**
  * Actions is a singleton logic bundler
@@ -103,15 +103,11 @@ class Actions {
    * @param token the faucet token
    */
   public async setFaucetToken(token: string) {
-    this.faucetToken = token;
-
     // Attempt to fund the account
-    try {
-      await this.fundAccount();
-      localStorage.setItem(defaultFaucetTokenKey, token);
-    } catch (e) {
-      console.error(e);
-    }
+
+    await this.fundAccount();
+    this.faucetToken = token;
+    localStorage.setItem(defaultFaucetTokenKey, token);
   }
 
   /**
@@ -182,12 +178,13 @@ class Actions {
    */
   private async waitForGame(timeout?: number): Promise<GameSettings> {
     this.isInTheLobby = true;
+
     return new Promise(async (resolve, reject) => {
       const exitTimeout = timeout ? timeout : drawRequestTimer * 1000; // wait time is max 15s
 
       const fetchInterval = setInterval(async () => {
         try {
-          if (!this.isInTheLobby) reject('Leaved the lobby');
+          if (!this.isInTheLobby) reject('Left the lobby');
 
           // Check if the game is ready
           const lobbyResponse: BroadcastTxCommitResult =
