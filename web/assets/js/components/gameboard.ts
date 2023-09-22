@@ -53,7 +53,7 @@ const Gameboard = class extends Component {
         cb: this.selectCell.bind(this)
       });
     });
-    this.intervalCheckForTimeout();
+    this.intervalCheckForOngoingGame();
   }
 
   showScoreBoard(winner: Colors) {
@@ -222,13 +222,15 @@ const Gameboard = class extends Component {
     }
   }
 
-  private async intervalCheckForTimeout() {
+  private async intervalCheckForOngoingGame() {
     const actions: Actions = await Actions.getInstance();
-    this.checkTimeoutTimer = setInterval(async () => {
-      const timeoutState = await actions.getTimeoutState(this.gameId);
+    this.checkOngoingTimer = setInterval(async () => {
+      const ongoing = await actions.isGameOngoing(this.gameId);
 
-      if (timeoutState) {
-        clearTimeout(this.checkTimeoutTimer);
+      if (!ongoing) {
+        clearTimeout(this.checkOngoingTimer);
+
+        // TODO @Alexis this doesn't necessarily need to be a timeout type
         this.call(this.engine(false, 'timeout'));
       }
     }, 3000);

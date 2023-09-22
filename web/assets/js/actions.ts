@@ -248,14 +248,14 @@ class Actions {
   }
 
   /**
-   * Checks if the given game timed out
+   * Checks if the given game is ongoing
    * @param gameID the ID of the running game
    */
-  public async getTimeoutState(gameID: string) {
+  public async isGameOngoing(gameID: string) {
     // Fetch the game
     const game: Game = await this.getGame(gameID);
 
-    return game.state === GameState.TIMEOUT;
+    return game.state === GameState.OPEN;
   }
 
   /**
