@@ -53,6 +53,11 @@ const onEnter = function (next?: any) {
     duration: 1,
     delay: 1
   });
+  gsap.to(container.querySelector('.js-banner'), {
+    autoAlpha: 1,
+    duration: 1,
+    delay: 1
+  });
   gsap.to(container.querySelector('.js-content'), {
     autoAlpha: 1,
     duration: 1,
