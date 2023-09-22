@@ -4,14 +4,12 @@ package chess
 import (
 	"bytes"
 	"errors"
-	"sort"
 	"std"
 	"strconv"
 	"time"
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/ufmt"
-	"gno.land/r/demo/users"
 )
 
 // realm state
@@ -229,6 +227,11 @@ func newGame(caller, opponent std.Address, seconds, increment int) *Game {
 	var games []*Game
 	if exist {
 		games, _ = val.([]*Game)
+
+		// Close previous games that timed-out
+		for _, g := range games {
+			_, _ = claimTimeout(g.ID)
+		}
 	}
 
 	if caller == opponent {
@@ -424,22 +427,20 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 	return g.json()
 }
 
-// ClaimTimeout should be caller when the caller believes the game has resulted
-// in a timeout.
-func ClaimTimeout(gameID string) string {
+func claimTimeout(gameID string) (string, error) {
 	// no assert origin call or caller check: anyone can claim a game to have
 	// finished in timeout.
 
 	g := getGame(gameID, true)
 
 	if g.Time == nil {
-		panic("game is not time controlled")
+		return "", errors.New("game is not time controlled")
 	}
 
 	// game is time controlled? add move to time control
 	to := g.Time.TimedOut()
 	if !to {
-		panic("game is not timed out")
+		return "", errors.New("game is not timed out")
 	}
 
 	if nmov := len(g.Position.Moves); nmov < 2 {
@@ -450,7 +451,7 @@ func ClaimTimeout(gameID string) string {
 			g.Concluder = &g.White
 		}
 		g.Winner = WinnerNone
-		return g.json()
+		return g.json(), nil
 	}
 
 	g.State = GameStateTimeout
@@ -462,7 +463,18 @@ func ClaimTimeout(gameID string) string {
 	g.DrawOfferer = nil
 	saveGameResult(g)
 
-	return g.json()
+	return g.json(), nil
+}
+
+// ClaimTimeout should be called when the caller believes the game has resulted
+// in a timeout.
+func ClaimTimeout(gameID string) string {
+	out, err := claimTimeout(gameID)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return out
 }
 
 func Abort(gameID string) string {
