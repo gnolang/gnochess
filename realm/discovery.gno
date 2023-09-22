@@ -81,7 +81,7 @@ func GetPlayer(player string) string {
 	addr := parsePlayer(player)
 	v, ok := playerStore.Get(addr.String())
 	if !ok {
-		panic("player not found: " + player)
+		panic("player not found")
 	}
 	b, err := v.(*Player).MarshalJSON()
 	if err != nil {
