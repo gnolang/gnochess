@@ -239,5 +239,5 @@ func LobbyQuit() {
 		}
 	}
 
-	panic("not found")
+	panic("you are not in the lobby")
 }
