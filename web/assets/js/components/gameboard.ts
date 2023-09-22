@@ -19,7 +19,7 @@ const Gameboard = class extends Component {
     this.allowedToMove = false;
     this.pomotionEvents = [];
     this.initMoveTimer = null;
-    this.checkTimeoutTimer = null;
+    this.checkOngoingTimer = null;
 
     this.DOM.board = this.DOM.el.querySelector('#js-game');
     this.DOM.promotionBtns = [...this.DOM.el.querySelectorAll('.js-topromote')];
@@ -93,7 +93,7 @@ const Gameboard = class extends Component {
 
       if (gameover === 'timeout' || gameState.state === 'timeout') {
         status = 'timeout';
-        clearTimeout(this.checkTimeoutTimer);
+        clearTimeout(this.checkOngoingTimer);
         const game = await actions.getGame(this.gameId);
         if (game.winner == 'none') {
           this.call('finishGame', ['abandon', status], 'gameplayers', 'rival');
@@ -394,7 +394,7 @@ const Gameboard = class extends Component {
 
   destroy() {
     clearTimeout(this.initMoveTimer);
-    clearInterval(this.checkTimeoutTimer);
+    clearInterval(this.checkOngoingTimer);
     this.chess.clear();
     this.board.destroy();
     //wS deco
