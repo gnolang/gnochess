@@ -50,6 +50,8 @@ github.com/gnolang/gno v0.0.0-20230920163030-d1193a234f2e h1:wQRLV4qn7XTk0gpW+yA
 github.com/gnolang/gno v0.0.0-20230920163030-d1193a234f2e/go.mod h1:dtwSoPiPCcGxACg4y2iJVWZ/vuU133n4kwF28mx6Krg=
 github.com/gnolang/gno v0.0.0-20230921091755-ae15a15b502e h1:3kBvbhw0izWQ/9HlFs2+3dGFRCNRwIknEk4oFi5zqYI=
 github.com/gnolang/gno v0.0.0-20230921091755-ae15a15b502e/go.mod h1:dtwSoPiPCcGxACg4y2iJVWZ/vuU133n4kwF28mx6Krg=
+github.com/gnolang/gno v0.0.0-20230922075615-67b75bafbe3c h1:bWuAwy1iHo63RptR5sCYPMR+ek/OuQRz4dI7atuomMQ=
+github.com/gnolang/gno v0.0.0-20230922075615-67b75bafbe3c/go.mod h1:dtwSoPiPCcGxACg4y2iJVWZ/vuU133n4kwF28mx6Krg=
 github.com/gnolang/goleveldb v0.0.9 h1:Q7rGko9oXMKtQA+Apeeed5a3sjba/mcDhzJGoTVLCKE=
 github.com/gnolang/goleveldb v0.0.9/go.mod h1:Dz6p9bmpy/FBESTgduiThZt5mToVDipcHGzj/zUOo8E=
 github.com/gnolang/overflow v0.0.0-20170615021017-4d914c927216 h1:GKvsK3oLWG9B1GL7WP/VqwM6C92j5tIvB844oggL9Lk=
