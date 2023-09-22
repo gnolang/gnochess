@@ -13,7 +13,6 @@ import (
 	"os/signal"
 	"regexp"
 	"strconv"
-	"strings"
 	"syscall"
 
 	"github.com/gnolang/faucet"
@@ -25,6 +24,7 @@ import (
 	"github.com/gnolang/gno/tm2/pkg/std"
 	"github.com/peterbourgon/ff/v3"
 	"github.com/peterbourgon/ff/v3/fftoml"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
@@ -57,7 +57,7 @@ type rootCfg struct {
 	remote    string
 	fundLimit string
 
-	allowedTokens stringArr
+	redisURL string
 }
 
 // generateFaucetConfig generates the Faucet configuration
@@ -155,12 +155,6 @@ func registerFlags(fs *flag.FlagSet, c *rootCfg) {
 		"the static send amount (native currency)",
 	)
 
-	fs.Var(
-		&c.allowedTokens,
-		"tokens",
-		"the allowed faucet tokens",
-	)
-
 	fs.StringVar(
 		&c.remote,
 		"remote",
@@ -173,6 +167,13 @@ func registerFlags(fs *flag.FlagSet, c *rootCfg) {
 		"fund-limit",
 		defaultFundLimit,
 		"the minimum amount of ugnot the account needs to have",
+	)
+
+	fs.StringVar(
+		&c.redisURL,
+		"redis-url",
+		"redis://user:pass@127.0.0.1:6379",
+		"redis connection string",
 	)
 }
 
@@ -209,9 +210,15 @@ func execMain(cfg *rootCfg) error {
 	// Create the client (HTTP)
 	cli := tm2Client.NewClient(cfg.remote)
 
+	redisOpts, err := redis.ParseURL(cfg.redisURL)
+	if err != nil {
+		return err
+	}
+	redisClient := redis.NewClient(redisOpts)
+
 	// Prepare the middlewares
 	middlewares := []faucet.Middleware{
-		prepareTokenMiddleware(cfg.allowedTokens),
+		prepareTokenMiddleware(redisClient),
 		prepareFundMiddleware(cli, fundLimit),
 	}
 
@@ -397,50 +404,29 @@ func prepareFundMiddleware(client client.Client, fundLimit std.Coins) faucet.Mid
 }
 
 // prepareTokenMiddleware prepares the token validation middleware
-func prepareTokenMiddleware(tokens []string) faucet.Middleware {
-	// Create the token map
-	tokenMap := make(map[string]struct{}, len(tokens))
-
-	// Add in the token values
-	for _, token := range tokens {
-		tokenMap[token] = struct{}{}
-	}
-
+func prepareTokenMiddleware(redisClient *redis.Client) faucet.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Fetch the faucet token
 			token := r.Header.Get(tokenKey)
 
-			// Make sure the token is valid
-			if _, valid := tokenMap[token]; !valid {
+			res, err := redisClient.HGet(r.Context(), "TOKEN:"+token, "used").Result()
+			if err != nil {
 				http.Error(w, "Invalid faucet token", http.StatusForbidden)
-
+				return
+			} else if res == "true" {
+				http.Error(w, "Already claimed", http.StatusForbidden)
 				return
 			}
 
 			// Continue with serving the faucet request
 			next.ServeHTTP(w, r)
+
+			_, err = redisClient.HSet(r.Context(), "TOKEN:"+token, "used", "true").Result()
+			if err != nil {
+				http.Error(w, "Unable to lock token", http.StatusInternalServerError)
+				return
+			}
 		})
 	}
-}
-
-// stringArr defines the custom flag type
-// that represents an array of string values
-type stringArr []string
-
-// String is a required output method for the flag
-func (s *stringArr) String() string {
-	if len(*s) <= 0 {
-		return "..."
-	}
-
-	return strings.Join(*s, ", ")
-}
-
-// Set is a required output method for the flag.
-// This is where our custom type manipulation actually happens
-func (s *stringArr) Set(value string) error {
-	*s = append(*s, value)
-
-	return nil
 }

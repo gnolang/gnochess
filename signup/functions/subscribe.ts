@@ -6,11 +6,15 @@ import type { Handler, HandlerEvent } from '@netlify/functions';
 import { CONFIG } from './config';
 import { SubscribeRequest } from './types';
 import subscribeUserSchema from './schemas/users.schema';
+import { RedisClient } from './services/redis';
 import RequestHelper from './helpers/requests.helper';
 import getRandomToken from './helpers/token.helper';
 
 const ajv = new Ajv();
 ajvFormats(ajv);
+
+// Login to redis
+const redisClient = new RedisClient(CONFIG.REDIS_URL);
 
 // Set up mailchimp
 mailchimp.setConfig({
@@ -42,6 +46,8 @@ export async function handler(event: HandlerEvent): Handler {
       };
     }
 
+    const token = getRandomToken();
+
     // Subscribe the user
     await mailchimp.lists.addListMember(CONFIG.MAILCHIMP_AUDIENCE_ID, {
       email_address: subscribeRequest.email,
@@ -50,7 +56,7 @@ export async function handler(event: HandlerEvent): Handler {
         FNAME: subscribeRequest.firstName,
         LNAME: subscribeRequest.lastName,
         MERGE5: subscribeRequest.participate ? 'Yes' : 'No',
-        MMERGE3: getRandomToken(),
+        MMERGE3: token,
         MMERGE4: subscribeRequest.githubHandle,
         MMERGE6: subscribeRequest.socialHandle,
         MMERGE8: subscribeRequest.interests,
@@ -59,6 +65,8 @@ export async function handler(event: HandlerEvent): Handler {
       }
       // TODO add tags
     });
+
+    await redisClient.storeUserToken(subscribeRequest.email, token);
 
     // Trigger an email for the user
     //@ts-ignore

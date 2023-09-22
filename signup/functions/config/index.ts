@@ -11,6 +11,7 @@ const {
   NODE_PORT,
   NODE_HOST,
   NODE_ENV,
+  REDIS_URL,
   MAILCHIMP_API_KEY,
   MAILCHIMP_API_SERVER,
   MAILCHIMP_AUDIENCE_ID,
@@ -23,6 +24,7 @@ const ENV: ApplicationEnv =
   (NODE_ENV as ApplicationEnv) || ApplicationEnv.DEVELOPMENT;
 
 export const CONFIG = {
+  REDIS_URL,
   MAILCHIMP_API_KEY,
   MAILCHIMP_API_SERVER,
   MAILCHIMP_AUDIENCE_ID,
