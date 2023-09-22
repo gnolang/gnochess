@@ -176,21 +176,34 @@ const Gameboard = class extends Component {
         const startDate = new Date(dateStartGame);
         const currentDate = new Date();
         const diffDate = startDate.getTime() - currentDate.getTime();
-        const timer = 30 * 1000 - diffDate;
-        this.initMoveTimer = setTimeout(async () => {
+
+        const exitforTimeout = async () => {
           try {
             // Claim timeout. If no error, timeout succeeded
             await actions.claimTimeout(this.gameId);
+            this.call(this.engine(false, 'timeout'));
           } catch (e) {
             this.call(
               'appear',
               ['Invalid claim timeout request', 'error'],
               'toast'
             );
+            this.call(this.engine(false, 'timeout')); //TODO: create a fail "exit" gameover in the engine
             // Timeout request is invalid
-            // TODO @Alexis, handle on the frontend
             // for the user (I assume fire event to end game)
           }
+        };
+
+        const timer = 30 * 1000 - diffDate;
+
+        if (timer <= 0) {
+          // if date too old (> 30sec )
+          await exitforTimeout();
+          throw new Error('Game party started too long time ago');
+        }
+
+        this.initMoveTimer = setTimeout(async () => {
+          await exitforTimeout();
         }, timer); //30sec first move
       } else {
         this.call('startTimer', [init], 'gameplayers', 'me');
