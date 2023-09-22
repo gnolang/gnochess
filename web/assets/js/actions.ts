@@ -30,7 +30,6 @@ const faucetURL: string = Config.FAUCET_URL;
 const defaultGasWanted: Long = new Long(10_000_000);
 
 const decodeRealmResponse = (resp: string | null)=> {
-  if (resp) console.log(atob(resp).slice(2,-9));
   return resp?JSON.parse(atob(resp).slice(2,-9)): null;
 }
 /**
@@ -164,7 +163,6 @@ class Actions {
   public async joinLobby(time: GameTime): Promise<GameSettings> {
     // Backend expects seconds.
     const seconds = time.time * 60;
-    console.log("Joining");
     // Join the waiting lobby
     try {
       await this.callMethod(
@@ -173,7 +171,7 @@ class Actions {
         [seconds.toString(), time.increment.toString()],
       );
     } catch (e) {
-      console.log(e)
+      console.log("Already in Lobby")
     }
 
     try {
@@ -181,8 +179,6 @@ class Actions {
       return await this.waitForGame();
     } catch (e) {
       // Unable to find the game, cancel the search
-      console.log("cancel");
-      console.log(e);
       await this.callMethod(
         chessRealm,
         'LobbyQuit',
@@ -208,8 +204,7 @@ class Actions {
    */
   private async lookForGame(): Promise<BroadcastTxCommitResult> {
     
-    if (!this.isInTheLobby) throw new Error('Left the lobby');
-    console.log("looking for a game");
+    if (!this.isInTheLobby) throw new Error('Left the lobby');    
     const lobbyResponse: BroadcastTxCommitResult =
       (await this.callMethod(
         chessRealm,
@@ -226,14 +221,12 @@ class Actions {
     return new Promise((resolve, reject) => {
       var exit = setTimeout(() => {
         clearTimeout(retryTimeout)
-        console.log('here');
         reject("wait timeout exceeded")
       }, exitTimeout)
       try {
         const tryForGame = async () => {
           const lobbyResponse = await this.lookForGame();
           const lobbyWaitResponse = decodeRealmResponse(lobbyResponse.deliver_tx.ResponseBase.Data)
-          console.log(lobbyWaitResponse);
           if (lobbyWaitResponse == null || lobbyWaitResponse == '') {
             retryTimeout = setTimeout(tryForGame, 3000)
           } else {
