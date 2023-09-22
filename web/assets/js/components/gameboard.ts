@@ -18,7 +18,6 @@ const Gameboard = class extends Component {
     this.promotion = [];
     this.allowedToMove = false;
     this.pomotionEvents = [];
-    this.initMove = true;
     this.initMoveTimer = null;
     this.checkTimeoutTimer = null;
 
@@ -154,22 +153,28 @@ const Gameboard = class extends Component {
       this.call('stopTimer', [true], 'gameplayers', 'rival');
       this.call('disappear', '', 'gamecontrols');
 
-      return; // action
+      return;
     }
 
-    //game turn update
-
+    // Game turn update (player timer and action balancing)
     if (this.color === this.chess.turn()) {
+      // My turn to play
+      // If first move, 30s rule - no timer
       this.allowedToMove = true;
       this.call('stopTimer', [init], 'gameplayers', 'rival');
 
-      if (this.initMove) {
-        this.initMove = false;
+      //TODO: chech if this.getMoveNumber() return 0 or 1 for before first move.
+      if (this.getMoveNumber() > 1) {
         this.initMoveTimer = setTimeout(async () => {
           try {
             // Claim timeout. If no error, timeout succeeded
             await actions.claimTimeout(this.gameId);
           } catch (e) {
+            this.call(
+              'appear',
+              ['Invalid claim timeout request', 'error'],
+              'toast'
+            );
             // Timeout request is invalid
             // TODO @Alexis, handle on the frontend
             // for the user (I assume fire event to end game)
@@ -179,9 +184,14 @@ const Gameboard = class extends Component {
         this.call('startTimer', [init], 'gameplayers', 'me');
       }
     } else {
+      // Rival turn to play
+      // stop my 30s first move.
+      // If less than 1 move it means rival 30s first move - no timer
       clearTimeout(this.initMoveTimer);
       this.call('stopTimer', [init], 'gameplayers', 'me');
-      this.call('startTimer', [init], 'gameplayers', 'rival');
+      if (this.getMoveNumber() > 1) {
+        this.call('startTimer', [init], 'gameplayers', 'rival');
+      }
       this.allowedToMove = false;
       this.rivalMove();
     }
@@ -192,8 +202,11 @@ const Gameboard = class extends Component {
     this.checkTimeoutTimer = setInterval(async () => {
       const timeoutState = await actions.getTimeoutState(this.gameId);
 
-      if (timeoutState) this.call(this.engine(false, 'timeout'));
-    }, 1000);
+      if (timeoutState) {
+        clearTimeout(this.checkTimeoutTimer);
+        this.call(this.engine(false, 'timeout'));
+      }
+    }, 3000);
   }
 
   async rivalMove() {
