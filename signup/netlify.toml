@@ -1,0 +1,18 @@
+# This file configures your Netlify deploy
+# Settings declared here override everything on Dashboard interface
+# https://docs.netlify.com/configure-builds/file-based-configuration/
+
+[build]
+command = "yarn build"
+functions = "lambda"
+
+[functions]
+directory = "functions"
+
+# this is actually a Rewrite
+# totally optional, but makes up for
+# a much better UX
+[[redirects]]
+from = "/api/subscribe"
+to = "/.netlify/functions/subscribe"
+status = 200

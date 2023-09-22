@@ -1,5 +1,7 @@
 # React + TypeScript + Vite
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/eb09bde7-610a-48c7-80ed-e0174f364d8f/deploy-status)](https://app.netlify.com/sites/gnochess-signup-form/deploys)
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

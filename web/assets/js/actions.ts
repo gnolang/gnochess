@@ -1,31 +1,36 @@
-import { saveToLocalStorage } from './utils/localstorage';
+import {saveToLocalStorage} from './utils/localstorage';
 import {
-  defaultFaucetTokenKey,
-  defaultMnemonicKey,
-  drawRequestTimer,
-  Game,
-  type GameoverType,
-  type GameSettings,
-  GameState,
-  GameTime,
-  Player,
-  Promotion
+    defaultFaucetTokenKey,
+    defaultMnemonicKey,
+    drawRequestTimer,
+    Game,
+    type GameoverType,
+    type GameSettings,
+    GameState,
+    GameTime,
+    Player,
+    Promotion
 } from './types/types';
-import { defaultTxFee, GnoWallet, GnoWSProvider } from '@gnolang/gno-js-client';
-import {
-  BroadcastTxCommitResult,
-  TransactionEndpoint
-} from '@gnolang/tm2-js-client';
-import { generateMnemonic } from './utils/crypto.ts';
+import {defaultTxFee, GnoWallet, GnoWSProvider} from '@gnolang/gno-js-client';
+import {BroadcastTxCommitResult, TM2Error, TransactionEndpoint} from '@gnolang/tm2-js-client';
+import {generateMnemonic} from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
-import { constructFaucetError } from './utils/errors.ts';
+import {constructFaucetError} from './utils/errors.ts';
+import {ErrorTransform} from './errors.ts'; // ENV values //
 
 // ENV values //
 const wsURL: string = Config.GNO_WS_URL;
 const chessRealm: string = Config.GNO_CHESS_REALM;
 const faucetURL: string = Config.FAUCET_URL;
 const defaultGasWanted: Long = new Long(10_000_000);
+
+const cleanUpRealmReturn = (ret: string) => {
+  return ret.slice(2, -9).replace(/\\"/g, '"');
+};
+const decodeRealmResponse = (resp: string) => {
+  return cleanUpRealmReturn(atob(resp));
+};
 
 /**
  * Actions is a singleton logic bundler
@@ -117,6 +122,36 @@ class Actions {
     return this.faucetToken || localStorage.getItem(defaultFaucetTokenKey);
   }
 
+  /**
+   * Performs a transaction, handling common error cases and transforming them
+   * into known error types.
+   */
+  public async callMethod(
+    path: string,
+    method: string,
+    args: string[] | null,
+    gasWanted: Long = defaultGasWanted
+  ): Promise<BroadcastTxCommitResult> {
+    try {
+      return (await this.wallet?.callMethod(
+        path,
+        method,
+        args,
+        TransactionEndpoint.BROADCAST_TX_COMMIT,
+        undefined,
+        {
+          gasFee: defaultTxFee,
+          gasWanted: gasWanted
+        }
+      )) as BroadcastTxCommitResult;
+    } catch (e) {
+      if (!(e instanceof TM2Error)) {
+        throw e;
+      }
+      throw ErrorTransform(e);
+    }
+  }
+
   /****************
    * GAME ENGINE
    ****************/
@@ -128,37 +163,23 @@ class Actions {
   public async joinLobby(time: GameTime): Promise<GameSettings> {
     // Backend expects seconds.
     const seconds = time.time * 60;
-
     // Join the waiting lobby
-    await this.wallet?.callMethod(
-      chessRealm,
-      'LobbyJoin',
-      [seconds.toString(), time.increment.toString()],
-      TransactionEndpoint.BROADCAST_TX_COMMIT,
-      undefined,
-      {
-        gasFee: defaultTxFee,
-        gasWanted: defaultGasWanted
-      }
-    );
+    try {
+      await this.callMethod(chessRealm, 'LobbyJoin', [
+        seconds.toString(),
+        time.increment.toString()
+      ]);
+    } catch (e) {
+      console.log('Already in Lobby');
+    }
 
     try {
       // Wait to be matched with an opponent
       return await this.waitForGame();
     } catch (e) {
       // Unable to find the game, cancel the search
-      await this.wallet?.callMethod(
-        chessRealm,
-        'LobbyQuit',
-        [],
-        TransactionEndpoint.BROADCAST_TX_COMMIT,
-        undefined,
-        {
-          gasFee: defaultTxFee,
-          gasWanted: defaultGasWanted
-        }
-      );
-
+      await this.callMethod(chessRealm, 'LobbyQuit', null);
+      this.quitLobby();
       // Propagate the error
       throw new Error('unable to find game');
     }
@@ -176,74 +197,62 @@ class Actions {
    * @param timeout the maximum wait time for a game
    * @private
    */
+  private async lookForGame(): Promise<BroadcastTxCommitResult> {
+    if (!this.isInTheLobby) throw new Error('Left the lobby');
+    return (await this.callMethod(
+      chessRealm,
+      'LobbyGameFound',
+      null
+    )) as BroadcastTxCommitResult;
+  }
+
   private async waitForGame(timeout?: number): Promise<GameSettings> {
     this.isInTheLobby = true;
-
-    return new Promise(async (resolve, reject) => {
-      const exitTimeout = timeout ? timeout : drawRequestTimer * 1000; // wait time is max 15s
-
-      const fetchInterval = setInterval(async () => {
-        try {
-          if (!this.isInTheLobby) reject('Left the lobby');
-
-          // Check if the game is ready
-          const lobbyResponse: BroadcastTxCommitResult =
-            (await this.wallet?.callMethod(
-              chessRealm,
-              'LobbyGameFound',
-              [],
-              TransactionEndpoint.BROADCAST_TX_COMMIT,
-              undefined,
-              {
-                gasFee: defaultTxFee,
-                gasWanted: defaultGasWanted
-              }
-            )) as BroadcastTxCommitResult;
-
-          // Parse the response
-          const lobbyWaitResponse: string | null =
-            lobbyResponse.deliver_tx.ResponseBase.Data;
-
-          if (lobbyWaitResponse == null || lobbyWaitResponse == '') {
-            return;
-          }
-
-          // Clear the fetch interval
-          clearInterval(fetchInterval);
-
-          // Parse the game data
-          const game: Game = JSON.parse(lobbyWaitResponse as string);
-
-          // Extract the game settings
-          const isBlack: boolean =
-            game.black == (await this.wallet?.getAddress());
-
-          const gameSettings: GameSettings = {
-            game: {
-              id: game.id
-            },
-            me: {
-              id: isBlack ? game.black : game.white,
-              color: isBlack ? 'b' : 'w'
-            },
-            rival: {
-              id: isBlack ? game.white : game.black,
-              color: isBlack ? 'w' : 'b'
-            }
-          };
-
-          resolve(gameSettings);
-        } catch (e) {
-          // Game not ready, continue polling...
-        }
-      }, 3000); // 3s, since it's an expensive call
-
-      setTimeout(() => {
-        this.isInTheLobby = false;
-        clearInterval(fetchInterval);
-
+    let retryTimeout: NodeJS.Timeout;
+    const exitTimeout = timeout ? timeout : drawRequestTimer * 1000; // wait time is max 15s
+    return new Promise((resolve, reject) => {
+      let exit = setTimeout(() => {
+        clearTimeout(retryTimeout);
         reject('wait timeout exceeded');
       }, exitTimeout);
+      try {
+        const tryForGame = async () => {
+          const lobbyResponse = await this.lookForGame();
+          const lobbyWaitResponse = decodeRealmResponse(
+            lobbyResponse.deliver_tx.ResponseBase.Data as string
+          );
+          const game: Game = JSON.parse(lobbyWaitResponse);
+          if (game == null) {
+            retryTimeout = setTimeout(tryForGame, 3000);
+          } else {
+            clearTimeout(exit);
+
+            // Extract the game settings
+            const isBlack: boolean =
+              game.black == (await this.wallet?.getAddress());
+
+            const gameSettings: GameSettings = {
+              game: {
+                id: game.id
+              },
+              me: {
+                id: isBlack ? game.black : game.white,
+                color: isBlack ? 'b' : 'w'
+              },
+              rival: {
+                id: isBlack ? game.white : game.black,
+                color: isBlack ? 'w' : 'b'
+              }
+            };
+
+            resolve(gameSettings);
+          }
+        };
+        retryTimeout = setTimeout(tryForGame, 0);
+      } catch (e) {
+        clearTimeout(exit);
+        reject(e);
+      }
     });
   }
 
@@ -270,7 +279,7 @@ class Actions {
     )) as string;
 
     // Parse the response
-    return JSON.parse(gameResponse);
+    return JSON.parse(decodeRealmResponse(gameResponse));
   }
 
   /**
@@ -287,28 +296,23 @@ class Actions {
     promotion: Promotion = Promotion.NO_PROMOTION
   ): Promise<Game> {
     // Make the move
-    const moveResponse: BroadcastTxCommitResult =
-      (await this.wallet?.callMethod(
-        chessRealm,
-        'MakeMove',
-        [gameID, from, to, promotion.toString()],
-        TransactionEndpoint.BROADCAST_TX_COMMIT,
-        undefined,
-        {
-          gasFee: defaultTxFee,
-          gasWanted: defaultGasWanted
-        }
-      )) as BroadcastTxCommitResult;
+    const moveResponse = await this.callMethod(chessRealm, 'MakeMove', [
+      gameID,
+      from,
+      to,
+      promotion.toString()
+    ]);
 
     // Parse the response from the node
-    const moveDataRaw: string | null =
-      moveResponse.deliver_tx.ResponseBase.Data;
-    if (!moveDataRaw) {
+    const moveData = JSON.parse(
+      decodeRealmResponse(moveResponse.deliver_tx.ResponseBase.Data as string)
+    );
+    if (!moveData) {
       throw new Error('invalid move response');
     }
 
     // Magically parse the response
-    return JSON.parse(moveDataRaw);
+    return moveData;
   }
 
   /**
@@ -330,18 +334,9 @@ class Actions {
    */
   async requestDraw(gameID: string, timeout?: number): Promise<Game> {
     // Make the request
-    const drawResponse: BroadcastTxCommitResult =
-      (await this.wallet?.callMethod(
-        chessRealm,
-        'DrawOffer',
-        [gameID],
-        TransactionEndpoint.BROADCAST_TX_COMMIT,
-        undefined,
-        {
-          gasFee: defaultTxFee,
-          gasWanted: defaultGasWanted
-        }
-      )) as BroadcastTxCommitResult;
+    const drawResponse = await this.callMethod(chessRealm, 'DrawOffer', [
+      gameID
+    ]);
 
     // Parse the response from the node
     const drawResponseRaw: string | null =
@@ -350,7 +345,7 @@ class Actions {
       throw new Error('invalid draw response');
     }
 
-    const game: Game = JSON.parse(drawResponseRaw);
+    const game: Game = JSON.parse(decodeRealmResponse(drawResponseRaw));
 
     // Check if the game is drawn
     switch (game.state) {
@@ -375,33 +370,22 @@ class Actions {
    * and returns the game object if the request is valid (game ended)
    * @param gameID
    */
+
   async claimTimeout(gameID: string): Promise<Game> {
     // Make the request
-    const timeoutResponse: BroadcastTxCommitResult =
-      (await this.wallet?.callMethod(
-        chessRealm,
-        'ClaimTimeout',
-        [gameID],
-        TransactionEndpoint.BROADCAST_TX_COMMIT,
-        undefined,
-        {
-          gasFee: defaultTxFee,
-          gasWanted: defaultGasWanted
-        }
-      )) as BroadcastTxCommitResult;
+    const response = await this.callMethod(chessRealm, 'ClaimTimeout', [
+      gameID
+    ]);
 
     // Parse the response from the node
-    const timeoutResponseRaw: string | null =
-      timeoutResponse.deliver_tx.ResponseBase.Data;
-    if (!timeoutResponseRaw) {
-      throw new Error('invalid claim timeout request');
+    const claimTimeoutRaw: string | null =
+      response.deliver_tx.ResponseBase.Data;
+    if (!claimTimeoutRaw) {
+      throw new Error('invalid claim timeout response');
     }
 
-    // TODO @Alexis, not sure what we need exactly in terms of a response.
-    // the backend returns the game object if the claim timeout
-    // request is valid, so we can assume if it doesn't error out,
-    // the request was valid and game is over (this object will contain game over data)
-    return JSON.parse(timeoutResponseRaw);
+    // Magically parse the response
+    return JSON.parse(decodeRealmResponse(claimTimeoutRaw));
   }
 
   /**
@@ -424,7 +408,7 @@ class Actions {
             )) as string;
 
           // Parse the response
-          const game: Game = JSON.parse(getGameResponse);
+          const game: Game = JSON.parse(decodeRealmResponse(getGameResponse));
 
           if (game.state === GameState.DRAWN_INSUFFICIENT) {
             // Clear the fetch interval
@@ -467,18 +451,9 @@ class Actions {
    */
   async requestResign(gameID: string): Promise<Game> {
     // Make the request
-    const resignResponse: BroadcastTxCommitResult =
-      (await this.wallet?.callMethod(
-        chessRealm,
-        'Resign',
-        [gameID],
-        TransactionEndpoint.BROADCAST_TX_COMMIT,
-        undefined,
-        {
-          gasFee: defaultTxFee,
-          gasWanted: defaultGasWanted
-        }
-      )) as BroadcastTxCommitResult;
+    const resignResponse = await this.callMethod(chessRealm, 'Resign', [
+      gameID
+    ]);
 
     // Parse the response from the node
     const resignResponseRaw: string | null =
@@ -488,7 +463,7 @@ class Actions {
     }
 
     // Magically parse the response
-    return JSON.parse(resignResponseRaw);
+    return JSON.parse(decodeRealmResponse(resignResponseRaw));
   }
 
   /**
@@ -497,18 +472,9 @@ class Actions {
    */
   async declineDraw(gameID: string): Promise<Game> {
     // Make the request
-    const declineResponse: BroadcastTxCommitResult =
-      (await this.wallet?.callMethod(
-        chessRealm,
-        'DrawRefuse',
-        [gameID],
-        TransactionEndpoint.BROADCAST_TX_COMMIT,
-        undefined,
-        {
-          gasFee: defaultTxFee,
-          gasWanted: defaultGasWanted
-        }
-      )) as BroadcastTxCommitResult;
+    const declineResponse = await this.callMethod(chessRealm, 'DrawRefuse', [
+      gameID
+    ]);
 
     // Parse the response from the node
     const declineResponseRaw: string | null =
@@ -518,7 +484,7 @@ class Actions {
     }
 
     // Magically parse the response
-    return JSON.parse(declineResponseRaw);
+    return JSON.parse(decodeRealmResponse(declineResponseRaw));
   }
 
   /**
@@ -527,18 +493,7 @@ class Actions {
    */
   async acceptDraw(gameID: string): Promise<Game> {
     // Make the request
-    const acceptResponse: BroadcastTxCommitResult =
-      (await this.wallet?.callMethod(
-        chessRealm,
-        'Draw',
-        [gameID],
-        TransactionEndpoint.BROADCAST_TX_COMMIT,
-        undefined,
-        {
-          gasFee: defaultTxFee,
-          gasWanted: defaultGasWanted
-        }
-      )) as BroadcastTxCommitResult;
+    const acceptResponse = await this.callMethod(chessRealm, 'Draw', [gameID]);
 
     // Parse the response from the node
     const acceptResponseRaw: string | null =
@@ -548,7 +503,7 @@ class Actions {
     }
 
     // Magically parse the response
-    return JSON.parse(acceptResponseRaw);
+    return JSON.parse(decodeRealmResponse(acceptResponseRaw));
   }
 
   /****************
@@ -578,7 +533,7 @@ class Actions {
       )) as string;
 
     // Parse the response
-    return JSON.parse(leaderboardResponse);
+    return JSON.parse(decodeRealmResponse(leaderboardResponse));
   }
 
   /**
@@ -592,7 +547,7 @@ class Actions {
     )) as string;
 
     // Parse the response
-    return JSON.parse(playerResponse);
+    return JSON.parse(decodeRealmResponse(playerResponse));
   }
 
   /**

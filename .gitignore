@@ -113,6 +113,7 @@ typings/
 web/resources/_gen/assets
 
 web/public/js/**/*.js
+web/public/js/**/*.js.map
 web/public/css/**/*.css
 web/public/**/*.html
 web/public/**/*.xml
@@ -122,3 +123,5 @@ realm/*.go
 *.vim
 
 .tmp/
+# Local Netlify folder
+.netlify

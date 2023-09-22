@@ -15,7 +15,7 @@ const formValidationSchema = yup.object({
     .string()
     .email('Email is not valid')
     .max(40)
-    .required('Last name is required'),
+    .required('Email is required'),
   githubHandle: yup.string().max(40),
   socialHandle: yup.string().max(40),
   interests: yup.string().max(40).required('Interests are required'),
