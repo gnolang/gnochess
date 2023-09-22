@@ -17,10 +17,18 @@ const dashboardTransition = (app: any) => {
             '.js-title  .char > span'
           );
           const subtitles = current.container.querySelectorAll('.js-subtitle');
+          const banner = current.container.querySelector('.js-banner');
           const content = current.container.querySelectorAll('.js-content');
           if (titles)
             gsap.to(titles, { y: '100%', autoAlpha: 0, duration: 0.4 });
           if (subtitles) gsap.to(subtitles, { autoAlpha: 0, duration: 0.4 });
+          if (banner) {
+            gsap.to(banner, {
+              autoAlpha: 0,
+              duration: 0.4
+            });
+          }
+
           if (content)
             gsap.to(content, {
               autoAlpha: 0,

@@ -59,6 +59,7 @@ const genericTransition = (app: any) => {
           delay: 0.7
         });
         gsap.to('.js-subtitle', { autoAlpha: 1, duration: 1, delay: 0.8 });
+        gsap.to('.js-banner', { autoAlpha: 1, duration: 1, delay: 0.8 });
         gsap.to('.js-content', { autoAlpha: 1, duration: 1, delay: 0.8 });
       }
     },
@@ -92,6 +93,7 @@ const genericTransition = (app: any) => {
           duration: 0.4
         });
         gsap.to('.js-subtitle', { autoAlpha: 1, duration: 1, delay: 0.6 });
+        gsap.to('.js-banner', { autoAlpha: 1, duration: 1, delay: 0.6 });
         gsap.to('.js-content', { autoAlpha: 1, duration: 1, delay: 0.6 });
       }
     }

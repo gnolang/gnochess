@@ -96,7 +96,7 @@ class Actions {
       this.faucetToken = faucetToken;
 
       // Attempt to fund the account
-      await this.fundAccount();
+      await this.fundAccount(this.faucetToken);
     }
   }
 
@@ -105,12 +105,11 @@ class Actions {
    * @param token the faucet token
    */
   public async setFaucetToken(token: string) {
-    this.faucetToken = token;
-
-    localStorage.setItem(defaultFaucetTokenKey, token);
-
     // Attempt to fund the account
-    await this.fundAccount();
+
+    await this.fundAccount(token);
+    this.faucetToken = token;
+    localStorage.setItem(defaultFaucetTokenKey, token);
   }
 
   /**
@@ -552,13 +551,14 @@ class Actions {
    * Pings the faucet to fund the account before playing
    * @private
    */
-  private async fundAccount(): Promise<void> {
+  private async fundAccount(token: string): Promise<void> {
     // Prepare the request options
+    console.log(token);
     const requestOptions = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'faucet-token': this.faucetToken as string
+        'faucet-token': token
       },
       body: JSON.stringify({
         to: await this.wallet?.getAddress()
@@ -567,7 +567,6 @@ class Actions {
 
     // Execute the request
     const fundResponse = await fetch(faucetURL, requestOptions);
-
     if (!fundResponse.ok) {
       throw constructFaucetError(await fundResponse.text());
     }
