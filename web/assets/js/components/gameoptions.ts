@@ -53,6 +53,7 @@ const Gameoptions = class extends Component {
 
     this.lookingForRival = false;
     this.currentState = 0;
+    this.disabled = false;
     this.timer = 0;
     this.timers = {
       rapid: [
@@ -220,7 +221,7 @@ const Gameoptions = class extends Component {
   private async _clickOnCtrl0() {
     this.currentState--;
 
-    console.log(`clickOnCtrl0: ${this.currentState}`);
+    if (this.disabled === true) return;
 
     if (this.currentState === 1) {
       const actions: Actions = await Actions.getInstance();
@@ -243,16 +244,22 @@ const Gameoptions = class extends Component {
   }
 
   async _clickOnCtrl1(_e: any, immediate = false) {
+    if (this.disabled === true) return;
     this.currentState++;
 
     const actions: Actions = await Actions.getInstance();
 
-    console.log(`current state: ${this.currentState}`);
-
     switch (this.currentState) {
       case 1: {
-        this.options.token = await this._inputToken();
-        this.DOM.ctrl1.innerHTML = this.states[this.currentState].ctrls[1]; //todo: animation
+        if (!immediate) {
+          this.options.token = await this._inputToken();
+          if (this.options.token === null) {
+            this.currentState--;
+            return;
+          }
+        }
+        this.DOM.ctrl1.innerHTML = this.states[this.currentState].ctrls[1];
+
         this.switchAnimation1[immediate ? 'progress' : 'play'](
           immediate ? 1 : 0
         );
@@ -260,6 +267,7 @@ const Gameoptions = class extends Component {
         break;
       }
       case 2: {
+        this.currentState++;
         this.switchAnimation2.play();
 
         this.call('changeStatus', ['action'], 'webgl');
@@ -339,14 +347,29 @@ const Gameoptions = class extends Component {
   async _inputToken() {
     const token =
       this.DOM.el.querySelector('#id-gameoptions-token').value || '';
-
+    gsap.to(this.DOM.ctrl1, { background: '#D9D9D9', color: '#FFFFFF' });
+    this.DOM.ctrl1.innerHTML = 'Waiting...';
+    this.disabled = true;
     const actions: Actions = await Actions.getInstance();
+    let isTokenError = false;
 
     if (!actions.getFaucetToken()) {
-      await actions.setFaucetToken(token);
+      try {
+        await actions.setFaucetToken(token);
+        gsap.to(this.DOM.ctrl1, { background: '#FFF', color: '#000' });
+      } catch (e) {
+        console.error(e);
+        isTokenError = true;
+        this.DOM.el.querySelector('#id-gameoptions-token').value = '';
+        this.DOM.ctrl1.innerHTML = 'Connection';
+        this.call('appear', ['Invalid token', 'error'], 'toast');
+      }
     }
+    this.disabled = false;
 
-    return token;
+    gsap.to(this.DOM.ctrl1, { background: '#FFF', color: '#000' });
+
+    return isTokenError ? null : token;
   }
 
   _inputCategory(): GameType {
