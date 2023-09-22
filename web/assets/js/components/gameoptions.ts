@@ -249,12 +249,9 @@ const Gameoptions = class extends Component {
 
     const actions: Actions = await Actions.getInstance();
 
-    console.log(this.currentState);
     switch (this.currentState) {
       case 1: {
-        console.log('in ggod place');
         if (!immediate) {
-          console.log('immediate');
           this.options.token = await this._inputToken();
           if (this.options.token === null) {
             this.currentState--;
@@ -358,7 +355,6 @@ const Gameoptions = class extends Component {
 
     if (!actions.getFaucetToken()) {
       try {
-        console.log('inside');
         await actions.setFaucetToken(token);
         gsap.to(this.DOM.ctrl1, { background: '#FFF', color: '#000' });
       } catch (e) {
