@@ -165,6 +165,18 @@ const Gameboard = class extends Component {
 
       //TODO: chech if this.getMoveNumber() return 0 or 1 for before first move.
       if (this.getMoveNumber() > 1) {
+        const dateStartGame = gameState.time?.started_at;
+
+        if (!dateStartGame) {
+          throw new Error('No started_at game time');
+          return;
+        }
+        // Get the time of creation & current time
+        // Get the diff and use it to get the updated / sync timeout by substract by 30s
+        const startDate = new Date(dateStartGame);
+        const currentDate = new Date();
+        const diffDate = startDate.getTime() - currentDate.getTime();
+        const timer = 30 * 1000 - diffDate;
         this.initMoveTimer = setTimeout(async () => {
           try {
             // Claim timeout. If no error, timeout succeeded
@@ -179,7 +191,7 @@ const Gameboard = class extends Component {
             // TODO @Alexis, handle on the frontend
             // for the user (I assume fire event to end game)
           }
-        }, 30000); //30sec first move
+        }, timer); //30sec first move
       } else {
         this.call('startTimer', [init], 'gameplayers', 'me');
       }
