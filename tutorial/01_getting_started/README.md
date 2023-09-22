@@ -36,6 +36,7 @@ SUBCOMMANDS
   doc         get documentation for the specified package or symbol (type, function, method, or variable/constant
 
 error parsing commandline arguments: flag: help requested
+$ cd tutorial/01_getting_started/
 $ gno doc greeter
 package greeter // import "gno.land/r/demo/001_getting_started/greeter"
 
