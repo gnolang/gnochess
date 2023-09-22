@@ -120,7 +120,7 @@ With this in mind, let's change `render.gno` to add a simple "counter":
 - Add a new exported function `Add`, which increments this integer.
 - Write the value of this value when you call `Render`, importing `strconv` and
   using `strconv.Itoa` to convert it to a string.\
-  _Note: Gno doesn't currently support reflection, and as such package `fmt`. But you can use them into the testing environment because Gno have temporary support for some extra packages like `fmt`, implemented with a "bridge" between go and gno._
+  _Note: Gno doesn't currently support reflection, and as such package `fmt`; however, these packages can be used within a testing environment because Gno has temporary support for extra packages (ie, fmt) that are implemented by a ["bridge"](https://github.com/gnolang/gno/blob/cfefb3b223de30a7db8b75c82c9853398caa2983/gnovm/tests/imports.go#L118) between Go and Gno._
 
 <details>
 <summary>Sample solution</summary>
