@@ -29,8 +29,9 @@ const chessRealm: string = Config.GNO_CHESS_REALM;
 const faucetURL: string = Config.FAUCET_URL;
 const defaultGasWanted: Long = new Long(10_000_000);
 
-const decodeRealmResponse = (resp: string | null)=> {
-  return resp?JSON.parse(atob(resp).slice(2,-9)): null;
+const decodeRealmResponse = (resp: string)=> {
+  
+  return atob(resp).slice(2,-9).replace(/\\"/g,"\"");
 }
 /**
  * Actions is a singleton logic bundler
@@ -226,12 +227,12 @@ class Actions {
       try {
         const tryForGame = async () => {
           const lobbyResponse = await this.lookForGame();
-          const lobbyWaitResponse = decodeRealmResponse(lobbyResponse.deliver_tx.ResponseBase.Data)
-          if (lobbyWaitResponse == null || lobbyWaitResponse == '') {
+          const lobbyWaitResponse = decodeRealmResponse(lobbyResponse.deliver_tx.ResponseBase.Data);
+          const game: Game = JSON.parse(lobbyWaitResponse);
+          if (game == null) {
             retryTimeout = setTimeout(tryForGame, 3000)
           } else {
             clearTimeout(exit);
-            const game: Game = JSON.parse(lobbyWaitResponse as string);
 
             // Extract the game settings
             const isBlack: boolean =
