@@ -4,6 +4,7 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig({
   build: {
+    sourcemap: true,
     outDir: 'static',
     watch: {
       include: ['assets/js/**']
