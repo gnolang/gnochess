@@ -13,6 +13,6 @@ directory = "functions"
 # totally optional, but makes up for
 # a much better UX
 [[redirects]]
-from = "/"
-to = "/.netlify/functions/index"
+from = "/api/subscribe"
+to = "/.netlify/functions/subscribe"
 status = 200
