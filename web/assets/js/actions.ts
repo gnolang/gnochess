@@ -29,6 +29,10 @@ const chessRealm: string = Config.GNO_CHESS_REALM;
 const faucetURL: string = Config.FAUCET_URL;
 const defaultGasWanted: Long = new Long(10_000_000);
 
+const decodeRealmResponse = (resp: string | null)=> {
+  if (resp) console.log(atob(resp).slice(2,-9));
+  return resp?JSON.parse(atob(resp).slice(2,-9)): null;
+}
 /**
  * Actions is a singleton logic bundler
  * that is shared throughout the game.
@@ -126,7 +130,7 @@ class Actions {
   public async callMethod(
     path: string,
     method: string,
-    args: string[],
+    args: string[] | null,
     gasWanted: Long = defaultGasWanted
   ): Promise<BroadcastTxCommitResult> {
     try {
@@ -160,20 +164,31 @@ class Actions {
   public async joinLobby(time: GameTime): Promise<GameSettings> {
     // Backend expects seconds.
     const seconds = time.time * 60;
-
+    console.log("Joining");
     // Join the waiting lobby
-    await this.callMethod(chessRealm, 'LobbyJoin', [
-      seconds.toString(),
-      time.increment.toString()
-    ]);
+    try {
+      await this.callMethod(
+        chessRealm,
+        'LobbyJoin',
+        [seconds.toString(), time.increment.toString()],
+      );
+    } catch (e) {
+      console.log(e)
+    }
 
     try {
       // Wait to be matched with an opponent
       return await this.waitForGame();
     } catch (e) {
       // Unable to find the game, cancel the search
-      await this.callMethod(chessRealm, 'LobbyQuit', []);
-
+      console.log("cancel");
+      console.log(e);
+      await this.callMethod(
+        chessRealm,
+        'LobbyQuit',
+        null
+      );
+      this.quitLobby();
       // Propagate the error
       throw new Error('unable to find game');
     }
@@ -191,67 +206,66 @@ class Actions {
    * @param timeout the maximum wait time for a game
    * @private
    */
+  private async lookForGame(): Promise<BroadcastTxCommitResult> {
+    
+    if (!this.isInTheLobby) throw new Error('Left the lobby');
+    console.log("looking for a game");
+    const lobbyResponse: BroadcastTxCommitResult =
+      (await this.callMethod(
+        chessRealm,
+        'LobbyGameFound',
+        null
+      )) as BroadcastTxCommitResult;
+
+      return lobbyResponse;
+  }
   private async waitForGame(timeout?: number): Promise<GameSettings> {
-    this.isInTheLobby = true;
-
-    return new Promise(async (resolve, reject) => {
-      const exitTimeout = timeout ? timeout : drawRequestTimer * 1000; // wait time is max 15s
-
-      const fetchInterval = setInterval(async () => {
-        try {
-          if (!this.isInTheLobby) reject('Left the lobby');
-
-          // Check if the game is ready
-          const lobbyResponse = await this.callMethod(
-            chessRealm,
-            'LobbyGameFound',
-            []
-          );
-
-          // Parse the response
-          const lobbyWaitResponse: string | null =
-            lobbyResponse.deliver_tx.ResponseBase.Data;
-
+    this.isInTheLobby = true;    
+    let retryTimeout: NodeJS.Timeout;
+    const exitTimeout = timeout ? timeout : drawRequestTimer * 1000; // wait time is max 15s
+    return new Promise((resolve, reject) => {
+      var exit = setTimeout(() => {
+        clearTimeout(retryTimeout)
+        console.log('here');
+        reject("wait timeout exceeded")
+      }, exitTimeout)
+      try {
+        const tryForGame = async () => {
+          const lobbyResponse = await this.lookForGame();
+          const lobbyWaitResponse = decodeRealmResponse(lobbyResponse.deliver_tx.ResponseBase.Data)
+          console.log(lobbyWaitResponse);
           if (lobbyWaitResponse == null || lobbyWaitResponse == '') {
-            return;
+            retryTimeout = setTimeout(tryForGame, 3000)
+          } else {
+            clearTimeout(exit);
+            const game: Game = JSON.parse(lobbyWaitResponse as string);
+
+            // Extract the game settings
+            const isBlack: boolean =
+              game.black == (await this.wallet?.getAddress());
+
+            const gameSettings: GameSettings = {
+              game: {
+                id: game.id
+              },
+              me: {
+                id: isBlack ? game.black : game.white,
+                color: isBlack ? 'b' : 'w'
+              },
+              rival: {
+                id: isBlack ? game.white : game.black,
+                color: isBlack ? 'w' : 'b'
+              }
+            };
+
+            resolve(gameSettings);            
           }
-
-          // Clear the fetch interval
-          clearInterval(fetchInterval);
-
-          // Parse the game data
-          const game: Game = JSON.parse(lobbyWaitResponse as string);
-
-          // Extract the game settings
-          const isBlack: boolean =
-            game.black == (await this.wallet?.getAddress());
-
-          const gameSettings: GameSettings = {
-            game: {
-              id: game.id
-            },
-            me: {
-              id: isBlack ? game.black : game.white,
-              color: isBlack ? 'b' : 'w'
-            },
-            rival: {
-              id: isBlack ? game.white : game.black,
-              color: isBlack ? 'w' : 'b'
-            }
-          };
-
-          resolve(gameSettings);
-        } catch (e) {
-          // Game not ready, continue polling...
         }
-      }, 3000); // 3s, since it's an expensive call
-
-      setTimeout(() => {
-        this.isInTheLobby = false;
-        clearInterval(fetchInterval);
-
-        reject('wait timeout exceeded');
-      }, exitTimeout);
+        retryTimeout = setTimeout(tryForGame,0)
+      } catch (e) {
+        clearTimeout(exit);
+        reject(e)
+      }
     });
   }
 
