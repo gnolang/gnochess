@@ -1,12 +1,10 @@
-import tokenList from "../config/token.config";
+import { v4 as uuidv4 } from 'uuid';
 
 /**
- * Fetches a random token from the token list
+ * Generate a random token
  */
 const getRandomToken = (): string => {
-  const randomTokenIndex = Math.floor(Math.random() * tokenList.length);
-
-  return tokenList[randomTokenIndex];
+  return uuidv4().substring(0, 8);
 };
 
 export default getRandomToken;
