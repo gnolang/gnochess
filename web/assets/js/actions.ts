@@ -602,7 +602,7 @@ class Actions {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'faucet-token': token as string
+        'faucet-token': token
       },
       body: JSON.stringify({
         to: await this.wallet?.getAddress()
