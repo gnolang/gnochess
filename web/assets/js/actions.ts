@@ -17,7 +17,7 @@ import {generateMnemonic} from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
 import {constructFaucetError} from './utils/errors.ts';
-import {ErrorTransform} from './errors.ts'; // ENV values //
+import {ErrorTransform} from './errors.ts';
 
 // ENV values //
 const wsURL: string = Config.GNO_WS_URL;
