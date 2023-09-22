@@ -16,8 +16,15 @@ class InvalidTokenError extends FaucetError {
   }
 }
 
+class TokenAlreadyBoundError extends FaucetError {
+  constructor() {
+    super('Faucet token already bound to an other address');
+  }
+}
+
 export {
   FaucetError,
   UserFundedError,
-  InvalidTokenError
+  InvalidTokenError,
+  TokenAlreadyBoundError
 };

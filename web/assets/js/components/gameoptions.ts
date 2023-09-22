@@ -362,7 +362,7 @@ const Gameoptions = class extends Component {
         isTokenError = true;
         this.DOM.el.querySelector('#id-gameoptions-token').value = '';
         this.DOM.ctrl1.innerHTML = 'Connection';
-        this.call('appear', ['Invalid token', 'error'], 'toast');
+        this.call('appear', [e, 'error'], 'toast');
       }
     }
     this.disabled = false;

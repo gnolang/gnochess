@@ -399,11 +399,11 @@ func prepareFundMiddleware(client client.Client, fundLimit std.Coins) faucet.Mid
 // prepareTokenMiddleware prepares the token validation middleware
 func prepareTokenMiddleware(tokens []string) faucet.Middleware {
 	// Create the token map
-	tokenMap := make(map[string]struct{}, len(tokens))
+	tokenMap := make(map[string]string, len(tokens))
 
 	// Add in the token values
 	for _, token := range tokens {
-		tokenMap[token] = struct{}{}
+		tokenMap[token] = ""
 	}
 
 	return func(next http.Handler) http.Handler {
@@ -412,11 +412,37 @@ func prepareTokenMiddleware(tokens []string) faucet.Middleware {
 			token := r.Header.Get(tokenKey)
 
 			// Make sure the token is valid
-			if _, valid := tokenMap[token]; !valid {
+			addr, ok := tokenMap[token]
+			if !ok {
 				http.Error(w, "Invalid faucet token", http.StatusForbidden)
-
 				return
 			}
+			// Parse the request to extract the address
+			var request faucet.Request
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				http.Error(w, "Error reading request body", http.StatusInternalServerError)
+				return
+			}
+			// Close the original body
+			if err := r.Body.Close(); err != nil {
+				http.Error(w, "Error closing request body", http.StatusInternalServerError)
+				return
+			}
+			// Create a new ReadCloser from the read bytes
+			// so that future middleware will be able to read
+			r.Body = io.NopCloser(bytes.NewReader(body))
+			// Decode the original request
+			if err := json.NewDecoder(bytes.NewBuffer(body)).Decode(&request); err != nil {
+				http.Error(w, "Invalid request", http.StatusBadRequest)
+				return
+			}
+
+			if addr != "" && addr != request.To {
+				http.Error(w, "Faucet token already bound to an other address", http.StatusForbidden)
+				return
+			}
+			tokenMap[token] = request.To
 
 			// Continue with serving the faucet request
 			next.ServeHTTP(w, r)
