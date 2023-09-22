@@ -1,27 +1,23 @@
-import { saveToLocalStorage } from './utils/localstorage';
+import {saveToLocalStorage} from './utils/localstorage';
 import {
-  defaultFaucetTokenKey,
-  defaultMnemonicKey,
-  drawRequestTimer,
-  Game,
-  type GameoverType,
-  type GameSettings,
-  GameState,
-  GameTime,
-  Player,
-  Promotion
+    defaultFaucetTokenKey,
+    defaultMnemonicKey,
+    drawRequestTimer,
+    Game,
+    type GameoverType,
+    type GameSettings,
+    GameState,
+    GameTime,
+    Player,
+    Promotion
 } from './types/types';
-import { defaultTxFee, GnoWallet, GnoWSProvider } from '@gnolang/gno-js-client';
-import {
-  BroadcastTxCommitResult,
-  TM2Error,
-  TransactionEndpoint
-} from '@gnolang/tm2-js-client';
-import { generateMnemonic } from './utils/crypto.ts';
+import {defaultTxFee, GnoWallet, GnoWSProvider} from '@gnolang/gno-js-client';
+import {BroadcastTxCommitResult, TM2Error, TransactionEndpoint} from '@gnolang/tm2-js-client';
+import {generateMnemonic} from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
-import { constructFaucetError } from './utils/errors.ts';
-import { ErrorTransform } from './errors.ts';
+import {constructFaucetError} from './utils/errors.ts';
+import {ErrorTransform} from './errors.ts';
 
 // ENV values //
 const wsURL: string = Config.GNO_WS_URL;
@@ -29,13 +25,13 @@ const chessRealm: string = Config.GNO_CHESS_REALM;
 const faucetURL: string = Config.FAUCET_URL;
 const defaultGasWanted: Long = new Long(10_000_000);
 
-
-const cleanUpRealmReturn = (ret:string)=> {
-  return ret.slice(2,-9).replace(/\\"/g,"\"");
-}
-const decodeRealmResponse = (resp: string)=> {  
+const cleanUpRealmReturn = (ret: string) => {
+  return ret.slice(2, -9).replace(/\\"/g, '"');
+};
+const decodeRealmResponse = (resp: string) => {
   return cleanUpRealmReturn(atob(resp));
-}
+};
+
 /**
  * Actions is a singleton logic bundler
  * that is shared throughout the game.
@@ -169,13 +165,12 @@ class Actions {
     const seconds = time.time * 60;
     // Join the waiting lobby
     try {
-      await this.callMethod(
-        chessRealm,
-        'LobbyJoin',
-        [seconds.toString(), time.increment.toString()],
-      );
+      await this.callMethod(chessRealm, 'LobbyJoin', [
+        seconds.toString(),
+        time.increment.toString()
+      ]);
     } catch (e) {
-      console.log("Already in Lobby")
+      console.log('Already in Lobby');
     }
 
     try {
@@ -183,11 +178,7 @@ class Actions {
       return await this.waitForGame();
     } catch (e) {
       // Unable to find the game, cancel the search
-      await this.callMethod(
-        chessRealm,
-        'LobbyQuit',
-        null
-      );
+      await this.callMethod(chessRealm, 'LobbyQuit', null);
       this.quitLobby();
       // Propagate the error
       throw new Error('unable to find game');
@@ -207,33 +198,32 @@ class Actions {
    * @private
    */
   private async lookForGame(): Promise<BroadcastTxCommitResult> {
-    
-    if (!this.isInTheLobby) throw new Error('Left the lobby');    
-    const lobbyResponse: BroadcastTxCommitResult =
-      (await this.callMethod(
-        chessRealm,
-        'LobbyGameFound',
-        null
-      )) as BroadcastTxCommitResult;
-
-      return lobbyResponse;
+    if (!this.isInTheLobby) throw new Error('Left the lobby');
+    return (await this.callMethod(
+      chessRealm,
+      'LobbyGameFound',
+      null
+    )) as BroadcastTxCommitResult;
   }
+
   private async waitForGame(timeout?: number): Promise<GameSettings> {
-    this.isInTheLobby = true;    
+    this.isInTheLobby = true;
     let retryTimeout: NodeJS.Timeout;
     const exitTimeout = timeout ? timeout : drawRequestTimer * 1000; // wait time is max 15s
     return new Promise((resolve, reject) => {
-      var exit = setTimeout(() => {
-        clearTimeout(retryTimeout)
-        reject("wait timeout exceeded")
-      }, exitTimeout)
+      let exit = setTimeout(() => {
+        clearTimeout(retryTimeout);
+        reject('wait timeout exceeded');
+      }, exitTimeout);
       try {
         const tryForGame = async () => {
           const lobbyResponse = await this.lookForGame();
-          const lobbyWaitResponse = decodeRealmResponse(lobbyResponse.deliver_tx.ResponseBase.Data as string);
+          const lobbyWaitResponse = decodeRealmResponse(
+            lobbyResponse.deliver_tx.ResponseBase.Data as string
+          );
           const game: Game = JSON.parse(lobbyWaitResponse);
           if (game == null) {
-            retryTimeout = setTimeout(tryForGame, 3000)
+            retryTimeout = setTimeout(tryForGame, 3000);
           } else {
             clearTimeout(exit);
 
@@ -255,15 +245,26 @@ class Actions {
               }
             };
 
-            resolve(gameSettings);            
+            resolve(gameSettings);
           }
-        }
-        retryTimeout = setTimeout(tryForGame,0)
+        };
+        retryTimeout = setTimeout(tryForGame, 0);
       } catch (e) {
         clearTimeout(exit);
-        reject(e)
+        reject(e);
       }
     });
+  }
+
+  /**
+   * Checks if the given game is ongoing
+   * @param gameID the ID of the running game
+   */
+  public async isGameOngoing(gameID: string) {
+    // Fetch the game
+    const game: Game = await this.getGame(gameID);
+
+    return game.state === GameState.OPEN;
   }
 
   /**
@@ -278,8 +279,7 @@ class Actions {
     )) as string;
 
     // Parse the response
-    
-    return JSON.parse(cleanUpRealmReturn(gameResponse));
+    return JSON.parse(decodeRealmResponse(gameResponse));
   }
 
   /**
@@ -304,7 +304,9 @@ class Actions {
     ]);
 
     // Parse the response from the node
-    const moveData= JSON.parse(decodeRealmResponse(moveResponse.deliver_tx.ResponseBase.Data as string))
+    const moveData = JSON.parse(
+      decodeRealmResponse(moveResponse.deliver_tx.ResponseBase.Data as string)
+    );
     if (!moveData) {
       throw new Error('invalid move response');
     }
@@ -343,7 +345,7 @@ class Actions {
       throw new Error('invalid draw response');
     }
 
-    const game: Game = JSON.parse(drawResponseRaw);
+    const game: Game = JSON.parse(decodeRealmResponse(drawResponseRaw));
 
     // Check if the game is drawn
     switch (game.state) {
@@ -360,6 +362,30 @@ class Actions {
       gameID,
       timeout ? timeout : drawRequestTimer * 1000
     );
+  }
+
+  /**
+   * Claims that the game timed out.
+   * Errors out if the claim timeout request is invalid,
+   * and returns the game object if the request is valid (game ended)
+   * @param gameID
+   */
+
+  async claimTimeout(gameID: string): Promise<Game> {
+    // Make the request
+    const response = await this.callMethod(chessRealm, 'ClaimTimeout', [
+      gameID
+    ]);
+
+    // Parse the response from the node
+    const claimTimeoutRaw: string | null =
+      response.deliver_tx.ResponseBase.Data;
+    if (!claimTimeoutRaw) {
+      throw new Error('invalid claim timeout response');
+    }
+
+    // Magically parse the response
+    return JSON.parse(decodeRealmResponse(claimTimeoutRaw));
   }
 
   /**
@@ -382,7 +408,7 @@ class Actions {
             )) as string;
 
           // Parse the response
-          const game: Game = JSON.parse(getGameResponse);
+          const game: Game = JSON.parse(decodeRealmResponse(getGameResponse));
 
           if (game.state === GameState.DRAWN_INSUFFICIENT) {
             // Clear the fetch interval
@@ -437,7 +463,7 @@ class Actions {
     }
 
     // Magically parse the response
-    return JSON.parse(resignResponseRaw);
+    return JSON.parse(decodeRealmResponse(resignResponseRaw));
   }
 
   /**
@@ -458,7 +484,7 @@ class Actions {
     }
 
     // Magically parse the response
-    return JSON.parse(declineResponseRaw);
+    return JSON.parse(decodeRealmResponse(declineResponseRaw));
   }
 
   /**
@@ -477,28 +503,7 @@ class Actions {
     }
 
     // Magically parse the response
-    return JSON.parse(acceptResponseRaw);
-  }
-
-  /**
-   * Claim that a timeout has occurred on the given game.
-   * @param gameID the ID of the running game
-   */
-  async claimTimeout(gameID: string): Promise<Game> {
-    // Make the request
-    const response = await this.callMethod(chessRealm, 'ClaimTimeout', [
-      gameID
-    ]);
-
-    // Parse the response from the node
-    const claimTimeoutRaw: string | null =
-      response.deliver_tx.ResponseBase.Data;
-    if (!claimTimeoutRaw) {
-      throw new Error('invalid draw refuse response');
-    }
-
-    // Magically parse the response
-    return JSON.parse(claimTimeoutRaw);
+    return JSON.parse(decodeRealmResponse(acceptResponseRaw));
   }
 
   /****************
@@ -528,7 +533,7 @@ class Actions {
       )) as string;
 
     // Parse the response
-    return JSON.parse(leaderboardResponse);
+    return JSON.parse(decodeRealmResponse(leaderboardResponse));
   }
 
   /**
@@ -542,7 +547,7 @@ class Actions {
     )) as string;
 
     // Parse the response
-    return JSON.parse(playerResponse);
+    return JSON.parse(decodeRealmResponse(playerResponse));
   }
 
   /**

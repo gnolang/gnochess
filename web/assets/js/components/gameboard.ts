@@ -18,6 +18,8 @@ const Gameboard = class extends Component {
     this.promotion = [];
     this.allowedToMove = false;
     this.pomotionEvents = [];
+    this.initMoveTimer = null;
+    this.checkOngoingTimer = null;
 
     this.DOM.board = this.DOM.el.querySelector('#js-game');
     this.DOM.promotionBtns = [...this.DOM.el.querySelectorAll('.js-topromote')];
@@ -51,6 +53,7 @@ const Gameboard = class extends Component {
         cb: this.selectCell.bind(this)
       });
     });
+    this.intervalCheckForOngoingGame();
   }
 
   showScoreBoard(winner: Colors) {
@@ -90,14 +93,20 @@ const Gameboard = class extends Component {
 
       if (gameover === 'timeout' || gameState.state === 'timeout') {
         status = 'timeout';
-        const valid = await actions.isGameOver(this.gameId, 'timeout');
-        if (valid)
-          this.call(
-            'finishGame',
-            ['winner', status],
-            'gameplayers',
-            this.color === this.chess.turn() ? 'rival' : 'me'
-          );
+        clearTimeout(this.checkOngoingTimer);
+        const game = await actions.getGame(this.gameId);
+        if (game.winner == 'none') {
+          this.call('finishGame', ['abandon', status], 'gameplayers', 'rival');
+        } else {
+          const valid = await actions.isGameOver(this.gameId, 'timeout');
+          if (valid)
+            this.call(
+              'finishGame',
+              ['winner', status],
+              'gameplayers',
+              this.color === this.chess.turn() ? 'rival' : 'me'
+            );
+        }
       }
 
       if (this.chess.isCheckmate() || gameState.state === 'checkmated') {
@@ -144,20 +153,87 @@ const Gameboard = class extends Component {
       this.call('stopTimer', [true], 'gameplayers', 'rival');
       this.call('disappear', '', 'gamecontrols');
 
-      return; // action
+      return;
     }
 
-    //game turn update
+    // Game turn update (player timer and action balancing)
     if (this.color === this.chess.turn()) {
-      this.call('stopTimer', [init], 'gameplayers', 'rival');
-      this.call('startTimer', [init], 'gameplayers', 'me');
+      // My turn to play
+      // If first move, 30s rule - no timer
       this.allowedToMove = true;
+      this.call('stopTimer', [init], 'gameplayers', 'rival');
+
+      //TODO: chech if this.getMoveNumber() return 0 or 1 for before first move.
+      if (this.getMoveNumber() > 1) {
+        const dateStartGame = gameState.time?.started_at;
+
+        if (!dateStartGame) {
+          throw new Error('No started_at game time');
+          return;
+        }
+        // Get the time of creation & current time
+        // Get the diff and use it to get the updated / sync timeout by substract by 30s
+        const startDate = new Date(dateStartGame);
+        const currentDate = new Date();
+        const diffDate = startDate.getTime() - currentDate.getTime();
+
+        const exitforTimeout = async () => {
+          try {
+            // Claim timeout. If no error, timeout succeeded
+            await actions.claimTimeout(this.gameId);
+            this.call(this.engine(false, 'timeout'));
+          } catch (e) {
+            this.call(
+              'appear',
+              ['Invalid claim timeout request', 'error'],
+              'toast'
+            );
+            this.call(this.engine(false, 'timeout')); //TODO: create a fail "exit" gameover in the engine
+            // Timeout request is invalid
+            // for the user (I assume fire event to end game)
+          }
+        };
+
+        const timer = 30 * 1000 - diffDate;
+
+        if (timer <= 0) {
+          // if date too old (> 30sec )
+          await exitforTimeout();
+          throw new Error('Game party started too long time ago');
+        }
+
+        this.initMoveTimer = setTimeout(async () => {
+          await exitforTimeout();
+        }, timer); //30sec first move
+      } else {
+        this.call('startTimer', [init], 'gameplayers', 'me');
+      }
     } else {
+      // Rival turn to play
+      // stop my 30s first move.
+      // If less than 1 move it means rival 30s first move - no timer
+      clearTimeout(this.initMoveTimer);
       this.call('stopTimer', [init], 'gameplayers', 'me');
-      this.call('startTimer', [init], 'gameplayers', 'rival');
+      if (this.getMoveNumber() > 1) {
+        this.call('startTimer', [init], 'gameplayers', 'rival');
+      }
       this.allowedToMove = false;
       this.rivalMove();
     }
+  }
+
+  private async intervalCheckForOngoingGame() {
+    const actions: Actions = await Actions.getInstance();
+    this.checkOngoingTimer = setInterval(async () => {
+      const ongoing = await actions.isGameOngoing(this.gameId);
+
+      if (!ongoing) {
+        clearTimeout(this.checkOngoingTimer);
+
+        // TODO @Alexis this doesn't necessarily need to be a timeout type
+        this.call(this.engine(false, 'timeout'));
+      }
+    }, 3000);
   }
 
   async rivalMove() {
@@ -317,6 +393,8 @@ const Gameboard = class extends Component {
   }
 
   destroy() {
+    clearTimeout(this.initMoveTimer);
+    clearInterval(this.checkOngoingTimer);
     this.chess.clear();
     this.board.destroy();
     //wS deco
