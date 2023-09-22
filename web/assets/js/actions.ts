@@ -255,6 +255,8 @@ class Actions {
               }
             };
 
+            console.log("Resolving")
+            console.log(gameSettings)
             resolve(gameSettings);            
           }
         }
