@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"regexp"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/gnolang/faucet"
@@ -58,6 +59,8 @@ type rootCfg struct {
 	fundLimit string
 
 	redisURL string
+
+	allowedTokens stringArr // TODO temporary
 }
 
 // generateFaucetConfig generates the Faucet configuration
@@ -175,6 +178,13 @@ func registerFlags(fs *flag.FlagSet, c *rootCfg) {
 		"redis://user:pass@127.0.0.1:6379",
 		"redis connection string",
 	)
+
+	// TODO temporary
+	fs.Var(
+		&c.allowedTokens,
+		"tokens",
+		"the allowed faucet tokens",
+	)
 }
 
 // execMain starts the GnoChess faucet
@@ -210,16 +220,22 @@ func execMain(cfg *rootCfg) error {
 	// Create the client (HTTP)
 	cli := tm2Client.NewClient(cfg.remote)
 
-	redisOpts, err := redis.ParseURL(cfg.redisURL)
-	if err != nil {
-		return err
-	}
-	redisClient := redis.NewClient(redisOpts)
-
 	// Prepare the middlewares
 	middlewares := []faucet.Middleware{
-		prepareTokenMiddleware(redisClient),
 		prepareFundMiddleware(cli, fundLimit),
+	}
+
+	// TODO temporary
+	if len(cfg.allowedTokens) != 0 {
+		middlewares = append(middlewares, prepareTokenListMiddleware(cfg.allowedTokens))
+	} else {
+		redisOpts, err := redis.ParseURL(cfg.redisURL)
+		if err != nil {
+			return err
+		}
+		redisClient := redis.NewClient(redisOpts)
+
+		middlewares = append(middlewares, prepareTokenMiddleware(redisClient))
 	}
 
 	// Create a new faucet with
@@ -403,6 +419,35 @@ func prepareFundMiddleware(client client.Client, fundLimit std.Coins) faucet.Mid
 	}
 }
 
+// TODO temporary
+// prepareTokenListMiddleware prepares the token validation middleware
+func prepareTokenListMiddleware(tokens []string) faucet.Middleware {
+	// Create the token map
+	tokenMap := make(map[string]struct{}, len(tokens))
+
+	// Add in the token values
+	for _, token := range tokens {
+		tokenMap[token] = struct{}{}
+	}
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Fetch the faucet token
+			token := r.Header.Get(tokenKey)
+
+			// Make sure the token is valid
+			if _, valid := tokenMap[token]; !valid {
+				http.Error(w, "Invalid faucet token", http.StatusForbidden)
+
+				return
+			}
+
+			// Continue with serving the faucet request
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
 // prepareTokenMiddleware prepares the token validation middleware
 func prepareTokenMiddleware(redisClient *redis.Client) faucet.Middleware {
 	return func(next http.Handler) http.Handler {
@@ -429,4 +474,27 @@ func prepareTokenMiddleware(redisClient *redis.Client) faucet.Middleware {
 			}
 		})
 	}
+}
+
+// TODO temporary
+
+// stringArr defines the custom flag type
+// that represents an array of string values
+type stringArr []string
+
+// String is a required output method for the flag
+func (s *stringArr) String() string {
+	if len(*s) <= 0 {
+		return "..."
+	}
+
+	return strings.Join(*s, ", ")
+}
+
+// Set is a required output method for the flag.
+// This is where our custom type manipulation actually happens
+func (s *stringArr) Set(value string) error {
+	*s = append(*s, value)
+
+	return nil
 }
