@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import * as path from 'path';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig({
   build: {
@@ -17,5 +18,5 @@ export default defineConfig({
       }
     }
   },
-  plugins: []
+  plugins: [nodePolyfills()]
 });
