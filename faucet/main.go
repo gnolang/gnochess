@@ -11,22 +11,25 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/gnolang/faucet"
 	"github.com/gnolang/faucet/client"
 	tm2Client "github.com/gnolang/faucet/client/http"
 	"github.com/gnolang/faucet/config"
 	"github.com/gnolang/faucet/estimate/static"
-	"github.com/gnolang/gno/tm2/pkg/crypto"
-	"github.com/gnolang/gno/tm2/pkg/std"
 	"github.com/peterbourgon/ff/v3"
 	"github.com/peterbourgon/ff/v3/fftoml"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/gnolang/gno/tm2/pkg/crypto"
+	"github.com/gnolang/gno/tm2/pkg/std"
 
 	"github.com/peterbourgon/ff/v3/ffcli"
 )
@@ -36,6 +39,7 @@ const (
 	defaultGasWanted = "100000"
 	defaultFundLimit = "100ugnot"
 	defaultRemote    = "http://127.0.0.1:26657"
+	defaultDataDir   = "data"
 )
 
 const (
@@ -57,7 +61,36 @@ type rootCfg struct {
 	remote    string
 	fundLimit string
 
+	dataDir string
+
 	allowedTokens stringArr
+}
+
+func (c *rootCfg) tokenFile() string {
+	return filepath.Join(c.dataDir, "tokens.json")
+}
+
+func (c *rootCfg) readTokens() map[string]string {
+	var tokens map[string]string
+	bz, _ := os.ReadFile(c.tokenFile())
+	if len(bz) > 0 {
+		err := json.Unmarshal(bz, &tokens)
+		if err != nil {
+			panic(err)
+		}
+	}
+	return tokens
+}
+
+func (c *rootCfg) writeTokens(tokens map[string]string) {
+	bz, err := json.MarshalIndent(tokens, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	err = os.WriteFile(c.tokenFile(), bz, os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // generateFaucetConfig generates the Faucet configuration
@@ -174,6 +207,13 @@ func registerFlags(fs *flag.FlagSet, c *rootCfg) {
 		defaultFundLimit,
 		"the minimum amount of ugnot the account needs to have",
 	)
+
+	fs.StringVar(
+		&c.dataDir,
+		"data-dir",
+		defaultDataDir,
+		"the directory used to save data",
+	)
 }
 
 // execMain starts the GnoChess faucet
@@ -206,12 +246,18 @@ func execMain(cfg *rootCfg) error {
 		return err
 	}
 
+	// Create the data dir if not exists
+	err = os.MkdirAll(cfg.dataDir, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
 	// Create the client (HTTP)
 	cli := tm2Client.NewClient(cfg.remote)
 
 	// Prepare the middlewares
 	middlewares := []faucet.Middleware{
-		prepareTokenMiddleware(cfg.allowedTokens),
+		cfg.prepareTokenMiddleware(cfg.allowedTokens),
 		prepareFundMiddleware(cli, fundLimit),
 	}
 
@@ -397,14 +443,27 @@ func prepareFundMiddleware(client client.Client, fundLimit std.Coins) faucet.Mid
 }
 
 // prepareTokenMiddleware prepares the token validation middleware
-func prepareTokenMiddleware(tokens []string) faucet.Middleware {
+func (c *rootCfg) prepareTokenMiddleware(tokens []string) faucet.Middleware {
 	// Create the token map
+	// key is the token
+	// value is the address bound to that token (empty means free token)
 	tokenMap := make(map[string]string, len(tokens))
+	// Read tokens from store
+	storedTokens := c.readTokens()
 
-	// Add in the token values
+	// Merge tokenMap with storedTokens
+	// If the token is not found in storedTokens, this will set an empty value
+	// which is a free token.
 	for _, token := range tokens {
-		tokenMap[token] = ""
+		tokenMap[token] = storedTokens[token]
 	}
+	// write tokenMap to the store periodically
+	go func() {
+		for {
+			c.writeTokens(tokenMap)
+			time.Sleep(time.Second * 5)
+		}
+	}()
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
