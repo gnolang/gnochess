@@ -64,8 +64,6 @@ const Gameplayers = class extends Component {
   }
 
   _createTime(datetarget: number) {
-    console.log(datetarget);
-
     const pad = (n: number) => (n < 10 ? '0' : '') + n;
 
     const minutes = Math.floor(datetarget / 60);
