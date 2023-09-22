@@ -129,7 +129,7 @@ export interface Player {
 
 export interface Rating {
   wins: number;
-  loses: number;
+  losses: number;
   draws: number;
   games: number;
 }

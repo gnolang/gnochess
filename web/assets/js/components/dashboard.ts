@@ -65,7 +65,7 @@ const Dashboard = class extends Component {
   }
 
   private _createDomFunc(category: Categoy, rating: any) {
-    const kinds = ['wins', 'draws', 'loses'];
+    const kinds = ['wins', 'draws', 'losses'];
     const games = document.getElementById(`js-dashboard${category}Games`);
 
     kinds.forEach((kind) => {
@@ -75,7 +75,7 @@ const Dashboard = class extends Component {
       if (el) el.innerHTML = rating[kind].toString();
     });
     if (games)
-      games.innerHTML = (rating.loses + rating.draws + rating.wins).toString();
+      games.innerHTML = (rating.losses + rating.draws + rating.wins).toString();
 
     return rating;
   }
@@ -86,7 +86,7 @@ const Dashboard = class extends Component {
 
     const rapidRating = {
       wins: playerRapidRating.wins,
-      loses: playerRapidRating.losses,
+      losses: playerRapidRating.losses,
       draws: playerRapidRating.draws,
       games:
         playerRapidRating.wins +
@@ -96,7 +96,7 @@ const Dashboard = class extends Component {
 
     const blitzRating = {
       wins: playerBlitzRating.wins,
-      loses: playerBlitzRating.losses,
+      losses: playerBlitzRating.losses,
       draws: playerBlitzRating.draws,
       games:
         playerBlitzRating.wins +
@@ -119,7 +119,7 @@ const Dashboard = class extends Component {
 
     const globalRating = ratings.reduce((acc, curr) => {
       curr.wins += acc.wins;
-      curr.loses += acc.loses;
+      curr.losses += acc.losses;
       curr.draws += acc.draws;
       curr.games += acc.games;
 
@@ -132,10 +132,10 @@ const Dashboard = class extends Component {
 
   private _createPie(rate: Rating) {
     //TODO: refactor to get interactive chart
-    const { wins, loses, draws, games } = rate;
+    const { wins, losses, draws, games } = rate;
 
     const calc = (i: number) => Math.round((i / games) * 100);
-    const percents = [calc(wins), calc(loses), calc(draws)];
+    const percents = [calc(wins), calc(losses), calc(draws)];
 
     const pieEl = this.DOM.el.querySelector('#dashboard-rank');
     pieEl.style.background = `conic-gradient(#777777 0% ${percents[0]}%, #b4b4b4 ${percents[0]}% ${percents[1]}%, #d9d9d9 ${percents[1]}% ${percents[2]}%)`;
@@ -143,7 +143,7 @@ const Dashboard = class extends Component {
 
     return {
       wins: percents[0],
-      loses: percents[1],
+      losses: percents[1],
       draws: percents[2],
       games: games
     };
