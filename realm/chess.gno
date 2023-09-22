@@ -230,7 +230,7 @@ func newGame(caller, opponent std.Address, seconds, increment int) *Game {
 
 		// Close previous games that timed-out
 		for _, g := range games {
-			_, _ = claimTimeout(g.ID)
+			_, _ = claimTimeout(g)
 		}
 	}
 
@@ -427,11 +427,9 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 	return g.json()
 }
 
-func claimTimeout(gameID string) (string, error) {
+func claimTimeout(g *Game) (string, error) {
 	// no assert origin call or caller check: anyone can claim a game to have
 	// finished in timeout.
-
-	g := getGame(gameID, true)
 
 	if g.Time == nil {
 		return "", errors.New("game is not time controlled")
@@ -469,7 +467,9 @@ func claimTimeout(gameID string) (string, error) {
 // ClaimTimeout should be called when the caller believes the game has resulted
 // in a timeout.
 func ClaimTimeout(gameID string) string {
-	out, err := claimTimeout(gameID)
+	g := getGame(gameID, true)
+
+	out, err := claimTimeout(g)
 	if err != nil {
 		panic(err.Error())
 	}
