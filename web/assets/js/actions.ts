@@ -29,8 +29,12 @@ const chessRealm: string = Config.GNO_CHESS_REALM;
 const faucetURL: string = Config.FAUCET_URL;
 const defaultGasWanted: Long = new Long(10_000_000);
 
-const decodeRealmResponse = (resp: string | null)=> {
-  return resp?JSON.parse(atob(resp).slice(2,-9)): null;
+
+const cleanUpRealmReturn = (ret:string)=> {
+  return ret.slice(2,-9).replace(/\\"/g,"\"");
+}
+const decodeRealmResponse = (resp: string)=> {  
+  return cleanUpRealmReturn(atob(resp));
 }
 /**
  * Actions is a singleton logic bundler
@@ -226,12 +230,12 @@ class Actions {
       try {
         const tryForGame = async () => {
           const lobbyResponse = await this.lookForGame();
-          const lobbyWaitResponse = decodeRealmResponse(lobbyResponse.deliver_tx.ResponseBase.Data)
-          if (lobbyWaitResponse == null || lobbyWaitResponse == '') {
+          const lobbyWaitResponse = decodeRealmResponse(lobbyResponse.deliver_tx.ResponseBase.Data as string);
+          const game: Game = JSON.parse(lobbyWaitResponse);
+          if (game == null) {
             retryTimeout = setTimeout(tryForGame, 3000)
           } else {
             clearTimeout(exit);
-            const game: Game = JSON.parse(lobbyWaitResponse as string);
 
             // Extract the game settings
             const isBlack: boolean =
@@ -274,7 +278,8 @@ class Actions {
     )) as string;
 
     // Parse the response
-    return JSON.parse(gameResponse);
+    
+    return JSON.parse(cleanUpRealmReturn(gameResponse));
   }
 
   /**
@@ -299,14 +304,13 @@ class Actions {
     ]);
 
     // Parse the response from the node
-    const moveDataRaw: string | null =
-      moveResponse.deliver_tx.ResponseBase.Data;
-    if (!moveDataRaw) {
+    const moveData= JSON.parse(decodeRealmResponse(moveResponse.deliver_tx.ResponseBase.Data as string))
+    if (!moveData) {
       throw new Error('invalid move response');
     }
 
     // Magically parse the response
-    return JSON.parse(moveDataRaw);
+    return moveData;
   }
 
   /**
