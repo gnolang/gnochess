@@ -103,27 +103,15 @@ func assertUserNotInLobby(caller std.Address) {
 // refreshLobby serves to run through the lobby, kick timed out users, and see if any users
 // can be matched with the current user.
 func refreshLobby(tc tcLobby) {
-	// determine sub lobby
-	sublob := lobby[tc]
-
 	callerAddr := std.GetOrigCaller()
-	callerPos := -1
-	var caller lobbyPlayer
-	for idx, player := range sublob {
+	now := time.Now()
+	for idx, player := range lobby[tc] {
 		if player.player.Address == callerAddr {
-			callerPos = idx
-			caller = player
 			// mark player as seen now
-			sublob[idx].seenAt = time.Now()
+			lobby[tc][idx].seenAt = now
 			break
 		}
 	}
-	// caller is not involved in lobby, or lobby only contains the player
-	if callerPos < 0 || len(sublob) < 2 {
-		return
-	}
-
-	now := time.Now()
 
 	// lobby housekeeping: kick any player that hasn't contacted us for the
 	// past 30 seconds.
@@ -136,16 +124,36 @@ func refreshLobby(tc tcLobby) {
 		}
 	}
 
-	// reassign sublob, so it doesn't reference an old (unupdated) slice.
-	sublob = lobby[tc]
+	// determine sub lobby
+	sublob := lobby[tc]
+
+	callerPos := -1
+	var caller lobbyPlayer
+	for idx, player := range sublob {
+		if player.player.Address == callerAddr {
+			callerPos = idx
+			caller = player
+			break
+		}
+	}
+	// caller is not involved in lobby, or lobby only contains the player
+	if callerPos < 0 || len(sublob) < 2 {
+		return
+	}
 
 	cat := tc.Category()
 	callerRating := caller.r(cat)
+	callerForce := now.Sub(caller.joinedAt) >= time.Second*10
 
 	for i, player := range sublob {
+		if i == callerPos {
+			continue
+		}
+		// force if either the caller or the player have been waiting for more than 10s.
+		force := callerForce || (now.Sub(player.joinedAt) >= time.Second*10)
 		// find player whose rating falls in each other's range.
-		if caller.acceptRating(cat, player.r(cat)) &&
-			player.acceptRating(cat, callerRating) {
+		if force || (caller.acceptRating(cat, player.r(cat)) &&
+			player.acceptRating(cat, callerRating)) {
 			lobbyMatch(tc, callerPos, i)
 			return
 		}
