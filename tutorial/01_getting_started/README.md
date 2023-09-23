@@ -36,6 +36,7 @@ SUBCOMMANDS
   doc         get documentation for the specified package or symbol (type, function, method, or variable/constant
 
 error parsing commandline arguments: flag: help requested
+$ cd tutorial/01_getting_started/
 $ gno doc greeter
 package greeter // import "gno.land/r/demo/001_getting_started/greeter"
 
@@ -119,7 +120,7 @@ With this in mind, let's change `render.gno` to add a simple "counter":
 - Add a new exported function `Add`, which increments this integer.
 - Write the value of this value when you call `Render`, importing `strconv` and
   using `strconv.Itoa` to convert it to a string.\
-  _Note: Gno doesn't currently support reflection, and as such package `fmt`._
+  _Note: Gno doesn't currently support reflection, and as such package `fmt`; however, these packages can be used within a testing environment because Gno has temporary support for extra packages (ie, fmt) that are implemented by a ["bridge"](https://github.com/gnolang/gno/blob/cfefb3b223de30a7db8b75c82c9853398caa2983/gnovm/tests/imports.go#L118) between Go and Gno._
 
 <details>
 <summary>Sample solution</summary>
