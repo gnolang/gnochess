@@ -221,7 +221,7 @@ const Gameboard = class extends Component {
       // If less than 1 move it means rival 30s first move - no timer
       clearTimeout(this.initMoveTimer);
       this.call('stopTimer', [init], 'gameplayers', 'me');
-      if (this.getMoveNumber() >= 1) {
+      if (this.getMoveNumber() > 1) {
         this.call('startTimer', [init], 'gameplayers', 'rival');
       }
       this.allowedToMove = false;
