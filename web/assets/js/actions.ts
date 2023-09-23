@@ -1,23 +1,27 @@
-import {saveToLocalStorage} from './utils/localstorage';
+import { saveToLocalStorage } from './utils/localstorage';
 import {
-    defaultFaucetTokenKey,
-    defaultMnemonicKey,
-    drawRequestTimer,
-    Game,
-    type GameoverType,
-    type GameSettings,
-    GameState,
-    GameTime,
-    Player,
-    Promotion
+  defaultFaucetTokenKey,
+  defaultMnemonicKey,
+  drawRequestTimer,
+  Game,
+  type GameoverType,
+  type GameSettings,
+  GameState,
+  GameTime,
+  Player,
+  Promotion
 } from './types/types';
-import {defaultTxFee, GnoWallet, GnoWSProvider} from '@gnolang/gno-js-client';
-import {BroadcastTxCommitResult, TM2Error, TransactionEndpoint} from '@gnolang/tm2-js-client';
-import {generateMnemonic} from './utils/crypto.ts';
+import { defaultTxFee, GnoWallet, GnoWSProvider } from '@gnolang/gno-js-client';
+import {
+  BroadcastTxCommitResult,
+  TM2Error,
+  TransactionEndpoint
+} from '@gnolang/tm2-js-client';
+import { generateMnemonic } from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
-import {constructFaucetError} from './utils/errors.ts';
-import {ErrorTransform} from './errors.ts';
+import { constructFaucetError } from './utils/errors.ts';
+import { AlreadyInLobbyError, ErrorTransform } from './errors.ts';
 
 // ENV values //
 const wsURL: string = Config.GNO_WS_URL;
@@ -145,10 +149,15 @@ class Actions {
         }
       )) as BroadcastTxCommitResult;
     } catch (e) {
-      if (!(e instanceof TM2Error)) {
-        throw e;
+      const ex = e as { log?: string; message?: string } | undefined;
+      if (
+        typeof ex?.log !== 'undefined' &&
+        typeof ex?.message !== 'undefined' &&
+        ex.message.includes('abci.StringError')
+      ) {
+        throw ErrorTransform(e as TM2Error);
       }
-      throw ErrorTransform(e);
+      throw e;
     }
   }
 
@@ -170,7 +179,11 @@ class Actions {
         time.increment.toString()
       ]);
     } catch (e) {
-      console.log('Already in Lobby');
+      if (e instanceof AlreadyInLobbyError) {
+        console.log('Already in Lobby', e);
+      } else {
+        throw e;
+      }
     }
 
     try {
