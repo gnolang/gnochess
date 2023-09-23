@@ -279,7 +279,7 @@ class Actions {
     )) as string;
 
     // Parse the response
-    return JSON.parse(decodeRealmResponse(gameResponse));
+    return JSON.parse(cleanUpRealmReturn(gameResponse));
   }
 
   /**
@@ -408,7 +408,7 @@ class Actions {
             )) as string;
 
           // Parse the response
-          const game: Game = JSON.parse(decodeRealmResponse(getGameResponse));
+          const game: Game = JSON.parse(cleanUpRealmReturn(getGameResponse));
 
           if (game.state === GameState.DRAWN_INSUFFICIENT) {
             // Clear the fetch interval
@@ -533,7 +533,7 @@ class Actions {
       )) as string;
 
     // Parse the response
-    return JSON.parse(decodeRealmResponse(leaderboardResponse));
+    return JSON.parse(cleanUpRealmReturn(leaderboardResponse));
   }
 
   /**
@@ -547,7 +547,7 @@ class Actions {
     )) as string;
 
     // Parse the response
-    return JSON.parse(decodeRealmResponse(playerResponse));
+    return JSON.parse(cleanUpRealmReturn(playerResponse));
   }
 
   /**
