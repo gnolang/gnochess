@@ -223,7 +223,7 @@ func LobbyQuit() {
 	for tc, sublob := range lobby {
 		for i, pl := range sublob {
 			if pl.player.Address == caller {
-				lobby[tc] = append(sublob[:i], sublob[i:]...)
+				lobby[tc] = append(sublob[:i], sublob[i+1:]...)
 				return
 			}
 		}
