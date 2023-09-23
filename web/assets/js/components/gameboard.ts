@@ -166,7 +166,7 @@ const Gameboard = class extends Component {
 
       // first call only if user is white
       if (this.firstMove) {
-        this.firstMove = true;
+        this.firstMove = false;
         const dateStartGame = gameState.time?.started_at;
 
         if (!dateStartGame) {
