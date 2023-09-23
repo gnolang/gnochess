@@ -230,7 +230,9 @@ func newGame(caller, opponent std.Address, seconds, increment int) *Game {
 
 		// Close previous games that timed-out
 		for _, g := range games {
-			_, _ = claimTimeout(g)
+			if !g.State.IsFinished() {
+				_, _ = claimTimeout(g)
+			}
 		}
 	}
 
