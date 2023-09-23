@@ -35,6 +35,11 @@ export interface GameTime {
   increment: number;
 }
 
+export enum GameType {
+  BLITZ = 'blitz',
+  RAPID = 'rapid'
+}
+
 export enum Promotion {
   NO_PROMOTION = 0,
   QUEEN = 'Q',

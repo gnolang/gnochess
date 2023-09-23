@@ -1,7 +1,12 @@
 import { Component } from 'sevejs';
 import { gsap } from 'gsap';
 import { truncateString } from '../utils/truncate';
-import { type Colors, type GameoverType } from '../types/types';
+import {
+  type Colors,
+  type GameoverType,
+  GameTime,
+  GameType
+} from '../types/types';
 
 const Gameplayers = class extends Component {
   constructor(opts: any) {
@@ -24,6 +29,7 @@ const Gameplayers = class extends Component {
   appear() {
     gsap.to(this.DOM.el, { autoAlpha: 1, display: 'flex' });
   }
+
   disappear() {
     gsap.to('.player-info', { '--banner-x': '-100%' });
     return gsap.to(this.DOM.el, {
@@ -33,16 +39,16 @@ const Gameplayers = class extends Component {
     });
   }
 
-  config(time: number[], color: Colors, token = '', category: string) {
+  config(time: GameTime, color: Colors, address: string = '', category: GameType) {
     //-- config game --
     //config token + type
-    this.DOM.token.innerHTML = truncateString(token, 4, 4);
+    this.DOM.token.innerHTML = truncateString(address, 4, 4);
     this.color = color;
     this.category = category;
 
     //config timer
-    this.increment = time[1];
-    this.timer = time[0] * 60; //min to sec
+    this.increment = time.increment;
+    this.timer = time.time * 60; //min to sec
     this._createTime(this.timer);
 
     //config pawn color
@@ -83,6 +89,7 @@ const Gameplayers = class extends Component {
 
     this.clock = setInterval(clockAction, 1000);
   }
+
   stopTimer(gameover = false) {
     clearInterval(this.clock);
     if (this.timerActive) {
