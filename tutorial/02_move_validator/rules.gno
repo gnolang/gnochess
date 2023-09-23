@@ -161,17 +161,17 @@ func (p Position) EncodeFEN() string {
 //
 // Caller must guarantee m.To and m.From to be valid (<64).
 func (p Position) ValidateMove(m Move) (newP Position, valid bool) {
+	// XXX: This below is a Gno bug! In Go we don't need to do this (Position is
+	// a value, not a reference), but in Gno there is a bug whereby the underlying
+	// p still holds (some) references.
+	// Just a small reminder that the software is not _beta_ quality, it's
+	// very, very alpha, and it's a shame the Greek alphabet doesn't allow me
+	// to go backwards to express how early in development we still are.
+	p := oldp.clone()
+
 	if p.B[m.To].StripColor() == PieceKing {
 		return
 	}
-
-	return p.validateMove(m)
-}
-
-// validateMove allows for m to be a "king-capture" move, which is illegal in
-// chess, but it is useful for InCheck. This is generally called "pseudo-legal".
-func (oldp Position) validateMove(m Move) (_ Position, ok bool) {
-	p := oldp.clone()
 
 	piece := p.B[m.From]
 
@@ -196,188 +196,13 @@ func (oldp Position) validateMove(m Move) (_ Position, ok bool) {
 	// Marked as true for succesful promotions.
 	var promoted bool
 
-	isDiag := func() bool {
-		// move diagonally (|dr| == |dc|)
-		if abs(dr) != abs(dc) {
-			return false
-		}
-		signr, signc := sign(dr), sign(dc)
-		// squares crossed must be empty
-		for i := int8(1); i < abs(dr); i++ {
-			if p.B[m.From.Move(i*signr, i*signc)] != PieceEmpty {
-				return false
-			}
-		}
-		return true
-	}
-	isHorizVert := func() bool {
-		// only one of dr, dc must be 0 (horiz/vert movement)
-		if dr != 0 && dc != 0 {
-			return false
-		}
-		// squares crossed must be empty
-		for i := int8(1); i < abs(dr); i++ {
-			if p.B[m.From.Move(i*sign(dr), 0)] != PieceEmpty {
-				return false
-			}
-		}
-		for i := int8(1); i < abs(dc); i++ {
-			if p.B[m.From.Move(0, i*sign(dc))] != PieceEmpty {
-				return false
-			}
-		}
-		return true
-	}
-
 	switch piece.StripColor() {
 	case PieceRook:
-		if !isHorizVert() {
-			return
-		}
-		// if rook has moved from a starting position, this disables castling
-		// on the side of the rook. flag accordingly in the move.
-		var fg Square
-		if color == Black {
-			fg = 7 << 3
-		}
-		switch m.From {
-		case fg: // a-col rook (either side)
-			if color == White {
-				newFlags |= NoCastleWQ
-			} else {
-				newFlags |= NoCastleBQ
-			}
-		case fg | 7: // h-col rook (either side)
-			if color == White {
-				newFlags |= NoCastleWK
-			} else {
-				newFlags |= NoCastleBK
-			}
-		}
-
 	case PieceKnight:
-		// move L-shaped
-		// rationale: if you only have positive integers, the only way you can
-		// obtain x * y == 2 is if x,y are either 1,2 or 2,1.
-		if abs(dc*dr) != 2 {
-			return
-		}
-
 	case PieceBishop:
-		if !isDiag() {
-			return
-		}
-
 	case PieceQueen:
-		if !isHorizVert() && !isDiag() {
-			return
-		}
-
 	case PieceKing:
-		// castling
-		if abs(dc) == 2 && dr == 0 {
-			// determine if castle is a valid form of castling for the given color
-			ctype := m.isCastle(color)
-			if ctype == 0 {
-				return
-			}
-
-			if false ||
-				// check that there are no previous moves which disable castling
-				p.castlingDisabled(color, ctype) ||
-				// check that we have the exact board set ups we need
-				// + make sure that the original and crossed squares are not in check
-				!p.checkCastlingSetup(ctype) {
-				return
-			}
-
-			// perform rook move here
-			p.B = p.B.castleRookMove(color, ctype)
-			// add NoCastle flags to prevent any further castling
-			if color == White {
-				newFlags |= NoCastleWQ | NoCastleWK
-			} else {
-				newFlags |= NoCastleBQ | NoCastleBK
-			}
-			break
-		}
-		// move 1sq in all directions
-		if dc < -1 || dc > 1 || dr < -1 || dr > 1 {
-			return
-		}
-		// king has moved: disable castling.
-		if color == White {
-			newFlags |= NoCastleWQ | NoCastleWK
-		} else {
-			newFlags |= NoCastleBQ | NoCastleBK
-		}
-
 	case PiecePawn:
-		// determine direction depending on color
-		dir := int8(1)
-		if color == Black {
-			dir = -1
-		}
-
-		switch {
-		case dc == 0 && dr == dir: // 1sq up
-			// destination must be empty (no captures allowed)
-			if p.B[m.To] != PieceEmpty {
-				return
-			}
-		case dc == 0 && dr == dir*2: // 2sq up (only from starting row)
-			wantRow := Square(1)
-			if color == Black {
-				wantRow = 6
-			}
-			// check starting row, and that two squares are empty
-			if (m.From>>3) != wantRow ||
-				p.B[m.From.Move(int8(dir), 0)] != PieceEmpty ||
-				p.B[m.To] != PieceEmpty {
-				return
-			}
-			_, col := m.To.Split()
-			newFlags |= EnPassant | PositionFlags(col)
-		case abs(dc) == 1 && dr == dir: // capture on diag
-			// must be a capture
-			if p.B[m.To] == PieceEmpty {
-				if sq := p.checkEnPassant(color, m.To); sq != SquareInvalid {
-					// remove other pawn
-					p.B[sq] = PieceEmpty
-					break
-				}
-				return
-			}
-			// p.B[m.To] is necessarily an opponent piece; we check & return
-			// p.B[m.To].Color == color at the beginning of the fn.
-		default: // not a recognized move
-			return
-		}
-
-		row := m.To >> 3
-		if (color == White && row == 7) ||
-			(color == Black && row == 0) {
-			switch m.Promotion {
-			case 0:
-				// m.To is a king? then this is a pseudo-move check.
-				// assume queen in that case.
-				if p.B[m.To].StripColor() != PieceKing {
-					// no promotion given, invalid
-					return
-				}
-				m.Promotion = PieceQueen
-			case PieceQueen, PieceBishop, PieceKnight, PieceRook:
-			default:
-				return
-			}
-			promoted = true
-			p.B[m.From] = m.Promotion | color.Piece()
-		}
-	}
-
-	// reject moves with promotion if there's nothing to promote
-	if m.Promotion != 0 && !promoted {
-		return
 	}
 
 	if p.B[m.To].StripColor() == PieceKing {
@@ -598,78 +423,6 @@ func (p Position) checkEnPassant(c Color, sq Square) Square {
 	return Square(3<<3 | col)
 }
 
-// InsufficientMaterial tests for insufficient material on the board, in which
-// case it returns true.
-//
-// See this reference for the rules used:
-// https://www.chess.com/article/view/how-chess-games-can-end-8-ways-explained#insufficient-material
-//
-//   - king vs king
-//   - king+N/B vs king
-//   - king+NN vs king
-//   - king+N/B vs king+N/B
-func (bd Board) InsufficientMaterial() bool {
-	// strategy:
-	// store the pieces which could count for an insufficient material
-	// scenario in w, b.
-	// if we encounter any pawn, queen, or rook, material is sufficient.
-	// if we encounter 2 bishops, material is sufficient.
-	// afterwards, we verify that w and b are one of the possible insuf material
-	// scenarios.
-
-	const (
-		imN  byte = 1 << iota // knight
-		imN2                  // second knight
-		imB                   // bishop
-	)
-	var w, b byte
-	for _, p := range bd {
-		strip := p.StripColor()
-		switch strip {
-		case PieceQueen, PiecePawn, PieceRook:
-			return false
-		case PieceKing, PieceEmpty:
-			continue
-		}
-		// strip is one of PieceBishop PieceKnight
-		t := &w
-		if p.Color() == Black {
-			t = &b
-		}
-		if strip == PieceBishop {
-			if *t&imB != 0 {
-				return false
-			}
-			*t |= imB
-		} else {
-			if *t&imN2 != 0 {
-				// third knight (ie. from pawn promotion)
-				return false
-			}
-			if *t&imN != 0 {
-				*t |= imN2
-			} else {
-				*t |= imN
-			}
-		}
-	}
-	// make it so that w is bigger than b
-	if b > w {
-		w, b = b, w
-	}
-	switch [2]byte{w, b} {
-	case [2]byte{0, 0}, // king vs king
-		[2]byte{imN, 0}, // king+N/B vs king
-		[2]byte{imB, 0},
-		[2]byte{imN | imN2, 0}, // king+NN vs king
-		[2]byte{imN, imN},      // king+N/B vs king+N/B
-		[2]byte{imB, imB},
-		[2]byte{imB, imN}: // imB > imN, so [2]byte{imN, imB} cannot happen
-		return true
-	}
-	return false
-}
-
 // GenMoves implements a rudimentary move generator.
 // This is not used beyond aiding in determing stalemate and doing perft tests.
 // Each generated move is passed to cb.
@@ -832,59 +585,6 @@ func deltaGenerator(p Piece, cb func(d Delta) byte) {
 			cb(Delta{0, 2}) == deltaGenStop ||
 			cb(Delta{0, -2}) == deltaGenStop
 	}
-}
-
-// Outcome is returned by IsFinished, and indicates if the game has finished,
-// and additionally if either of the player can claim draw by the 50-move rule
-// or by 3-fold repetition.
-//
-// Either one of the sequential outcomes will be set (values 1-5), indicating
-// that the game is terminated, or the low 3 bits will be 0, and
-// the Can* flags may be set.
-type Outcome byte
-
-const (
-	NotFinished Outcome = iota
-	Checkmate
-	Stalemate
-	Drawn75Move
-	Drawn5Fold
-
-	Can50Move       Outcome = 8
-	Can3Fold        Outcome = 16
-	CanInsufficient Outcome = 32
-)
-
-var errFound = errors.New("found")
-
-// IsFinished determines if the game at the given position can be considered
-// "finished".
-// See [Outcome] for the possible results.
-func (p Position) IsFinished() Outcome {
-	err := p.GenMoves(func(Position, Move) error {
-		return errFound
-	})
-	// If there is any legal move, this is not any kind of mate.
-	if err != nil {
-		switch {
-		case p.HalfMoveClock >= 150:
-			return Drawn75Move
-		}
-		var o Outcome
-		if p.HalfMoveClock >= 100 {
-			o |= Can50Move
-		}
-		if p.B.InsufficientMaterial() {
-			o |= CanInsufficient
-		}
-		return o
-	}
-
-	// No legal moves. Is the king in check?
-	if p.B.InCheck(p.Color()) {
-		return Checkmate
-	}
-	return Stalemate
 }
 
 // Color determines a player's color -- either white or black.
