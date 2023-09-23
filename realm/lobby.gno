@@ -10,20 +10,34 @@ import (
 
 type lobbyPlayer struct {
 	joinedAt time.Time
+	seenAt   time.Time
 	player   *Player
-	lo, hi   float64
 }
 
 func (l lobbyPlayer) r(cat Category) float64 { return l.player.CategoryInfo[cat].Rating }
 
+// returns whether the rating r is within l's current "acceptable" range.
+func (l lobbyPlayer) acceptRating(cat Category, r float64) bool {
+	delta := int(time.Since(l.joinedAt) / time.Second)
+	if delta >= 10 {
+		return true
+	}
+
+	halfsize := bracketSize[delta] / 2
+	rat := l.r(cat)
+	return r >= (rat-halfsize) && r <= (rat+halfsize)
+}
+
+type tcLobby byte
+
 // time control lobby divisions. N+M -> tcLobbyNpM
 const (
-	tcLobby5p0 = iota
+	tcLobby5p0 tcLobby = iota
 	tcLobby10p5
 	tcLobbyMax
 )
 
-func tcCategory(tc int) Category {
+func (tc tcLobby) Category() Category {
 	switch tc {
 	case tcLobby5p0:
 		return Blitz
@@ -32,90 +46,92 @@ func tcCategory(tc int) Category {
 	}
 }
 
+func (tc tcLobby) Time() (secs, incr int) {
+	switch tc {
+	case tcLobby5p0:
+		return 60 * 5, 0
+	case tcLobby10p5:
+		return 60 * 10, 5
+	default:
+		panic("invalid tc value")
+	}
+}
+
 var (
-	lobby          [tcLobbyMax][]lobbyPlayer
-	lobbyUpdatedAt [tcLobbyMax]time.Time
-	playerGameID   avl.Tree // player addr -> game id (string). only set when not in lobby.
+	lobby            [tcLobbyMax][]lobbyPlayer
+	lobbyPlayer2Game avl.Tree // player addr -> *Game. set after a user is matched; reset when joining again.
 )
+
+// XXX: REMOVE BEFORE PRODUCTION
+func LobbyData() ([tcLobbyMax][]lobbyPlayer, avl.Tree) {
+	return lobby, lobbyPlayer2Game
+}
 
 func LobbyJoin(seconds, increment int) {
 	std.AssertOriginCall()
 
-	var tcLobby int
+	var tc tcLobby
 	switch {
 	case seconds == (60*5) && increment == 0:
-		tcLobby = tcLobby5p0
+		tc = tcLobby5p0
 	case seconds == (60*10) && increment == 5:
-		tcLobby = tcLobby10p5
+		tc = tcLobby10p5
 	default:
 		panic("can only use time controls 5+0 or 10+5")
 	}
 
+	// Ensure that user's previous games are finished (or timed out).
 	caller := std.GetOrigCaller()
-	for i := 0; i < tcLobbyMax; i++ {
-		for _, pl := range lobby[i] {
+
+	assertGamesFinished(getUserGames(caller))
+	assertUserNotInLobby(caller)
+
+	// remove caller from lobbyPlayer2Game, so LobbyGameFound
+	// returns the right value.
+	lobbyPlayer2Game.Remove(caller.String())
+
+	now := time.Now()
+	lobby[tc] = append(lobby[tc], lobbyPlayer{joinedAt: now, seenAt: now, player: getPlayer(caller)})
+	refreshLobby(tc)
+}
+
+func assertUserNotInLobby(caller std.Address) {
+	for _, sublob := range lobby {
+		for _, pl := range sublob {
 			if pl.player.Address == caller {
 				panic("you are already in the lobby")
 			}
 		}
 	}
-	// TODO: Check if has open games
-
-	// remove caller from playerGameID, so LobbyGameFound
-	// returns the right value.
-	playerGameID.Remove(caller.String())
-
-	lobby[tcLobby] = append(lobby[tcLobby], lobbyPlayer{joinedAt: time.Now(), player: getPlayer(caller)})
-	refreshLobby(tcLobby)
 }
 
-// refreshLobby serves to run through the lobby, update lo/hi values and find if there are
-// any matchings to be made with the current user.
-func refreshLobby(tc int) {
+// refreshLobby serves to run through the lobby, kick timed out users, and see if any users
+// can be matched with the current user.
+func refreshLobby(tc tcLobby) {
+	callerAddr := std.GetOrigCaller()
+	now := time.Now()
+	for idx, player := range lobby[tc] {
+		if player.player.Address == callerAddr {
+			// mark player as seen now
+			lobby[tc][idx].seenAt = now
+			break
+		}
+	}
+
+	// lobby housekeeping: kick any player that hasn't contacted us for the
+	// past 30 seconds.
+	// do this BEFORE matching the caller, as we want to give them someone who
+	// is seemingly active in the lobby.
+	for i := 0; i < len(lobby[tc]); i++ {
+		if now.Sub(lobby[tc][i].seenAt) >= time.Second*30 {
+			lobby[tc] = append(lobby[tc][:i], lobby[tc][i+1:]...)
+			i--
+		}
+	}
+
 	// determine sub lobby
 	sublob := lobby[tc]
-	now := time.Now()
-	cat := tcCategory(tc)
 
-	// check if time passed; if so update leaderboard lo/hi's.
-	// check if we have someone "timed out" and match them to the closest
-	// player available in the lobby.
-	// (we don't iteratively match all users because we are still presumably running
-	// using someone's gas).
-	if !lobbyUpdatedAt[tc].Equal(now) {
-		firstTimeout := -1
-		for pos, player := range sublob {
-			rat := player.r(cat)
-			wait := now.Sub(player.joinedAt) / time.Second
-			if wait >= 10 {
-				if firstTimeout < 0 {
-					firstTimeout = pos
-				}
-				player.lo, player.hi = math.Inf(-1), math.Inf(1)
-			} else {
-				halfsize := bracketSize[int(wait)] / 2
-				player.lo, player.hi = rat-halfsize, rat+halfsize
-			}
-			sublob[pos] = player
-		}
-		lobbyUpdatedAt[tc] = now
-
-		if firstTimeout >= 0 && len(sublob) >= 2 {
-			ftr := sublob[firstTimeout].r(cat)
-			pos := lobbyClosest(sublob, cat, ftr, firstTimeout)
-			lobbyMatch(tc, firstTimeout, pos)
-			// update sublob value, as lobbyMatch will have
-			// updated lobby[tc].
-			sublob = lobby[tc]
-		}
-	}
-
-	if len(sublob) < 2 {
-		// 1 or 0 players; not much we can do!
-		return
-	}
-
-	callerAddr := std.GetOrigCaller()
 	callerPos := -1
 	var caller lobbyPlayer
 	for idx, player := range sublob {
@@ -125,46 +141,35 @@ func refreshLobby(tc int) {
 			break
 		}
 	}
-	if callerPos < 0 {
-		// perform nothing, player not found
+	// caller is not involved in lobby, or lobby only contains the player
+	if callerPos < 0 || len(sublob) < 2 {
 		return
 	}
-	closestPos := lobbyClosest(sublob, cat, caller.r(cat), callerPos)
-	closest := sublob[closestPos]
 
-	// ensure each is the other's bracket,
-	// OR one of them has been waiting 10s+
-	if now.Sub(caller.joinedAt) >= time.Second*10 ||
-		now.Sub(closest.joinedAt) >= time.Second*10 ||
-		(closest.r(cat) >= caller.lo && closest.r(cat) <= caller.hi &&
-			caller.r(cat) >= closest.lo && caller.r(cat) <= closest.hi) {
-		lobbyMatch(tc, callerPos, closestPos)
-	}
-}
+	cat := tc.Category()
+	callerRating := caller.r(cat)
+	callerForce := now.Sub(caller.joinedAt) >= time.Second*10
 
-func lobbyClosest(sublob []lobbyPlayer, cat Category, rating float64, skip int) (idx int) {
-	delta := math.Inf(1)
-	for i, pl := range sublob {
-		if i == skip {
+	for i, player := range sublob {
+		if i == callerPos {
 			continue
 		}
-		if cd := math.Abs(rating - pl.r(cat)); cd < delta {
-			delta, idx = cd, i
+		// force if either the caller or the player have been waiting for more than 10s.
+		force := callerForce || (now.Sub(player.joinedAt) >= time.Second*10)
+		// find player whose rating falls in each other's range.
+		if force || (caller.acceptRating(cat, player.r(cat)) &&
+			player.acceptRating(cat, callerRating)) {
+			lobbyMatch(tc, callerPos, i)
+			return
 		}
 	}
-	return
 }
 
-func lobbyMatch(tc, p1, p2 int) {
+func lobbyMatch(tc tcLobby, p1, p2 int) {
 	// Get the two players, create a new game with them.
-	var secs, incr int
-	switch tc {
-	case tcLobby5p0:
-		secs, incr = 60*5, 0
-	case tcLobby10p5:
-		secs, incr = 60*10, 5
-	}
+	secs, incr := tc.Time()
 	a1, a2 := lobby[tc][p1].player.Address, lobby[tc][p2].player.Address
+
 	game := newGame(a1, a2, secs, incr)
 
 	// remove p1 and p2 from lobby
@@ -175,9 +180,9 @@ func lobbyMatch(tc, p1, p2 int) {
 	nl = append(nl, lobby[tc][p2+1:]...)
 	lobby[tc] = nl
 
-	// add to playerGameID
-	playerGameID.Set(a1.String(), game.ID)
-	playerGameID.Set(a2.String(), game.ID)
+	// add to lobbyPlayer2Game
+	lobbyPlayer2Game.Set(a1.String(), game)
+	lobbyPlayer2Game.Set(a2.String(), game)
 }
 
 /*
@@ -211,11 +216,11 @@ func LobbyGameFound() string {
 	refreshLobby(tcLobby5p0)
 	refreshLobby(tcLobby10p5)
 
-	val, ok := playerGameID.Get(std.GetOrigCaller().String())
+	val, ok := lobbyPlayer2Game.Get(std.GetOrigCaller().String())
 	if !ok {
 		return "null"
 	}
-	return GetGame(val.(string))
+	return val.(*Game).json()
 }
 
 func LobbyQuit() {
@@ -223,11 +228,12 @@ func LobbyQuit() {
 	for tc, sublob := range lobby {
 		for i, pl := range sublob {
 			if pl.player.Address == caller {
-				lobby[tc] = append(sublob[:i], sublob[i:]...)
+				lobby[tc] = append(sublob[:i], sublob[i+1:]...)
 				return
 			}
 		}
 	}
+	lobbyPlayer2Game.Remove(caller.String())
 
 	panic("you are not in the lobby")
 }
