@@ -26,29 +26,26 @@ const (
 	CategoryMax
 )
 
+var categoryString = [CategoryMax]string{
+	Blitz:          "blitz",
+	Rapid:          "rapid",
+	Correspondence: "correspondence",
+}
+
 var categoryList = [...]Category{Blitz, Rapid, Correspondence}
 
 func (c Category) String() string {
-	// TODO: convert to array map, for both string and FromString
-	switch c {
-	case Blitz:
-		return "blitz"
-	case Rapid:
-		return "rapid"
-	case Correspondence:
-		return "correspondence"
+	if c > CategoryMax || categoryString[c] == "" {
+		panic("invalid category")
 	}
-	panic("invalid category")
+	return categoryString[c]
 }
 
 func CategoryFromString(s string) Category {
-	switch s {
-	case "blitz":
-		return Blitz
-	case "rapid":
-		return Rapid
-	case "correspondence":
-		return Correspondence
+	for i, cs := range categoryString {
+		if s == cs {
+			return Category(i)
+		}
 	}
 	panic("invalid category")
 }
