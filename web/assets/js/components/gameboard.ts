@@ -163,8 +163,7 @@ const Gameboard = class extends Component {
       this.allowedToMove = true;
       this.call('stopTimer', [init], 'gameplayers', 'rival');
 
-      //TODO: chech if this.getMoveNumber() return 0 or 1 for before first move.
-      if (this.getMoveNumber() > 1) {
+      if (this.getMoveNumber() >= 1) {
         const dateStartGame = gameState.time?.started_at;
 
         if (!dateStartGame) {
