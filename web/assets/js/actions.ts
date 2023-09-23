@@ -14,17 +14,27 @@ import {
 import { defaultTxFee, GnoWallet, GnoWSProvider } from '@gnolang/gno-js-client';
 import {
   BroadcastTxCommitResult,
+  TM2Error,
   TransactionEndpoint
 } from '@gnolang/tm2-js-client';
 import { generateMnemonic } from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
+import { constructFaucetError } from './utils/errors.ts';
+import { AlreadyInLobbyError, ErrorTransform } from './errors.ts';
 
 // ENV values //
 const wsURL: string = Config.GNO_WS_URL;
 const chessRealm: string = Config.GNO_CHESS_REALM;
 const faucetURL: string = Config.FAUCET_URL;
-const defaultGasWanted: Long = new Long(1000000); // 1M
+const defaultGasWanted: Long = new Long(10_000_000);
+
+const cleanUpRealmReturn = (ret: string) => {
+  return ret.slice(2, -9).replace(/\\"/g, '"');
+};
+const decodeRealmResponse = (resp: string) => {
+  return cleanUpRealmReturn(atob(resp));
+};
 
 /**
  * Actions is a singleton logic bundler
@@ -39,6 +49,7 @@ class Actions {
   private wallet: GnoWallet | null = null;
   private provider: GnoWSProvider | null = null;
   private faucetToken: string | null = null;
+  private isInTheLobby = false;
 
   private constructor() {}
 
@@ -92,7 +103,7 @@ class Actions {
       this.faucetToken = faucetToken;
 
       // Attempt to fund the account
-      await this.fundAccount();
+      await this.fundAccount(this.faucetToken);
     }
   }
 
@@ -101,12 +112,11 @@ class Actions {
    * @param token the faucet token
    */
   public async setFaucetToken(token: string) {
-    this.faucetToken = token;
-
-    localStorage.setItem(defaultFaucetTokenKey, token);
-
     // Attempt to fund the account
-    await this.fundAccount();
+
+    await this.fundAccount(token);
+    this.faucetToken = token;
+    localStorage.setItem(defaultFaucetTokenKey, token);
   }
 
   /**
@@ -114,6 +124,41 @@ class Actions {
    */
   public getFaucetToken(): string | null {
     return this.faucetToken || localStorage.getItem(defaultFaucetTokenKey);
+  }
+
+  /**
+   * Performs a transaction, handling common error cases and transforming them
+   * into known error types.
+   */
+  public async callMethod(
+    path: string,
+    method: string,
+    args: string[] | null,
+    gasWanted: Long = defaultGasWanted
+  ): Promise<BroadcastTxCommitResult> {
+    try {
+      return (await this.wallet?.callMethod(
+        path,
+        method,
+        args,
+        TransactionEndpoint.BROADCAST_TX_COMMIT,
+        undefined,
+        {
+          gasFee: defaultTxFee,
+          gasWanted: gasWanted
+        }
+      )) as BroadcastTxCommitResult;
+    } catch (e) {
+      const ex = e as { log?: string; message?: string } | undefined;
+      if (
+        typeof ex?.log !== 'undefined' &&
+        typeof ex?.message !== 'undefined' &&
+        ex.message.includes('abci.StringError')
+      ) {
+        throw ErrorTransform(e as TM2Error);
+      }
+      throw e;
+    }
   }
 
   /****************
@@ -125,39 +170,39 @@ class Actions {
    * @param time
    */
   public async joinLobby(time: GameTime): Promise<GameSettings> {
+    // Backend expects seconds.
+    const seconds = time.time * 60;
     // Join the waiting lobby
-    await this.wallet?.callMethod(
-      chessRealm,
-      'LobbyJoin',
-      [time.time.toString(), time.increment.toString()],
-      TransactionEndpoint.BROADCAST_TX_COMMIT,
-      undefined,
-      {
-        gasFee: defaultTxFee,
-        gasWanted: defaultGasWanted
+    try {
+      await this.callMethod(chessRealm, 'LobbyJoin', [
+        seconds.toString(),
+        time.increment.toString()
+      ]);
+    } catch (e) {
+      if (e instanceof AlreadyInLobbyError) {
+        console.log('Already in Lobby', e);
+      } else {
+        throw e;
       }
-    );
+    }
 
     try {
       // Wait to be matched with an opponent
       return await this.waitForGame();
     } catch (e) {
       // Unable to find the game, cancel the search
-      await this.wallet?.callMethod(
-        chessRealm,
-        'LobbyQuit',
-        [],
-        TransactionEndpoint.BROADCAST_TX_COMMIT,
-        undefined,
-        {
-          gasFee: defaultTxFee,
-          gasWanted: defaultGasWanted
-        }
-      );
-
+      await this.callMethod(chessRealm, 'LobbyQuit', null);
+      this.quitLobby();
       // Propagate the error
       throw new Error('unable to find game');
     }
+  }
+
+  /**
+   * Leave the waiting lobby for the game
+   */
+  public quitLobby() {
+    this.isInTheLobby = false;
   }
 
   /**
@@ -165,71 +210,74 @@ class Actions {
    * @param timeout the maximum wait time for a game
    * @private
    */
+  private async lookForGame(): Promise<BroadcastTxCommitResult> {
+    if (!this.isInTheLobby) throw new Error('Left the lobby');
+    return (await this.callMethod(
+      chessRealm,
+      'LobbyGameFound',
+      null
+    )) as BroadcastTxCommitResult;
+  }
+
   private async waitForGame(timeout?: number): Promise<GameSettings> {
-    return new Promise(async (resolve, reject) => {
-      const exitTimeout = timeout ? timeout : drawRequestTimer * 1000; // wait time is max 15s
-
-      const fetchInterval = setInterval(async () => {
-        try {
-          // Check if the game is ready
-          const lobbyResponse: BroadcastTxCommitResult =
-            (await this.wallet?.callMethod(
-              chessRealm,
-              'LobbyGameFound',
-              [],
-              TransactionEndpoint.BROADCAST_TX_COMMIT,
-              undefined,
-              {
-                gasFee: defaultTxFee,
-                gasWanted: defaultGasWanted
-              }
-            )) as BroadcastTxCommitResult;
-
-          // Parse the response
-          const lobbyWaitResponse: string | null =
-            lobbyResponse.deliver_tx.ResponseBase.Data;
-
-          if (lobbyWaitResponse == null || lobbyWaitResponse == '') {
-            return;
-          }
-
-          // Clear the fetch interval
-          clearInterval(fetchInterval);
-
-          // Parse the game data
-          const game: Game = JSON.parse(lobbyWaitResponse as string);
-
-          // Extract the game settings
-          const isBlack: boolean =
-            game.black == (await this.wallet?.getAddress());
-
-          const gameSettings: GameSettings = {
-            game: {
-              id: game.id
-            },
-            me: {
-              id: isBlack ? game.black : game.white,
-              color: isBlack ? 'b' : 'w'
-            },
-            rival: {
-              id: isBlack ? game.white : game.black,
-              color: isBlack ? 'w' : 'b'
-            }
-          };
-
-          resolve(gameSettings);
-        } catch (e) {
-          // Game not ready, continue polling...
-        }
-      }, 3000); // 3s, since it's an expensive call
-
-      setTimeout(() => {
-        // Clear the fetch interval
-        clearInterval(fetchInterval);
-
+    this.isInTheLobby = true;
+    let retryTimeout: NodeJS.Timeout;
+    const exitTimeout = timeout ? timeout : drawRequestTimer * 1000; // wait time is max 15s
+    return new Promise((resolve, reject) => {
+      let exit = setTimeout(() => {
+        clearTimeout(retryTimeout);
         reject('wait timeout exceeded');
       }, exitTimeout);
+      try {
+        const tryForGame = async () => {
+          const lobbyResponse = await this.lookForGame();
+          const lobbyWaitResponse = decodeRealmResponse(
+            lobbyResponse.deliver_tx.ResponseBase.Data as string
+          );
+          const game: Game = JSON.parse(lobbyWaitResponse);
+          if (game == null) {
+            retryTimeout = setTimeout(tryForGame, 3000);
+          } else {
+            clearTimeout(exit);
+
+            // Extract the game settings
+            const isBlack: boolean =
+              game.black == (await this.wallet?.getAddress());
+
+            const gameSettings: GameSettings = {
+              game: {
+                id: game.id
+              },
+              me: {
+                id: isBlack ? game.black : game.white,
+                color: isBlack ? 'b' : 'w'
+              },
+              rival: {
+                id: isBlack ? game.white : game.black,
+                color: isBlack ? 'w' : 'b'
+              }
+            };
+
+            resolve(gameSettings);
+          }
+        };
+        retryTimeout = setTimeout(tryForGame, 0);
+      } catch (e) {
+        clearTimeout(exit);
+        reject(e);
+      }
     });
+  }
+
+  /**
+   * Checks if the given game is ongoing
+   * @param gameID the ID of the running game
+   */
+  public async isGameOngoing(gameID: string) {
+    // Fetch the game
+    const game: Game = await this.getGame(gameID);
+
+    return game.state === GameState.OPEN;
   }
 
   /**
@@ -240,11 +288,11 @@ class Actions {
   public async getGame(gameID: string): Promise<Game> {
     const gameResponse: string = (await this.provider?.evaluateExpression(
       chessRealm,
-      `GetGame(${gameID})`
+      `GetGame("${gameID}")`
     )) as string;
 
     // Parse the response
-    return JSON.parse(gameResponse);
+    return JSON.parse(cleanUpRealmReturn(gameResponse));
   }
 
   /**
@@ -261,28 +309,23 @@ class Actions {
     promotion: Promotion = Promotion.NO_PROMOTION
   ): Promise<Game> {
     // Make the move
-    const moveResponse: BroadcastTxCommitResult =
-      (await this.wallet?.callMethod(
-        chessRealm,
-        'MakeMove',
-        [gameID, from, to, promotion.toString()],
-        TransactionEndpoint.BROADCAST_TX_COMMIT,
-        undefined,
-        {
-          gasFee: defaultTxFee,
-          gasWanted: defaultGasWanted
-        }
-      )) as BroadcastTxCommitResult;
+    const moveResponse = await this.callMethod(chessRealm, 'MakeMove', [
+      gameID,
+      from,
+      to,
+      promotion.toString()
+    ]);
 
     // Parse the response from the node
-    const moveDataRaw: string | null =
-      moveResponse.deliver_tx.ResponseBase.Data;
-    if (!moveDataRaw) {
+    const moveData = JSON.parse(
+      decodeRealmResponse(moveResponse.deliver_tx.ResponseBase.Data as string)
+    );
+    if (!moveData) {
       throw new Error('invalid move response');
     }
 
     // Magically parse the response
-    return JSON.parse(moveDataRaw);
+    return moveData;
   }
 
   /**
@@ -304,18 +347,9 @@ class Actions {
    */
   async requestDraw(gameID: string, timeout?: number): Promise<Game> {
     // Make the request
-    const drawResponse: BroadcastTxCommitResult =
-      (await this.wallet?.callMethod(
-        chessRealm,
-        'DrawOffer',
-        [gameID],
-        TransactionEndpoint.BROADCAST_TX_COMMIT,
-        undefined,
-        {
-          gasFee: defaultTxFee,
-          gasWanted: defaultGasWanted
-        }
-      )) as BroadcastTxCommitResult;
+    const drawResponse = await this.callMethod(chessRealm, 'DrawOffer', [
+      gameID
+    ]);
 
     // Parse the response from the node
     const drawResponseRaw: string | null =
@@ -324,7 +358,7 @@ class Actions {
       throw new Error('invalid draw response');
     }
 
-    const game: Game = JSON.parse(drawResponseRaw);
+    const game: Game = JSON.parse(decodeRealmResponse(drawResponseRaw));
 
     // Check if the game is drawn
     switch (game.state) {
@@ -341,6 +375,30 @@ class Actions {
       gameID,
       timeout ? timeout : drawRequestTimer * 1000
     );
+  }
+
+  /**
+   * Claims that the game timed out.
+   * Errors out if the claim timeout request is invalid,
+   * and returns the game object if the request is valid (game ended)
+   * @param gameID
+   */
+
+  async claimTimeout(gameID: string): Promise<Game> {
+    // Make the request
+    const response = await this.callMethod(chessRealm, 'ClaimTimeout', [
+      gameID
+    ]);
+
+    // Parse the response from the node
+    const claimTimeoutRaw: string | null =
+      response.deliver_tx.ResponseBase.Data;
+    if (!claimTimeoutRaw) {
+      throw new Error('invalid claim timeout response');
+    }
+
+    // Magically parse the response
+    return JSON.parse(decodeRealmResponse(claimTimeoutRaw));
   }
 
   /**
@@ -363,7 +421,7 @@ class Actions {
             )) as string;
 
           // Parse the response
-          const game: Game = JSON.parse(getGameResponse);
+          const game: Game = JSON.parse(cleanUpRealmReturn(getGameResponse));
 
           if (game.state === GameState.DRAWN_INSUFFICIENT) {
             // Clear the fetch interval
@@ -406,18 +464,9 @@ class Actions {
    */
   async requestResign(gameID: string): Promise<Game> {
     // Make the request
-    const resignResponse: BroadcastTxCommitResult =
-      (await this.wallet?.callMethod(
-        chessRealm,
-        'Resign',
-        [gameID],
-        TransactionEndpoint.BROADCAST_TX_COMMIT,
-        undefined,
-        {
-          gasFee: defaultTxFee,
-          gasWanted: defaultGasWanted
-        }
-      )) as BroadcastTxCommitResult;
+    const resignResponse = await this.callMethod(chessRealm, 'Resign', [
+      gameID
+    ]);
 
     // Parse the response from the node
     const resignResponseRaw: string | null =
@@ -427,7 +476,7 @@ class Actions {
     }
 
     // Magically parse the response
-    return JSON.parse(resignResponseRaw);
+    return JSON.parse(decodeRealmResponse(resignResponseRaw));
   }
 
   /**
@@ -436,18 +485,9 @@ class Actions {
    */
   async declineDraw(gameID: string): Promise<Game> {
     // Make the request
-    const declineResponse: BroadcastTxCommitResult =
-      (await this.wallet?.callMethod(
-        chessRealm,
-        'DrawRefuse',
-        [gameID],
-        TransactionEndpoint.BROADCAST_TX_COMMIT,
-        undefined,
-        {
-          gasFee: defaultTxFee,
-          gasWanted: defaultGasWanted
-        }
-      )) as BroadcastTxCommitResult;
+    const declineResponse = await this.callMethod(chessRealm, 'DrawRefuse', [
+      gameID
+    ]);
 
     // Parse the response from the node
     const declineResponseRaw: string | null =
@@ -457,7 +497,7 @@ class Actions {
     }
 
     // Magically parse the response
-    return JSON.parse(declineResponseRaw);
+    return JSON.parse(decodeRealmResponse(declineResponseRaw));
   }
 
   /**
@@ -466,18 +506,7 @@ class Actions {
    */
   async acceptDraw(gameID: string): Promise<Game> {
     // Make the request
-    const acceptResponse: BroadcastTxCommitResult =
-      (await this.wallet?.callMethod(
-        chessRealm,
-        'Draw',
-        [gameID],
-        TransactionEndpoint.BROADCAST_TX_COMMIT,
-        undefined,
-        {
-          gasFee: defaultTxFee,
-          gasWanted: defaultGasWanted
-        }
-      )) as BroadcastTxCommitResult;
+    const acceptResponse = await this.callMethod(chessRealm, 'Draw', [gameID]);
 
     // Parse the response from the node
     const acceptResponseRaw: string | null =
@@ -487,7 +516,7 @@ class Actions {
     }
 
     // Magically parse the response
-    return JSON.parse(acceptResponseRaw);
+    return JSON.parse(decodeRealmResponse(acceptResponseRaw));
   }
 
   /****************
@@ -517,7 +546,7 @@ class Actions {
       )) as string;
 
     // Parse the response
-    return JSON.parse(leaderboardResponse);
+    return JSON.parse(cleanUpRealmReturn(leaderboardResponse));
   }
 
   /**
@@ -527,11 +556,11 @@ class Actions {
   async getPlayer(playerID: string): Promise<Player> {
     const playerResponse: string = (await this.provider?.evaluateExpression(
       chessRealm,
-      `GetPlayer(${playerID})`
+      `GetPlayer("${playerID}")`
     )) as string;
 
     // Parse the response
-    return JSON.parse(playerResponse);
+    return JSON.parse(cleanUpRealmReturn(playerResponse));
   }
 
   /**
@@ -551,26 +580,24 @@ class Actions {
    * Pings the faucet to fund the account before playing
    * @private
    */
-  private async fundAccount(): Promise<void> {
+  private async fundAccount(token: string): Promise<void> {
     // Prepare the request options
+    console.log(token);
     const requestOptions = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'faucet-token': this.faucetToken as string
+        'faucet-token': token
       },
       body: JSON.stringify({
         to: await this.wallet?.getAddress()
       })
     };
 
-    // TODO @Alexis do we want this to propagate the error?
-    // The error can be that the user is funded already
-    try {
-      // Execute the request
-      await fetch(faucetURL, requestOptions);
-    } catch (e) {
-      console.error(`Unable to fund account: ${e}`);
+    // Execute the request
+    const fundResponse = await fetch(faucetURL, requestOptions);
+    if (!fundResponse.ok) {
+      throw constructFaucetError(await fundResponse.text());
     }
   }
 }

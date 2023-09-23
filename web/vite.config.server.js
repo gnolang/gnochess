@@ -1,8 +1,10 @@
 import { defineConfig } from 'vite';
 import * as path from 'path';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig({
   build: {
+    sourcemap: true,
     outDir: 'static',
     watch: {
       include: ['assets/js/**']
@@ -17,5 +19,5 @@ export default defineConfig({
       }
     }
   },
-  plugins: []
+  plugins: [nodePolyfills()]
 });

@@ -2,23 +2,58 @@ import { Component } from 'sevejs';
 import { gsap } from 'gsap';
 import { GameTime } from '../types/types.ts';
 import Actions from '../actions.ts';
+import Events from '../utils/events.ts';
 
-type Options = {
+enum GameType {
+  BLITZ = 'blitz',
+  RAPID = 'rapid'
+}
+
+interface Options {
   token: string;
-  category: 'rapid' | 'blitz';
+  category: GameType;
   timer: GameTime;
-};
+}
+
 type Events = Record<string, any>;
 
+interface State {
+  name: string;
+  panels: string[];
+  ctrls: string[];
+}
+
+interface Timer {
+  time: number;
+  increment: number;
+}
+
+interface Timers {
+  rapid: Timer[];
+  blitz: Timer[];
+}
+
 const Gameoptions = class extends Component {
+  private states: State[];
+  private lookingForRival: boolean;
+  private currentState: number;
+  private timer: number;
+  private readonly timers: Timers;
+  private readonly options: Options;
+  private readonly events: Events;
+  private panelSize: number = 0;
+
   constructor(opts: any) {
     super(opts);
+
     this.states = [
       { name: 'token', panels: ['token'], ctrls: ['cross', 'Connection'] },
       { name: 'token', panels: ['game'], ctrls: ['arrow', 'Play'] }
     ];
+
     this.lookingForRival = false;
     this.currentState = 0;
+    this.disabled = false;
     this.timer = 0;
     this.timers = {
       rapid: [
@@ -36,12 +71,12 @@ const Gameoptions = class extends Component {
 
     this.options = {
       token: '',
-      category: 'rapid',
+      category: GameType.RAPID,
       timer: {
         time: 10,
         increment: 5
       }
-    } as Options;
+    };
 
     this.events = {} as Events;
   }
@@ -73,6 +108,8 @@ const Gameoptions = class extends Component {
     this.DOM.paneCategory = this.DOM.el.querySelector('#js-category');
     this.DOM.paneTimer = this.DOM.el.querySelector('#js-timer');
     this.DOM.paneLoader = this.DOM.el.querySelector('#js-paneloader');
+    this.DOM.paneBtns = this.DOM.el.querySelector('#gameoptions-actions');
+    this.DOM.screen2 = this.DOM.el.querySelector('#js-secondscreen');
     this.DOM.categoryBtns = [
       ...this.DOM.el.querySelectorAll('.js-categoryUpdate')
     ];
@@ -106,31 +143,45 @@ const Gameoptions = class extends Component {
     });
 
     //tl
+    this.panelSize = this._getPanelSize();
+    gsap.set(this.DOM.paneCategory, { display: 'none' });
+    gsap.set(this.DOM.paneTimer, { display: 'none' });
+
     this.switchAnimation1 = gsap
       .timeline({ paused: true })
-      .to(this.DOM.paneConnection, {
-        autoAlpha: 0,
-        display: 'none',
-        duration: 0.6
-      })
+      .to(this.DOM.el, { height: this.panelSize, duration: 0.4 })
+      .to(
+        this.DOM.paneConnection,
+        {
+          autoAlpha: 0,
+          display: 'none',
+          duration: 0.4
+        },
+        '<'
+      )
       .to(this.DOM.paneCategory, {
         autoAlpha: 1,
         display: 'flex',
-        duration: 0.6
+        duration: 1
       })
       .to(
         this.DOM.paneTimer,
-        { autoAlpha: 1, display: 'flex', duration: 0.6 },
+        { autoAlpha: 1, display: 'flex', duration: 1 },
         '<'
       );
 
     this.switchAnimation2 = gsap
       .timeline({ paused: true })
-      .to(this.DOM.paneCategory, {
-        autoAlpha: 0,
-        display: 'none',
-        duration: 0.6
-      })
+      .set(this.DOM.el, { height: this.panelSize })
+      .to(
+        this.DOM.paneCategory,
+        {
+          autoAlpha: 0,
+          display: 'none',
+          duration: 0.6
+        },
+        '<'
+      )
       .to(
         this.DOM.paneTimer,
         { autoAlpha: 0, display: 'none', duration: 0.6 },
@@ -149,7 +200,6 @@ const Gameoptions = class extends Component {
 
     //checkstep
     Actions.getInstance().then((actions) => {
-      // TODO @Alexis please check that the semantics are right here
       if (actions.getFaucetToken()) {
         this._clickOnCtrl1(null, true);
       }
@@ -158,13 +208,27 @@ const Gameoptions = class extends Component {
     });
   }
 
-  private _clickOnCtrl0() {
+  private _getPanelSize() {
+    const compStyles = window.getComputedStyle(this.DOM.el);
+    return (
+      this.DOM.screen2.getBoundingClientRect().height +
+      this.DOM.paneBtns.getBoundingClientRect().height +
+      parseInt(compStyles.getPropertyValue('padding-bottom').slice(0, -2)) +
+      parseInt(compStyles.getPropertyValue('padding-top').slice(0, -2))
+    );
+  }
+
+  private async _clickOnCtrl0() {
     this.currentState--;
 
+    if (this.disabled === true) return;
+
     if (this.currentState === 1) {
+      const actions: Actions = await Actions.getInstance();
+      actions.quitLobby();
+
       this.switchAnimation2.reverse();
       this.lookingForRival = false;
-      //TODO: stop WS rival finding -> this.lookingForRival
     } else {
       this.call('goTo', ['/'], 'Router');
     }
@@ -180,14 +244,22 @@ const Gameoptions = class extends Component {
   }
 
   async _clickOnCtrl1(_e: any, immediate = false) {
+    if (this.disabled === true) return;
     this.currentState++;
 
     const actions: Actions = await Actions.getInstance();
 
     switch (this.currentState) {
       case 1: {
-        this.options.token = await this._inputToken();
-        this.DOM.ctrl1.innerHTML = this.states[this.currentState].ctrls[1]; //todo: animation
+        if (!immediate) {
+          this.options.token = await this._inputToken();
+          if (this.options.token === null) {
+            this.currentState--;
+            return;
+          }
+        }
+        this.DOM.ctrl1.innerHTML = this.states[this.currentState].ctrls[1];
+
         this.switchAnimation1[immediate ? 'progress' : 'play'](
           immediate ? 1 : 0
         );
@@ -195,6 +267,7 @@ const Gameoptions = class extends Component {
         break;
       }
       case 2: {
+        this.currentState++;
         this.switchAnimation2.play();
 
         this.call('changeStatus', ['action'], 'webgl');
@@ -258,11 +331,11 @@ const Gameoptions = class extends Component {
             this.lookingForRival = false;
             this.call(
               'appear',
-              ['Leaved game lobby, try again.', 'warning'],
+              ['Left game lobby, try again.', 'warning'],
               'toast'
             );
             return;
-          }, 1000);
+          }, 10000);
         }
 
         break;
@@ -274,27 +347,41 @@ const Gameoptions = class extends Component {
   async _inputToken() {
     const token =
       this.DOM.el.querySelector('#id-gameoptions-token').value || '';
-
+    gsap.to(this.DOM.ctrl1, { background: '#D9D9D9', color: '#FFFFFF' });
+    this.DOM.ctrl1.innerHTML = 'Waiting...';
+    this.disabled = true;
     const actions: Actions = await Actions.getInstance();
+    let isTokenError = false;
 
     if (!actions.getFaucetToken()) {
-      await actions.setFaucetToken(token);
+      try {
+        await actions.setFaucetToken(token);
+        gsap.to(this.DOM.ctrl1, { background: '#FFF', color: '#000' });
+      } catch (e) {
+        console.error(e);
+        isTokenError = true;
+        this.DOM.el.querySelector('#id-gameoptions-token').value = '';
+        this.DOM.ctrl1.innerHTML = 'Connection';
+        this.call('appear', ['Invalid token', 'error'], 'toast');
+      }
     }
+    this.disabled = false;
 
-    return token;
+    gsap.to(this.DOM.ctrl1, { background: '#FFF', color: '#000' });
+
+    return isTokenError ? null : token;
   }
 
-  _inputCategory() {
+  _inputCategory(): GameType {
     const arry = [
       ...document.getElementsByName('category')
     ] as HTMLInputElement[];
-    return arry.filter((el) => el.checked)[0].value;
+    return arry.filter((el) => el.checked)[0].value as GameType;
   }
 
   _updateTimer(e: any, init?: number) {
-    if (init !== undefined || null) {
-      const index = init ?? 0;
-      this.timer = index;
+    if (init) {
+      this.timer = init ?? 0;
     } else {
       const dir: number = e
         ? e.currentTarget.dataset.ctrl === '+'
@@ -354,9 +441,6 @@ const Gameoptions = class extends Component {
   }
 
   destroy() {
-    for (const prop of Object.getOwnPropertyNames(this.options)) {
-      delete this.options[prop];
-    }
     this.switchAnimation1.kill();
     this.switchAnimation2.kill();
   }

@@ -27,7 +27,7 @@ services:
         max-size: "100m"
   gnoweb:
     image: ghcr.io/gnolang/gno/gnochess:latest
-    command: [ "gnoweb", "-remote", "gnoland:26657", "-bind", "0.0.0.0:8888" ]
+    command: ["gnoweb", "-remote", "gnoland:26657", "-bind", "0.0.0.0:8888"]
     working_dir: /opt/gno/src/gno.land
     networks:
       - gnonode
@@ -43,7 +43,7 @@ services:
     image: ghcr.io/gnolang/gno/gnochess:latest
     environment:
       - LOG_LEVEL=4
-    command: [ "gnoland", "start", "-genesis-max-vm-cycles", "100000000" ]
+    command: ["gnoland", "start", "-genesis-max-vm-cycles", "100000000"]
     volumes:
       - "gnonode:/opt/gno/src/testdir"
       - "./config.toml:/opt/gno/src/gno.land/testdir/config/config.toml"
@@ -63,4 +63,3 @@ networks:
   gnonode: {}
 volumes:
   gnonode: {}
-

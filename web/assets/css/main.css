@@ -126,7 +126,7 @@ body {
 
 .content h1,
 .content h2 {
-  @apply font-termina pt-10 text-400 md:text-200 text-grey-800;
+  @apply font-termina pt-10 text-400 text-grey-800;
 }
 
 .content a {
@@ -215,7 +215,7 @@ body {
   @apply absolute w-full h-full bg-grey-50;
 }
 
-.dashbord-global-rank-value {
+.dashboard-global-rank-value {
   @apply relative z-2 font-bold text-500 text-center leading-[.8];
 }
 .dashboard-avatar > div:last-child::before {

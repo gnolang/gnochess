@@ -22,8 +22,10 @@ const playTransition = (app: any) => {
           );
           const subtitles = current.container.querySelectorAll('.js-subtitle');
           const content = current.container.querySelectorAll('.js-content');
+          const banner = current.container.querySelectorAll('.js-banner');
           gsap.to(titles, { y: '100%', autoAlpha: 0, duration: 0.4 });
           gsap.to(subtitles, { autoAlpha: 0, duration: 0.4 });
+          gsap.to(banner, { autoAlpha: 0, duration: 0.4 });
           gsap.to(content, {
             autoAlpha: 0,
             duration: 0.4,

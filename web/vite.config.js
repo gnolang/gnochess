@@ -1,8 +1,10 @@
 import { defineConfig } from 'vite';
 import * as path from 'path';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig({
   build: {
+    sourcemap: true,
     outDir: 'static',
     rollupOptions: {
       input: {
@@ -14,5 +16,5 @@ export default defineConfig({
       }
     }
   },
-  plugins: []
+  plugins: [nodePolyfills()]
 });

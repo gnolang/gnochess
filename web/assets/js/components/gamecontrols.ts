@@ -76,6 +76,7 @@ const Gamecontrols = class extends Component {
     });
 
     //async events
+    //TODO: still in use? (destory as well)
     Events.on('drawPropal', this._getDrawProposition.bind(this));
 
     //tl

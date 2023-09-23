@@ -25,6 +25,7 @@ import (
 	"github.com/gnolang/gno/tm2/pkg/std"
 	"github.com/peterbourgon/ff/v3"
 	"github.com/peterbourgon/ff/v3/fftoml"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
@@ -57,7 +58,9 @@ type rootCfg struct {
 	remote    string
 	fundLimit string
 
-	allowedTokens stringArr
+	redisURL string
+
+	allowedTokens stringArr // TODO temporary
 }
 
 // generateFaucetConfig generates the Faucet configuration
@@ -155,12 +158,6 @@ func registerFlags(fs *flag.FlagSet, c *rootCfg) {
 		"the static send amount (native currency)",
 	)
 
-	fs.Var(
-		&c.allowedTokens,
-		"tokens",
-		"the allowed faucet tokens",
-	)
-
 	fs.StringVar(
 		&c.remote,
 		"remote",
@@ -173,6 +170,20 @@ func registerFlags(fs *flag.FlagSet, c *rootCfg) {
 		"fund-limit",
 		defaultFundLimit,
 		"the minimum amount of ugnot the account needs to have",
+	)
+
+	fs.StringVar(
+		&c.redisURL,
+		"redis-url",
+		"redis://user:pass@127.0.0.1:6379",
+		"redis connection string",
+	)
+
+	// TODO temporary
+	fs.Var(
+		&c.allowedTokens,
+		"tokens",
+		"the allowed faucet tokens",
 	)
 }
 
@@ -211,8 +222,20 @@ func execMain(cfg *rootCfg) error {
 
 	// Prepare the middlewares
 	middlewares := []faucet.Middleware{
-		prepareTokenMiddleware(cfg.allowedTokens),
 		prepareFundMiddleware(cli, fundLimit),
+	}
+
+	// TODO temporary
+	if len(cfg.allowedTokens) != 0 {
+		middlewares = append(middlewares, prepareTokenListMiddleware(cfg.allowedTokens))
+	} else {
+		redisOpts, err := redis.ParseURL(cfg.redisURL)
+		if err != nil {
+			return err
+		}
+		redisClient := redis.NewClient(redisOpts)
+
+		middlewares = append(middlewares, prepareTokenMiddleware(redisClient))
 	}
 
 	// Create a new faucet with
@@ -396,8 +419,9 @@ func prepareFundMiddleware(client client.Client, fundLimit std.Coins) faucet.Mid
 	}
 }
 
-// prepareTokenMiddleware prepares the token validation middleware
-func prepareTokenMiddleware(tokens []string) faucet.Middleware {
+// TODO temporary
+// prepareTokenListMiddleware prepares the token validation middleware
+func prepareTokenListMiddleware(tokens []string) faucet.Middleware {
 	// Create the token map
 	tokenMap := make(map[string]struct{}, len(tokens))
 
@@ -423,6 +447,36 @@ func prepareTokenMiddleware(tokens []string) faucet.Middleware {
 		})
 	}
 }
+
+// prepareTokenMiddleware prepares the token validation middleware
+func prepareTokenMiddleware(redisClient *redis.Client) faucet.Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Fetch the faucet token
+			token := r.Header.Get(tokenKey)
+
+			res, err := redisClient.HGet(r.Context(), "TOKEN:"+token, "used").Result()
+			if err != nil {
+				http.Error(w, "Invalid faucet token", http.StatusForbidden)
+				return
+			} else if res == "true" {
+				http.Error(w, "Already claimed", http.StatusForbidden)
+				return
+			}
+
+			// Continue with serving the faucet request
+			next.ServeHTTP(w, r)
+
+			_, err = redisClient.HSet(r.Context(), "TOKEN:"+token, "used", "true").Result()
+			if err != nil {
+				http.Error(w, "Unable to lock token", http.StatusInternalServerError)
+				return
+			}
+		})
+	}
+}
+
+// TODO temporary
 
 // stringArr defines the custom flag type
 // that represents an array of string values

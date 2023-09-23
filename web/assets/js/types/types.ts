@@ -2,6 +2,7 @@ export type Colors = 'w' | 'b';
 export type GameoverType =
   | 'checkmate'
   | 'timeout'
+  | 'noMove'
   | 'draw'
   | 'stalemate'
   | 'threefoldRepetition'
@@ -129,7 +130,7 @@ export interface Player {
 
 export interface Rating {
   wins: number;
-  loses: number;
+  losses: number;
   draws: number;
   games: number;
 }
