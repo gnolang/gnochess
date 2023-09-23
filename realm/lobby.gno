@@ -77,15 +77,9 @@ func LobbyJoin(seconds, increment int) {
 
 	// Ensure that user's previous games are finished (or timed out).
 	caller := std.GetOrigCaller()
-	assertGamesFinished(getUserGames(caller))
 
-	for _, sublob := range lobby {
-		for _, pl := range sublob {
-			if pl.player.Address == caller {
-				panic("you are already in the lobby")
-			}
-		}
-	}
+	assertGamesFinished(getUserGames(caller))
+	assertUserNotInLobby(caller)
 
 	// remove caller from lobbyPlayer2Game, so LobbyGameFound
 	// returns the right value.
@@ -94,6 +88,16 @@ func LobbyJoin(seconds, increment int) {
 	now := time.Now()
 	lobby[tc] = append(lobby[tc], lobbyPlayer{joinedAt: now, seenAt: now, player: getPlayer(caller)})
 	refreshLobby(tc)
+}
+
+func assertUserNotInLobby(caller std.Address) {
+	for _, sublob := range lobby {
+		for _, pl := range sublob {
+			if pl.player.Address == caller {
+				panic("you are already in the lobby")
+			}
+		}
+	}
 }
 
 // refreshLobby serves to run through the lobby, kick timed out users, and see if any users

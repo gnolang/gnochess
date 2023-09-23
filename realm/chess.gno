@@ -218,6 +218,7 @@ func NewGame(opponentRaw string, seconds, increment int) string {
 
 	opponent := parsePlayer(opponentRaw)
 	caller := std.GetOrigCaller()
+	assertUserNotInLobby(caller)
 
 	return newGame(caller, opponent, seconds, increment).json()
 }
