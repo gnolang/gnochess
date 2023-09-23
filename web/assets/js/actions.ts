@@ -304,8 +304,6 @@ class Actions {
     to: string,
     promotion: Promotion = Promotion.NO_PROMOTION
   ): Promise<Game> {
-    console.log(`MakeMove called: ${gameID}, ${from}, ${to}, ${promotion.toString()}`);
-
     // Make the move
     const moveResponse = await this.callMethod(chessRealm, 'MakeMove', [
       gameID,

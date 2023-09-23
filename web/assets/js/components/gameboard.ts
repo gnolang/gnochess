@@ -242,11 +242,7 @@ const Gameboard = class extends Component {
     let retryTimeout: NodeJS.Timeout;
 
     const checkRivalMove = async () => {
-      console.log(`gameID ${this.gameId}`)
-
       const gameState = await actions.getGame(this.gameId);
-      console.log(gameState)
-
       const currentFen = gameState.position.fen;
 
       if (this.chess.fen() === currentFen) {
@@ -258,14 +254,11 @@ const Gameboard = class extends Component {
 
       clearTimeout(retryTimeout);
 
-      console.log(`moves: ${gameState.position.moves}`)
-      console.log(`requested move${gameState.position.moves[gameState.position.moves.length - 1]}`)
       const move = this.chess.move(
         gameState.position.moves[gameState.position.moves.length - 1]
       );
 
       const chessFen: string = this.chess.fen();
-      console.log(`chessFen ${chessFen}`);
 
       this.board.position(chessFen);
 
@@ -341,7 +334,6 @@ const Gameboard = class extends Component {
         to: currentCell,
         promotion: promotion
       });
-      console.log(`move is ${move.from} ${move.to}`);
       this.board.move(`${move.from}-${move.to}`);
       if (move.captured) {
         // capture
