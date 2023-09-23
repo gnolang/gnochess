@@ -62,6 +62,11 @@ var (
 	lobbyPlayer2Game avl.Tree // player addr -> *Game. set after a user is matched; reset when joining again.
 )
 
+// XXX: REMOVE BEFORE PRODUCTION
+func LobbyData() ([tcLobbyMax][]lobbyPlayer, avl.Tree) {
+	return lobby, lobbyPlayer2Game
+}
+
 func LobbyJoin(seconds, increment int) {
 	std.AssertOriginCall()
 
@@ -228,6 +233,7 @@ func LobbyQuit() {
 			}
 		}
 	}
+	lobbyPlayer2Game.Remove(caller.String())
 
 	panic("you are not in the lobby")
 }

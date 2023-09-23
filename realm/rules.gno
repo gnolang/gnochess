@@ -426,6 +426,7 @@ func (oldp Position) validateMove(m Move) (_ Position, ok bool) {
 	capture := p.B[m.To] != PieceEmpty
 	p.B[m.From], p.B[m.To] = PieceEmpty, p.B[m.From]
 	p.Flags = newFlags
+	p.Moves = append([]Move{}, p.Moves...)
 	p.Moves = append(p.Moves, m)
 
 	// halfmove clock + hashes logic
