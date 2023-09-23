@@ -342,7 +342,7 @@ const Gameboard = class extends Component {
       }
       // ------ Action - emmit my move ------
       try {
-        await actions.makeMove(this.gameID, move.from, move.to, promotion);
+        await actions.makeMove(this.gameId, move.from, move.to, promotion);
         this.engine(); // TODO @Alexis missing await?
 
         //reset allowed positions
