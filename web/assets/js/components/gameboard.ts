@@ -350,7 +350,9 @@ const Gameboard = class extends Component {
         this.DOM.moves = [];
       } catch (e) {
         this.chess.undo(); //undo move in the headless Chess
-        this.call('appear', [e + ' - try your move again.', 'error'], 'toast');
+        this.board.position(this.chess.fen(), false); //undo move on the board
+
+        this.call('appear', [e + ' - try your move again.', 'error'], 'toast'); //display error
       }
     } else {
       // if click on disallow cell (new select)
