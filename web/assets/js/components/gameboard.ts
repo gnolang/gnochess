@@ -254,20 +254,26 @@ const Gameboard = class extends Component {
 
       clearTimeout(retryTimeout);
 
-      const move = this.chess.move(
-        gameState.position.moves[gameState.position.moves.length - 1]
-      );
+      // Update the game state
+      this.chess.load(gameState.position.fen);
 
       const chessFen: string = this.chess.fen();
-
       this.board.position(chessFen);
 
-      if (move.captured) {
+      // Fetch the move history to check for a capture
+      const moveHistory = this.chess.history({ verbose: true });
+      if (moveHistory.length == 0) {
+        await this.engine();
+      }
+
+      const lastMove = moveHistory[moveHistory.length - 1];
+
+      if (lastMove.captured) {
         this.call(
           'capturePawn',
-          [move.captured],
+          [lastMove.captured],
           'gameplayers',
-          move.color === this.color ? 'me' : 'rival'
+          lastMove.color === this.color ? 'me' : 'rival'
         );
       }
 
