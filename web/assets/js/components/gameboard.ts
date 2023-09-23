@@ -305,11 +305,11 @@ const Gameboard = class extends Component {
 
   async selectCell(e: any) {
     //TODO: highlight selected pawn
+    if (!this.allowedToMove) return;
 
     const actions: Actions = await Actions.getInstance();
 
     //only if player turn
-    if (!this.allowedToMove) return;
 
     const currentCell = e.currentTarget.dataset.square;
 
