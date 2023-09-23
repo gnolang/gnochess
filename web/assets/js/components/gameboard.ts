@@ -20,6 +20,7 @@ const Gameboard = class extends Component {
     this.pomotionEvents = [];
     this.initMoveTimer = null;
     this.checkOngoingTimer = null;
+    this.firstMove = true;
 
     this.DOM.board = this.DOM.el.querySelector('#js-game');
     this.DOM.promotionBtns = [...this.DOM.el.querySelectorAll('.js-topromote')];
@@ -163,19 +164,23 @@ const Gameboard = class extends Component {
       this.allowedToMove = true;
       this.call('stopTimer', [init], 'gameplayers', 'rival');
 
-      //TODO: chech if this.getMoveNumber() return 0 or 1 for before first move.
-      if (this.getMoveNumber() > 1) {
+      // first call only if user is white
+      if (this.firstMove) {
+        this.firstMove = false;
         const dateStartGame = gameState.time?.started_at;
 
         if (!dateStartGame) {
           throw new Error('No started_at game time');
-          return;
         }
+
         // Get the time of creation & current time
         // Get the diff and use it to get the updated / sync timeout by substract by 30s
-        const startDate = new Date(dateStartGame);
-        const currentDate = new Date();
-        const diffDate = startDate.getTime() - currentDate.getTime();
+
+        //TODO: trying with 30s from browser perspective
+        // -> becareful, this may be a sync issue & timout result with the server: not good
+        // const startDate = new Date(dateStartGame);
+        // const currentDate = new Date();
+        // const diffDate = startDate.getTime() - currentDate.getTime();
 
         const exitforTimeout = async () => {
           try {
@@ -194,7 +199,9 @@ const Gameboard = class extends Component {
           }
         };
 
-        const timer = 30 * 1000 - diffDate;
+        // TODO: trying with 30s from browser perspective
+        // const timer = 30 * 1000 - diffDate;
+        const timer = 30 * 1000;
 
         if (timer <= 0) {
           // if date too old (> 30sec )
