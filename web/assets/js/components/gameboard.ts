@@ -247,7 +247,7 @@ const Gameboard = class extends Component {
 
       if (this.chess.fen() === currentFen) {
         // No changes, set up the next tick
-        retryTimeout = setTimeout(checkRivalMove, 1000);
+        retryTimeout = setTimeout(checkRivalMove, 500);
 
         return;
       }
