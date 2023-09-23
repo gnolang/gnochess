@@ -51,7 +51,10 @@ func LobbyJoin(seconds, increment int) {
 		panic("can only use time controls 5+0 or 10+5")
 	}
 
+	// Ensure that user's previous games are finished (or timed out).
 	caller := std.GetOrigCaller()
+	assertGamesFinished(getUserGames(caller))
+
 	for i := 0; i < tcLobbyMax; i++ {
 		for _, pl := range lobby[i] {
 			if pl.player.Address == caller {
@@ -59,7 +62,6 @@ func LobbyJoin(seconds, increment int) {
 			}
 		}
 	}
-	// TODO: Check if has open games
 
 	// remove caller from playerGameID, so LobbyGameFound
 	// returns the right value.

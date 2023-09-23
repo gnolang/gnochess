@@ -100,7 +100,7 @@ var commandTests = [...]string{
 	`,
 	`	name NewGameDouble
 		newgame
-		newgame #panic contains game with opponent is still ongoing
+		newgame #panic contains is not yet finished
 	`,
 	`	name ScholarsMate
 		newgame #id equal 000000001

@@ -3,6 +3,7 @@ package chess
 import (
 	"fmt"
 	"std"
+	"strings"
 	"testing"
 	"time"
 
@@ -21,4 +22,27 @@ func TestLobby(t *testing.T) {
 		t.Errorf("LobbyGameFound is null")
 	}
 	t.Log(res)
+}
+
+func TestLobbyJoin_HasOpenGames(t *testing.T) {
+	cleanup()
+	std.TestSetOrigCaller(white)
+	g := &Game{
+		ID:    "123",
+		White: white,
+		Black: black,
+		State: GameStateOpen,
+	}
+	gameStore.Set(g.ID, g)
+	addToUser2Games(white, g)
+	addToUser2Games(black, g)
+
+	defer func() {
+		e := recover()
+		if !strings.Contains(fmt.Sprint(e), "game 123 is not yet finished") {
+			t.Errorf("expecting 'game is not finished' panic, got %v", e)
+		}
+	}()
+
+	LobbyJoin(10*60, 5)
 }

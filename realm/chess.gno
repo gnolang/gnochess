@@ -222,19 +222,32 @@ func NewGame(opponentRaw string, seconds, increment int) string {
 	return newGame(caller, opponent, seconds, increment).json()
 }
 
-func newGame(caller, opponent std.Address, seconds, increment int) *Game {
-	val, exist := user2Games.Get(caller.String())
+func getUserGames(user std.Address) []*Game {
+	val, exist := user2Games.Get(user.String())
 	var games []*Game
-	if exist {
-		games, _ = val.([]*Game)
+	if !exist {
+		return nil
+	}
+	return val.([]*Game)
+}
 
-		// Close previous games that timed-out
-		for _, g := range games {
-			if !g.State.IsFinished() {
-				_, _ = claimTimeout(g)
-			}
+func assertGamesFinished(games []*Game) {
+	for _, g := range games {
+		if g.State.IsFinished() {
+			continue
+		}
+		err := claimTimeout(g)
+		if err != nil {
+			panic("can't start new game: game " + g.ID + " is not yet finished")
 		}
 	}
+}
+
+func newGame(caller, opponent std.Address, seconds, increment int) *Game {
+	games := getUserGames(caller)
+	// Ensure player has no ongoing games.
+	assertGamesFinished(games)
+	assertGamesFinished(getUserGames(opponent))
 
 	if caller == opponent {
 		panic("can't create a game with yourself")
@@ -305,17 +318,11 @@ func determineColor(games []*Game, caller, opponent std.Address) (isBlack bool) 
 		games = games[:256]
 	}
 	for _, game := range games {
-		if game.White != opponent && game.Black != opponent {
-			continue
-		}
-		if !game.State.IsFinished() {
-			panic(ufmt.Sprintf("game with opponent '%s' (id: %s) is still ongoing", opponent, game.ID))
-		}
 		if game.White == opponent || game.Black == opponent {
 			return game.White == caller
 		}
 	}
-	return false
+	return
 }
 
 // GetGame returns a game, knowing its ID.
@@ -429,18 +436,18 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 	return g.json()
 }
 
-func claimTimeout(g *Game) (string, error) {
+func claimTimeout(g *Game) error {
 	// no assert origin call or caller check: anyone can claim a game to have
 	// finished in timeout.
 
 	if g.Time == nil {
-		return "", errors.New("game is not time controlled")
+		return errors.New("game is not time controlled")
 	}
 
 	// game is time controlled? add move to time control
 	to := g.Time.TimedOut()
 	if !to {
-		return "", errors.New("game is not timed out")
+		return errors.New("game is not timed out")
 	}
 
 	if nmov := len(g.Position.Moves); nmov < 2 {
@@ -451,7 +458,7 @@ func claimTimeout(g *Game) (string, error) {
 			g.Concluder = &g.White
 		}
 		g.Winner = WinnerNone
-		return g.json(), nil
+		return nil
 	}
 
 	g.State = GameStateTimeout
@@ -463,7 +470,7 @@ func claimTimeout(g *Game) (string, error) {
 	g.DrawOfferer = nil
 	saveGameResult(g)
 
-	return g.json(), nil
+	return nil
 }
 
 // ClaimTimeout should be called when the caller believes the game has resulted
@@ -471,12 +478,12 @@ func claimTimeout(g *Game) (string, error) {
 func ClaimTimeout(gameID string) string {
 	g := getGame(gameID, true)
 
-	out, err := claimTimeout(g)
+	err := claimTimeout(g)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	return out
+	return g.json()
 }
 
 func Abort(gameID string) string {
