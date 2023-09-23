@@ -1,4 +1,4 @@
-import { saveToLocalStorage } from './utils/localstorage';
+import {saveToLocalStorage} from './utils/localstorage';
 import {
   defaultFaucetTokenKey,
   defaultMnemonicKey,
@@ -11,17 +11,13 @@ import {
   Player,
   Promotion
 } from './types/types';
-import { defaultTxFee, GnoWallet, GnoWSProvider } from '@gnolang/gno-js-client';
-import {
-  BroadcastTxCommitResult,
-  TM2Error,
-  TransactionEndpoint
-} from '@gnolang/tm2-js-client';
-import { generateMnemonic } from './utils/crypto.ts';
+import {defaultTxFee, GnoWallet, GnoWSProvider} from '@gnolang/gno-js-client';
+import {BroadcastTxCommitResult, TM2Error, TransactionEndpoint} from '@gnolang/tm2-js-client';
+import {generateMnemonic} from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
-import { constructFaucetError } from './utils/errors.ts';
-import { AlreadyInLobbyError, ErrorTransform } from './errors.ts';
+import {constructFaucetError} from './utils/errors.ts';
+import {AlreadyInLobbyError, ErrorTransform} from './errors.ts';
 
 // ENV values //
 const wsURL: string = Config.GNO_WS_URL;

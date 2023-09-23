@@ -239,38 +239,48 @@ const Gameboard = class extends Component {
   async rivalMove() {
     const actions: Actions = await Actions.getInstance();
 
+    let retryTimeout: NodeJS.Timeout;
+
     const checkRivalMove = async () => {
       const gameState = await actions.getGame(this.gameId);
-      let tick = setTimeout(checkRivalMove, 350);
-
       const currentFen = gameState.position.fen;
 
-      if (this.chess.fen() !== currentFen) {
-        clearTimeout(tick);
-        const move = this.chess.move(
-          gameState.position.moves[gameState.position.moves.length - 1]
-        );
-        //If moves doesnt work -> use load method
-        //   try {
-        //     this.chess.load(currentFen);
-        //   } catch (e) {
-        //     throw new Error(e + ' — Invalid fen');
-        //   }
+      if (this.chess.fen() === currentFen) {
+        // No changes, set up the next tick
+        retryTimeout = setTimeout(checkRivalMove, 500);
 
-        this.board.position(this.chess.fen());
-
-        if (move.captured) {
-          this.call(
-            'capturePawn',
-            [move.captured],
-            'gameplayers',
-            move.color === this.color ? 'me' : 'rival'
-          );
-        }
-        this.engine();
+        return;
       }
+
+      clearTimeout(retryTimeout);
+
+      // Update the game state
+      this.chess.load(gameState.position.fen);
+
+      const chessFen: string = this.chess.fen();
+      this.board.position(chessFen);
+
+      // Fetch the move history to check for a capture
+      const moveHistory = this.chess.history({ verbose: true });
+      if (moveHistory.length == 0) {
+        await this.engine();
+      }
+
+      const lastMove = moveHistory[moveHistory.length - 1];
+
+      if (lastMove.captured) {
+        this.call(
+          'capturePawn',
+          [lastMove.captured],
+          'gameplayers',
+          lastMove.color === this.color ? 'me' : 'rival'
+        );
+      }
+
+      await this.engine();
     };
-    checkRivalMove();
+
+    retryTimeout = setTimeout(checkRivalMove, 0);
   }
 
   async promote(): Promise<Promotion> {
@@ -330,7 +340,6 @@ const Gameboard = class extends Component {
         to: currentCell,
         promotion: promotion
       });
-      console.log(move);
       this.board.move(`${move.from}-${move.to}`);
       if (move.captured) {
         // capture
