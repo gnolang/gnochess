@@ -245,7 +245,7 @@ const Gameboard = class extends Component {
 
       const currentFen = gameState.position.fen;
 
-      if (this.chess.fen !== currentFen) {
+      if (this.chess.fen() !== currentFen) {
         clearTimeout(tick);
         const move = this.chess.move(
           gameState.position.moves[gameState.position.moves.length - 1]
@@ -330,6 +330,7 @@ const Gameboard = class extends Component {
         to: currentCell,
         promotion: promotion
       });
+      console.log(move);
       this.board.move(`${move.from}-${move.to}`);
       if (move.captured) {
         // capture
