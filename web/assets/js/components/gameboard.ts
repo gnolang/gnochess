@@ -264,6 +264,8 @@ const Gameboard = class extends Component {
       const moveHistory = this.chess.history({ verbose: true });
       if (moveHistory.length == 0) {
         await this.engine();
+
+        return;
       }
 
       const lastMove = moveHistory[moveHistory.length - 1];
