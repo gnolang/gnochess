@@ -10,7 +10,7 @@ import (
 	"internal/os_test"
 )
 
-func TestLobby(t *testing.T) {
+func TestLobbyJoin(t *testing.T) {
 	cleanup()
 	std.TestSetOrigCaller(white)
 	LobbyJoin(10*60, 5)
@@ -21,7 +21,6 @@ func TestLobby(t *testing.T) {
 	if res == "null" {
 		t.Errorf("LobbyGameFound is null")
 	}
-	t.Log(res)
 }
 
 func sublobbyToIDs(pl []lobbyPlayer) []string {

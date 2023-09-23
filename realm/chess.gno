@@ -500,6 +500,7 @@ func Abort(gameID string) string {
 	if caller != g.White && caller != g.Black {
 		panic("you are not involved in this game")
 	}
+	g.State = GameStateAborted
 	g.Concluder = &caller
 	g.DrawOfferer = nil
 	g.Winner = WinnerNone
