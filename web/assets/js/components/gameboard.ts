@@ -340,14 +340,18 @@ const Gameboard = class extends Component {
           move.color === this.color ? 'me' : 'rival'
         );
       }
-
       // ------ Action - emmit my move ------
-      await actions.makeMove(this.gameID, move.from, move.to, promotion);
-      this.engine(); // TODO @Alexis missing await?
+      try {
+        await actions.makeMove(this.gameID, move.from, move.to, promotion);
+        this.engine(); // TODO @Alexis missing await?
 
-      //reset allowed positions
-      gsap.to('.chess-board [data-square]', { '--disp-opacity': 0 });
-      this.DOM.moves = [];
+        //reset allowed positions
+        gsap.to('.chess-board [data-square]', { '--disp-opacity': 0 });
+        this.DOM.moves = [];
+      } catch (e) {
+        this.chess.undo(); //undo move in the headless Chess
+        this.call('appear', [e + ' - try your move again.', 'error'], 'toast');
+      }
     } else {
       // if click on disallow cell (new select)
       if (this.DOM.moves.length > 0) {
