@@ -237,6 +237,4 @@ func LobbyQuit() {
 		}
 	}
 	lobbyPlayer2Game.Remove(caller.String())
-
-	panic("you are not in the lobby")
 }
