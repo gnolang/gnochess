@@ -42,9 +42,7 @@ type Game struct {
 
 func (g Game) json() string {
 	s, err := g.MarshalJSON()
-	if err != nil {
-		panic(err)
-	}
+	checkErr(err)
 	return string(s)
 }
 
@@ -209,7 +207,12 @@ func (g GameState) IsFinished() bool {
 // seconds is the amount of time given to play to each player; increment
 // is by how many seconds the player's time should be increased when they make a move.
 // seconds <= 0 means no time control (correspondence).
-func NewGame(opponentRaw string, seconds, increment int) string {
+//
+// XXX: Disabled for GnoChess production temporarily. (prefixed with x for unexported)
+// Ideally, we'd need this to work either by not forcing users not to have
+// parallel games OR by introducing a "request" system, so that a game is not
+// immediately considered "open" when calling NewGame.
+func xNewGame(opponentRaw string, seconds, increment int) string {
 	std.AssertOriginCall()
 
 	if seconds >= 0 && increment < 0 {
@@ -237,7 +240,7 @@ func assertGamesFinished(games []*Game) {
 		if g.State.IsFinished() {
 			continue
 		}
-		err := claimTimeout(g)
+		err := g.claimTimeout()
 		if err != nil {
 			panic("can't start new game: game " + g.ID + " is not yet finished")
 		}
@@ -379,7 +382,7 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 			} else {
 				g.Winner = WinnerWhite
 			}
-			saveGameResult(g)
+			g.saveResult()
 			return g.json()
 		}
 	}
@@ -432,12 +435,12 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 		g.Winner = WinnerDraw
 	}
 	g.DrawOfferer = nil
-	saveGameResult(g)
+	g.saveResult()
 
 	return g.json()
 }
 
-func claimTimeout(g *Game) error {
+func (g *Game) claimTimeout() error {
 	// no assert origin call or caller check: anyone can claim a game to have
 	// finished in timeout.
 
@@ -469,7 +472,7 @@ func claimTimeout(g *Game) error {
 		g.Winner = WinnerWhite
 	}
 	g.DrawOfferer = nil
-	saveGameResult(g)
+	g.saveResult()
 
 	return nil
 }
@@ -479,10 +482,8 @@ func claimTimeout(g *Game) error {
 func ClaimTimeout(gameID string) string {
 	g := getGame(gameID, true)
 
-	err := claimTimeout(g)
-	if err != nil {
-		panic(err.Error())
-	}
+	err := g.claimTimeout()
+	checkErr(err)
 
 	return g.json()
 }
@@ -525,7 +526,7 @@ func Resign(gameID string) string {
 		panic("you are not involved in this game")
 	}
 	g.DrawOfferer = nil
-	saveGameResult(g)
+	g.saveResult()
 
 	return g.json()
 }
@@ -590,7 +591,7 @@ func Draw(gameID string) string {
 		g.Winner = WinnerDraw
 		g.Concluder = &caller
 
-		saveGameResult(g)
+		g.saveResult()
 
 		return g.json()
 	}
@@ -610,7 +611,7 @@ func Draw(gameID string) string {
 	g.Winner = WinnerDraw
 	g.DrawOfferer = nil
 
-	saveGameResult(g)
+	g.saveResult()
 
 	return g.json()
 }
