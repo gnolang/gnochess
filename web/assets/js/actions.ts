@@ -1,17 +1,17 @@
 import {saveToLocalStorage} from './utils/localstorage';
 import {
-  defaultFaucetTokenKey,
-  defaultMnemonicKey,
-  drawRequestTimer,
-  Game,
-  type GameoverType,
-  type GameSettings,
-  GameState,
-  GameTime,
-  Player,
-  Promotion
+    defaultFaucetTokenKey,
+    defaultMnemonicKey,
+    drawRequestTimer,
+    Game,
+    type GameoverType,
+    type GameSettings,
+    GameState,
+    GameTime,
+    Player,
+    Promotion
 } from './types/types';
-import {defaultTxFee, GnoWallet, GnoWSProvider} from '@gnolang/gno-js-client';
+import {defaultTxFee, GnoJSONRPCProvider, GnoWallet} from '@gnolang/gno-js-client';
 import {BroadcastTxCommitResult, TM2Error, TransactionEndpoint} from '@gnolang/tm2-js-client';
 import {generateMnemonic} from './utils/crypto.ts';
 import Long from 'long';
@@ -21,7 +21,8 @@ import {AlreadyInLobbyError, ErrorTransform} from './errors.ts';
 import {preparePromotion} from './utils/moves.ts';
 
 // ENV values //
-const wsURL: string = Config.GNO_WS_URL;
+// const wsURL: string = Config.GNO_WS_URL; TODO temporarily disabled
+const JSONRPCURL: string = Config.GNO_JSONRPC_URL;
 const chessRealm: string = Config.GNO_CHESS_REALM;
 const faucetURL: string = Config.FAUCET_URL;
 const defaultGasWanted: Long = new Long(10_000_000);
@@ -39,12 +40,11 @@ const decodeRealmResponse = (resp: string) => {
  *
  * Always use as Actions.getInstance()
  */
-// @ts-ignore
 class Actions {
   private static instance: Actions;
 
   private wallet: GnoWallet | null = null;
-  private provider: GnoWSProvider | null = null;
+  private provider: GnoJSONRPCProvider | null = null;
   private faucetToken: string | null = null;
   private isInTheLobby = false;
 
@@ -86,7 +86,7 @@ class Actions {
     this.wallet = await GnoWallet.fromMnemonic(mnemonic);
 
     // Initialize the provider
-    this.provider = new GnoWSProvider(wsURL);
+    this.provider = new GnoJSONRPCProvider(JSONRPCURL);
 
     // Connect the wallet to the provider
     this.wallet.connect(this.provider);
@@ -570,7 +570,8 @@ class Actions {
     }
 
     // Close out the WS connection
-    this.provider.closeConnection();
+    // TODO Temporarily disabled
+    // this.provider.closeConnection();
   }
 
   /**
