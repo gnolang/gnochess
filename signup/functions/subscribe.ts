@@ -7,7 +7,6 @@ import { CONFIG } from './config';
 import { SubscribeRequest } from './types';
 import subscribeUserSchema from './schemas/users.schema';
 import { RedisClient } from './services/redis';
-import RequestHelper from './helpers/requests.helper';
 import getRandomToken from './helpers/token.helper';
 
 const ajv = new Ajv();
@@ -34,7 +33,7 @@ export async function handler(event: HandlerEvent): Handler {
     if (!isValid) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ errors: ajv.errors })
+        body: JSON.stringify({ errors: 'Bad request' })
       };
     }
 
@@ -63,7 +62,6 @@ export async function handler(event: HandlerEvent): Handler {
         MMERGE9: subscribeRequest.receiveNews ? 'Yes' : 'No',
         MMERGE10: subscribeRequest.termsAndConditions ? 'Yes' : 'No'
       }
-      // TODO add tags
     });
 
     await redisClient.storeUserToken(subscribeRequest.email, token);
@@ -81,6 +79,7 @@ export async function handler(event: HandlerEvent): Handler {
     if (journeyResponse != null) {
       throw new Error(journeyResponse);
     }
+
     // Success return
     return {
       statusCode: 200,
@@ -91,9 +90,10 @@ export async function handler(event: HandlerEvent): Handler {
       req: event.body,
       message: err
     });
+
     return {
       statusCode: 500,
-      body: JSON.stringify({ errors: { message: 'Unabled to subsribe user' } })
+      body: JSON.stringify({ errors: { message: 'Unable to subscribe user' } })
     };
   }
 }
