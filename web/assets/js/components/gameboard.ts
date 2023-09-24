@@ -279,12 +279,14 @@ const Gameboard = class extends Component {
 
       clearTimeout(retryTimeout);
 
-      const moves = this.chess.moves({ verbose: true });
       // Find the move that matches the current fen
+      const moves = this.chess.moves({ verbose: true });
       const nextMove = moves.find((move: any) => move.after === currentFen);
 
-      // Update the game state
-      const move = this.chess.move(nextMove);
+      // Fallback to loading the fen if we can't find the move
+      const move = nextMove
+        ? this.chess.move(nextMove)
+        : this.chess.load(currentFen);
 
       const chessFen: string = this.chess.fen();
       this.board.position(chessFen);
