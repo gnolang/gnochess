@@ -83,7 +83,16 @@ func LobbyJoin(seconds, increment int) {
 	// Ensure that user's previous games are finished (or timed out).
 	caller := std.GetOrigCaller()
 
-	assertGamesFinished(getUserGames(caller))
+	games := getUserGames(caller)
+	// XXX: temporary to avoid ever prohibiting a user from joining the lobby.
+	// when possible, change back to assertGamesFinished(games)
+	for _, g := range games {
+		if !g.State.IsFinished() {
+			if err := resign(g); err != nil {
+				panic("internal error (could not resign game " + g.ID + "): " + err.Error())
+			}
+		}
+	}
 	assertUserNotInLobby(caller)
 
 	// remove caller from lobbyPlayer2Game, so LobbyGameFound

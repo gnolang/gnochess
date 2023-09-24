@@ -513,7 +513,14 @@ func Resign(gameID string) string {
 	std.AssertOriginCall()
 
 	g := getGame(gameID, true)
+	err := resign(g)
+	if err != nil {
+		panic(err.String())
+	}
+	return g.json()
+}
 
+func resign(g *Game) error {
 	caller := std.GetOrigCaller()
 	switch caller {
 	case g.Black:
@@ -523,12 +530,12 @@ func Resign(gameID string) string {
 		g.State = GameStateResigned
 		g.Winner = WinnerBlack
 	default:
-		panic("you are not involved in this game")
+		return errors.New("you are not involved in this game")
 	}
 	g.DrawOfferer = nil
 	g.saveResult()
 
-	return g.json()
+	return nil
 }
 
 // DrawOffer creates a draw offer in the current game, if one doesn't already
