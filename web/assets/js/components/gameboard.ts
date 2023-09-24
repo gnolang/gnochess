@@ -244,7 +244,7 @@ const Gameboard = class extends Component {
 
         if (!ongoing) {
           console.log('game stopped');
-          clearTimeout(this.checkOngoingTimer);
+          clearInterval(this.checkOngoingTimer);
 
           // TODO @Alexis this doesn't necessarily need to be a timeout type
           this.engine(false, 'timeout');
