@@ -37,7 +37,8 @@ export async function handler(event: HandlerEvent): Handler {
     // Validate the request
     const subscribeRequest: SubscribeRequest = JSON.parse(event.body);
 
-    console.log(subscribeRequest)
+    // Intentional; TODO Remove
+    console.log(subscribeRequest);
 
     const isValid: boolean = ajv.validate(
       subscribeUserSchema,
@@ -46,7 +47,7 @@ export async function handler(event: HandlerEvent): Handler {
     if (!isValid) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ errors: 'Bad request' })
+        body: JSON.stringify({ errors: 'Unable to validate request' })
       };
     }
 
@@ -54,7 +55,7 @@ export async function handler(event: HandlerEvent): Handler {
     if (subscribeRequest.termsAndConditions !== subscribeRequest.participate) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ errors: { message: 'Bad request' } })
+        body: JSON.stringify({ errors: { message: 'Request is invalid' } })
       };
     }
 

@@ -8,20 +8,13 @@ export enum ApplicationEnv {
 }
 
 const {
-  NODE_PORT,
-  NODE_HOST,
-  NODE_ENV,
   REDIS_URL,
   MAILCHIMP_API_KEY,
   MAILCHIMP_API_SERVER,
   MAILCHIMP_AUDIENCE_ID,
   MAILCHIMP_JOURNEY_ID,
   MAILCHIMP_JOURNEY_STEP,
-  TOKEN_LIST
 } = process.env;
-
-const ENV: ApplicationEnv =
-  (NODE_ENV as ApplicationEnv) || ApplicationEnv.DEVELOPMENT;
 
 export const CONFIG = {
   REDIS_URL,
@@ -30,8 +23,4 @@ export const CONFIG = {
   MAILCHIMP_AUDIENCE_ID,
   MAILCHIMP_JOURNEY_ID,
   MAILCHIMP_JOURNEY_STEP,
-  TOKEN_LIST,
-  NODE_PORT,
-  NODE_HOST,
-  NODE_ENV: ENV
 };
