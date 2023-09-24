@@ -350,9 +350,7 @@ func parseCommandTest(t *testing.T, command string) (funcs []testCommandRunner, 
 	lines := strings.Split(command, "\n")
 	atoi := func(s string) int {
 		n, err := strconv.Atoi(s)
-		if err != nil {
-			panic(err)
-		}
+		checkErr(err)
 		return n
 	}
 	// used to detect whether to auto-add a panic checker

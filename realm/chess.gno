@@ -42,9 +42,7 @@ type Game struct {
 
 func (g Game) json() string {
 	s, err := g.MarshalJSON()
-	if err != nil {
-		panic(err)
-	}
+	checkErr(err)
 	return string(s)
 }
 
