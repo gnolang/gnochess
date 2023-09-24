@@ -27,8 +27,29 @@ tasks:
   - name: Setup Gnopls
     before: cd ..
     init: |
+      # Set GNOROOT env variable
       gp env GNOROOT=/workspace/gno
-      go install github.com/harry-hov/gnopls@latest
+    
+      # Determine the architecture of the Gitpod environment
+      ARCH=$(uname -m)
+
+      # Map architecture to GitHub release asset file name pattern
+      if [ "$ARCH" == "x86_64" ]; then
+        ASSET_PATTERN="linux_amd64"
+      elif [ "$ARCH" == "aarch64" ]; then
+        ASSET_PATTERN="linux_arm64"
+      else
+        echo "Unsupported architecture: $ARCH"
+        exit 1
+      fi
+
+      # Fetch the latest GitHub release asset matching the architecture
+      GITHUB_RELEASE_URL=$(curl -s https://api.github.com/repos/harry-hov/gnopls/releases/latest | grep "browser_download_url" | grep "$ASSET_PATTERN" | cut -d : -f 2,3 | tr -d ' "')
+      wget "$GITHUB_RELEASE_URL" -O /tmp/gnopls-latest-release.tar.gz
+      tar -xzf /tmp/gnopls-latest-release.tar.gz -C /tmp/
+      sudo mv /tmp/gnopls /usr/local/bin/
+      rm /tmp/gnopls-latest-release.tar.gz
+      
     openMode: split-right
 
   - name: Deps
