@@ -70,7 +70,7 @@ help: ## Display this help message.
 	  echo "VITE_GNO_WS_URL=ws://127.0.0.1:26657/websocket"; \
 	  echo "VITE_GNO_CHESS_REALM=gno.land/r/demo/chess"; \
 	  echo "VITE_FAUCET_URL=http://127.0.0.1:8545"; \
-		echo "VITE_GNO_JSONRPC_URL=http://127.0.0.1:26657"; \
+	  echo "VITE_GNO_JSONRPC_URL=http://127.0.0.1:26657"; \
 	) > web/.env
 	cp web/.env web/assets/js/.env
 	cd web; npm run build
