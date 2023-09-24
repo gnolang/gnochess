@@ -1,3 +1,5 @@
+default: help
+
 help: ## Display this help message.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[0-9a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
@@ -90,3 +92,6 @@ z_use_local_gno: ## Use the local '../gno' directory instead of the remote 'gith
 z_use_remote_gno: ## Use the remote 'github.com/gnolang/gno' module and remove any replacements.
 	@echo "Switching to remote gno module..."
 	@go mod edit -dropreplace github.com/gnolang/gno
+
+z_test_realm: ## Test the realm.
+	go run github.com/gnolang/gno/gnovm/cmd/gno test --verbose ./realm

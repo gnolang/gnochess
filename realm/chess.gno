@@ -237,7 +237,7 @@ func assertGamesFinished(games []*Game) {
 		if g.State.IsFinished() {
 			continue
 		}
-		err := claimTimeout(g)
+		err := g.claimTimeout()
 		if err != nil {
 			panic("can't start new game: game " + g.ID + " is not yet finished")
 		}
@@ -437,7 +437,7 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 	return g.json()
 }
 
-func claimTimeout(g *Game) error {
+func (g *Game) claimTimeout() error {
 	// no assert origin call or caller check: anyone can claim a game to have
 	// finished in timeout.
 
@@ -479,10 +479,8 @@ func claimTimeout(g *Game) error {
 func ClaimTimeout(gameID string) string {
 	g := getGame(gameID, true)
 
-	err := claimTimeout(g)
-	if err != nil {
-		panic(err.Error())
-	}
+	err := g.claimTimeout()
+	checkErr(err)
 
 	return g.json()
 }
