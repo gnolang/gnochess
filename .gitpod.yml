@@ -24,6 +24,13 @@ tasks:
     command: gnoweb --bind=0.0.0.0:8888
     openMode: split-right
 
+  - name: Setup Gnopls
+    before: cd ..
+    init: |
+      gp env GNOROOT=/workspace/gno
+      go install github.com/harry-hov/gnopls@latest
+    openMode: split-right
+
   - name: Deps
     before: cd ../gno/misc/devdeps
     init: |
