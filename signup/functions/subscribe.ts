@@ -4,10 +4,21 @@ import mailchimp from '@mailchimp/mailchimp_marketing';
 import type { Handler, HandlerEvent } from '@netlify/functions';
 
 import { CONFIG } from './config';
-import { SubscribeRequest } from './types';
 import subscribeUserSchema from './schemas/users.schema';
 import { RedisClient } from './services/redis';
 import getRandomToken from './helpers/token.helper';
+
+interface SubscribeRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  githubHandle: string;
+  socialHandle: string;
+  interests: string;
+  receiveNews: boolean;
+  participate: boolean;
+  termsAndConditions: boolean;
+}
 
 const ajv = new Ajv();
 ajvFormats(ajv);
@@ -26,6 +37,9 @@ export async function handler(event: HandlerEvent): Handler {
     // Validate the request
     const subscribeRequest: SubscribeRequest = JSON.parse(event.body);
 
+    // Intentional; TODO Remove
+    console.log(subscribeRequest);
+
     const isValid: boolean = ajv.validate(
       subscribeUserSchema,
       subscribeRequest
@@ -33,7 +47,7 @@ export async function handler(event: HandlerEvent): Handler {
     if (!isValid) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ errors: 'Bad request' })
+        body: JSON.stringify({ errors: 'Unable to validate request' })
       };
     }
 
@@ -41,7 +55,7 @@ export async function handler(event: HandlerEvent): Handler {
     if (subscribeRequest.termsAndConditions !== subscribeRequest.participate) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ errors: { message: 'Bad request' } })
+        body: JSON.stringify({ errors: { message: 'Request is invalid' } })
       };
     }
 
