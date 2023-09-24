@@ -42,10 +42,10 @@ export enum GameType {
 
 export enum Promotion {
   NO_PROMOTION = 0,
-  QUEEN = 'Q',
-  BISHOP = 'B',
-  KNIGHT = 'N',
-  ROOK = 'R'
+  QUEEN = 'q',
+  BISHOP = 'b',
+  KNIGHT = 'n',
+  ROOK = 'r'
 }
 
 export enum Winner {

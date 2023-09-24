@@ -207,7 +207,12 @@ func (g GameState) IsFinished() bool {
 // seconds is the amount of time given to play to each player; increment
 // is by how many seconds the player's time should be increased when they make a move.
 // seconds <= 0 means no time control (correspondence).
-func NewGame(opponentRaw string, seconds, increment int) string {
+//
+// XXX: Disabled for GnoChess production temporarily. (prefixed with x for unexported)
+// Ideally, we'd need this to work either by not forcing users not to have
+// parallel games OR by introducing a "request" system, so that a game is not
+// immediately considered "open" when calling NewGame.
+func xNewGame(opponentRaw string, seconds, increment int) string {
 	std.AssertOriginCall()
 
 	if seconds >= 0 && increment < 0 {

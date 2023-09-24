@@ -17,7 +17,8 @@ import {generateMnemonic} from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
 import {constructFaucetError} from './utils/errors.ts';
-import {AlreadyInLobbyError, ErrorTransform} from './errors.ts'; // ENV values //
+import {AlreadyInLobbyError, ErrorTransform} from './errors.ts';
+import {preparePromotion} from './utils/moves.ts';
 
 // ENV values //
 // const wsURL: string = Config.GNO_WS_URL; TODO temporarily disabled
@@ -309,7 +310,7 @@ class Actions {
       gameID,
       from,
       to,
-      promotion.toString()
+      preparePromotion(promotion)
     ]);
 
     // Parse the response from the node

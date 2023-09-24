@@ -27,7 +27,7 @@ func cleanup() {
 func TestNewGame(t *testing.T) {
 	cleanup()
 
-	g := NewGame(std.DerivePkgAddr("xx").String(), 0, 0)
+	g := xNewGame(std.DerivePkgAddr("xx").String(), 0, 0)
 	println(g)
 }
 
@@ -274,7 +274,7 @@ type testCommandNewGame struct {
 
 func (tc *testCommandNewGame) Run(t *testing.T, bufs map[string]string) {
 	std.TestSetOrigCaller(tc.w)
-	res := NewGame(string(tc.b), tc.seconds, tc.incr)
+	res := xNewGame(string(tc.b), tc.seconds, tc.incr)
 	bufs["result"] = res
 
 	const idMagicString = `"id":"`
