@@ -1,34 +1,27 @@
-import { saveToLocalStorage } from './utils/localstorage';
+import {saveToLocalStorage} from './utils/localstorage';
 import {
-  defaultFaucetTokenKey,
-  defaultMnemonicKey,
-  drawRequestTimer,
-  Game,
-  type GameoverType,
-  type GameSettings,
-  GameState,
-  GameTime,
-  Player,
-  Promotion
+    defaultFaucetTokenKey,
+    defaultMnemonicKey,
+    drawRequestTimer,
+    Game,
+    type GameoverType,
+    type GameSettings,
+    GameState,
+    GameTime,
+    Player,
+    Promotion
 } from './types/types';
-import {
-  defaultTxFee,
-  GnoWallet,
-  GnoJSONRPCProvider
-} from '@gnolang/gno-js-client';
-import {
-  BroadcastTxCommitResult,
-  TM2Error,
-  TransactionEndpoint
-} from '@gnolang/tm2-js-client';
-import { generateMnemonic } from './utils/crypto.ts';
+import {defaultTxFee, GnoJSONRPCProvider, GnoWallet} from '@gnolang/gno-js-client';
+import {BroadcastTxCommitResult, TM2Error, TransactionEndpoint} from '@gnolang/tm2-js-client';
+import {generateMnemonic} from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
-import { constructFaucetError } from './utils/errors.ts';
-import { AlreadyInLobbyError, ErrorTransform } from './errors.ts';
+import {constructFaucetError} from './utils/errors.ts';
+import {AlreadyInLobbyError, ErrorTransform} from './errors.ts'; // ENV values //
 
 // ENV values //
-// const wsURL: string = Config.GNO_WS_URL;
+// const wsURL: string = Config.GNO_WS_URL; TODO temporarily disabled
+const JSONRPCURL: string = Config.GNO_JSONRPC_URL;
 const chessRealm: string = Config.GNO_CHESS_REALM;
 const faucetURL: string = Config.FAUCET_URL;
 const defaultGasWanted: Long = new Long(10_000_000);
@@ -92,7 +85,7 @@ class Actions {
     this.wallet = await GnoWallet.fromMnemonic(mnemonic);
 
     // Initialize the provider
-    this.provider = new GnoJSONRPCProvider('http://127.0.0.1:26657');
+    this.provider = new GnoJSONRPCProvider(JSONRPCURL);
 
     // Connect the wallet to the provider
     this.wallet.connect(this.provider);
@@ -576,6 +569,7 @@ class Actions {
     }
 
     // Close out the WS connection
+    // TODO Temporarily disabled
     // this.provider.closeConnection();
   }
 
