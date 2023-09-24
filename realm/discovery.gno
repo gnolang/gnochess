@@ -81,9 +81,7 @@ func GetPlayer(player string) string {
 		panic("player not found")
 	}
 	b, err := v.(*Player).MarshalJSON()
-	if err != nil {
-		panic(err)
-	}
+	checkErr(err)
 	return string(b)
 }
 
@@ -150,7 +148,7 @@ func (p Player) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func saveGameResult(g *Game) {
+func (g *Game) saveResult() {
 	w, b := getPlayer(g.White), getPlayer(g.Black)
 
 	cat := g.Time.Category()
@@ -282,9 +280,7 @@ func Leaderboard(category string) string {
 	for idx, entry := range leaderboard[cat] {
 		p, _ := playerStore.Get(entry.addr.String())
 		d, err := p.(Player).MarshalJSON()
-		if err != nil {
-			panic(err)
-		}
+		checkErr(err)
 		buf.Write(d)
 		if idx != len(leaderboard[cat])-1 {
 			buf.WriteByte(',')
@@ -420,9 +416,7 @@ func parseFilters(filters string) (r listGamesFilters) {
 			r.minID = pred
 		case "limit:":
 			n, err := strconv.Atoi(pred)
-			if err != nil {
-				panic(err)
-			}
+			checkErr(err)
 			r.limit = n
 		case "sort:":
 			r.reverse = pred == "desc"

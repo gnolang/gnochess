@@ -42,9 +42,7 @@ type Game struct {
 
 func (g Game) json() string {
 	s, err := g.MarshalJSON()
-	if err != nil {
-		panic(err)
-	}
+	checkErr(err)
 	return string(s)
 }
 
@@ -237,7 +235,7 @@ func assertGamesFinished(games []*Game) {
 		if g.State.IsFinished() {
 			continue
 		}
-		err := claimTimeout(g)
+		err := g.claimTimeout()
 		if err != nil {
 			panic("can't start new game: game " + g.ID + " is not yet finished")
 		}
@@ -379,7 +377,7 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 			} else {
 				g.Winner = WinnerWhite
 			}
-			saveGameResult(g)
+			g.saveResult()
 			return g.json()
 		}
 	}
@@ -432,12 +430,12 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 		g.Winner = WinnerDraw
 	}
 	g.DrawOfferer = nil
-	saveGameResult(g)
+	g.saveResult()
 
 	return g.json()
 }
 
-func claimTimeout(g *Game) error {
+func (g *Game) claimTimeout() error {
 	// no assert origin call or caller check: anyone can claim a game to have
 	// finished in timeout.
 
@@ -469,7 +467,7 @@ func claimTimeout(g *Game) error {
 		g.Winner = WinnerWhite
 	}
 	g.DrawOfferer = nil
-	saveGameResult(g)
+	g.saveResult()
 
 	return nil
 }
@@ -479,10 +477,8 @@ func claimTimeout(g *Game) error {
 func ClaimTimeout(gameID string) string {
 	g := getGame(gameID, true)
 
-	err := claimTimeout(g)
-	if err != nil {
-		panic(err.Error())
-	}
+	err := g.claimTimeout()
+	checkErr(err)
 
 	return g.json()
 }
@@ -525,7 +521,7 @@ func Resign(gameID string) string {
 		panic("you are not involved in this game")
 	}
 	g.DrawOfferer = nil
-	saveGameResult(g)
+	g.saveResult()
 
 	return g.json()
 }
@@ -590,7 +586,7 @@ func Draw(gameID string) string {
 		g.Winner = WinnerDraw
 		g.Concluder = &caller
 
-		saveGameResult(g)
+		g.saveResult()
 
 		return g.json()
 	}
@@ -610,7 +606,7 @@ func Draw(gameID string) string {
 	g.Winner = WinnerDraw
 	g.DrawOfferer = nil
 
-	saveGameResult(g)
+	g.saveResult()
 
 	return g.json()
 }
