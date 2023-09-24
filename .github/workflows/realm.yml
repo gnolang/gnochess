@@ -21,4 +21,4 @@ jobs:
         with:
           go-version: 'stable'
       - run: go mod download -x
-      - run: go run github.com/gnolang/gno/gnovm/cmd/gno test -verbose .
+      - run: go run github.com/gnolang/gno/gnovm/cmd/gno test -verbose ./realm

@@ -515,7 +515,7 @@ func Resign(gameID string) string {
 	g := getGame(gameID, true)
 	err := resign(g)
 	if err != nil {
-		panic(err.String())
+		panic(err.Error())
 	}
 	return g.json()
 }
