@@ -264,7 +264,7 @@ const Gameboard = class extends Component {
     const checkRivalMove = async () => {
       console.log('checkRivalMove start');
       const gameState = await actions.getGame(this.gameId);
-      const currentFen = gameState.position.fen;
+      const currentFen = new Chess(gameState.position.fen).fen();
 
       if (this.chess.fen() === currentFen) {
         // No changes, set up the next tick
