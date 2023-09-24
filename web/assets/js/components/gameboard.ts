@@ -72,6 +72,7 @@ const Gameboard = class extends Component {
   }
 
   async engine(init = false, gameover?: GameoverType) {
+    console.log('engine called');
     const actions: Actions = await Actions.getInstance();
 
     const gameState = await actions.getGame(this.gameId);
@@ -94,6 +95,7 @@ const Gameboard = class extends Component {
 
       if (gameover === 'timeout' || gameState.state === 'timeout') {
         status = 'timeout';
+        console.log('gameover for timeout');
         clearTimeout(this.checkOngoingTimer);
         const game = await actions.getGame(this.gameId);
         if (game.winner == 'none') {
@@ -166,6 +168,7 @@ const Gameboard = class extends Component {
 
       // first call only if user is white
       if (this.firstMove) {
+        console.log('first move');
         this.firstMove = false;
         const dateStartGame = gameState.time?.started_at;
 
@@ -183,6 +186,7 @@ const Gameboard = class extends Component {
         // const diffDate = startDate.getTime() - currentDate.getTime();
 
         const exitforTimeout = async () => {
+          console.log('exitforTimeout called -> Ive not player under 30s');
           try {
             // Claim timeout. If no error, timeout succeeded
             await actions.claimTimeout(this.gameId);
@@ -232,32 +236,45 @@ const Gameboard = class extends Component {
   private async intervalCheckForOngoingGame() {
     const actions: Actions = await Actions.getInstance();
     this.checkOngoingTimer = setInterval(async () => {
-      const ongoing = await actions.isGameOngoing(this.gameId);
+      console.log('isGameOngoing is asked');
+      try {
+        const ongoing = await actions.isGameOngoing(this.gameId);
+        console.log('isGameOngoing is resolved');
+        console.log(ongoing);
 
-      if (!ongoing) {
-        clearTimeout(this.checkOngoingTimer);
+        if (!ongoing) {
+          console.log('game stopped');
+          clearTimeout(this.checkOngoingTimer);
 
-        // TODO @Alexis this doesn't necessarily need to be a timeout type
-        this.call(this.engine(false, 'timeout'));
+          // TODO @Alexis this doesn't necessarily need to be a timeout type
+          this.engine(false, 'timeout');
+        }
+      } catch (e) {
+        console.error('isGameOngoing doesnt work : ' + e);
       }
     }, 3000);
   }
 
   async rivalMove() {
+    console.log('get rival move');
     const actions: Actions = await Actions.getInstance();
 
     let retryTimeout: NodeJS.Timeout;
 
     const checkRivalMove = async () => {
+      console.log('checkRivalMove start');
       const gameState = await actions.getGame(this.gameId);
       const currentFen = gameState.position.fen;
 
       if (this.chess.fen() === currentFen) {
         // No changes, set up the next tick
         retryTimeout = setTimeout(checkRivalMove, 500);
-
+        console.log('same fen');
         return;
       }
+      console.log('different fen');
+      console.log(this.chess.fen());
+      console.log(currentFen);
 
       clearTimeout(retryTimeout);
 
@@ -269,15 +286,17 @@ const Gameboard = class extends Component {
 
       // Fetch the move history to check for a capture
       const moveHistory = this.chess.history({ verbose: true });
+      console.log(moveHistory);
       if (moveHistory.length == 0) {
-        await this.engine();
-
-        return;
+        console.log(moveHistory.length == 0);
+        // Do we need this? there is a this.engine(); at the end of the function
+        //   await this.engine();
+        // return;
       }
 
       const lastMove = moveHistory[moveHistory.length - 1];
 
-      if (lastMove.captured) {
+      if (lastMove?.captured) {
         this.call(
           'capturePawn',
           [lastMove.captured],
@@ -285,7 +304,7 @@ const Gameboard = class extends Component {
           lastMove.color === this.color ? 'me' : 'rival'
         );
       }
-
+      console.log('engine called here');
       await this.engine();
     };
 
@@ -361,13 +380,19 @@ const Gameboard = class extends Component {
       }
       // ------ Action - emmit my move ------
       try {
+        console.log('try move');
+
         await actions.makeMove(this.gameId, move.from, move.to, promotion);
+        console.log('move succeed');
+
         this.engine(); // TODO @Alexis missing await?
 
         //reset allowed positions
         gsap.to('.chess-board [data-square]', { '--disp-opacity': 0 });
         this.DOM.moves = [];
       } catch (e) {
+        console.log('move error');
+
         this.chess.undo(); //undo move in the headless Chess
         this.board.position(this.chess.fen(), false); //undo move on the board
 
