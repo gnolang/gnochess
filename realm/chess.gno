@@ -379,7 +379,7 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 			} else {
 				g.Winner = WinnerWhite
 			}
-			saveGameResult(g)
+			g.saveResult()
 			return g.json()
 		}
 	}
@@ -432,7 +432,7 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 		g.Winner = WinnerDraw
 	}
 	g.DrawOfferer = nil
-	saveGameResult(g)
+	g.saveResult()
 
 	return g.json()
 }
@@ -469,7 +469,7 @@ func (g *Game) claimTimeout() error {
 		g.Winner = WinnerWhite
 	}
 	g.DrawOfferer = nil
-	saveGameResult(g)
+	g.saveResult()
 
 	return nil
 }
@@ -523,7 +523,7 @@ func Resign(gameID string) string {
 		panic("you are not involved in this game")
 	}
 	g.DrawOfferer = nil
-	saveGameResult(g)
+	g.saveResult()
 
 	return g.json()
 }
@@ -588,7 +588,7 @@ func Draw(gameID string) string {
 		g.Winner = WinnerDraw
 		g.Concluder = &caller
 
-		saveGameResult(g)
+		g.saveResult()
 
 		return g.json()
 	}
@@ -608,7 +608,7 @@ func Draw(gameID string) string {
 	g.Winner = WinnerDraw
 	g.DrawOfferer = nil
 
-	saveGameResult(g)
+	g.saveResult()
 
 	return g.json()
 }

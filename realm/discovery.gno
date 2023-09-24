@@ -150,7 +150,7 @@ func (p Player) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func saveGameResult(g *Game) {
+func (g *Game) saveResult(g *Game) {
 	w, b := getPlayer(g.White), getPlayer(g.Black)
 
 	cat := g.Time.Category()
