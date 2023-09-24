@@ -229,11 +229,11 @@ func LobbyQuit() {
 		for i, pl := range sublob {
 			if pl.player.Address == caller {
 				lobby[tc] = append(sublob[:i], sublob[i+1:]...)
+				lobbyPlayer2Game.Remove(caller.String())
 				return
 			}
 		}
 	}
-	lobbyPlayer2Game.Remove(caller.String())
 
 	panic("you are not in the lobby")
 }
