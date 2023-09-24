@@ -158,6 +158,13 @@ class Actions {
     }
   }
 
+  /**
+   * Fetches the current user's wallet address
+   */
+  public async getUserAddress(): Promise<string> {
+    return (await this.wallet?.getAddress()) as string;
+  }
+
   /****************
    * GAME ENGINE
    ****************/
