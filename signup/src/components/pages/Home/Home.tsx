@@ -36,8 +36,8 @@ const Home: FC<IHomeProps> = () => {
       githubHandle: '',
       socialHandle: '',
       interests: 'General Gno.land',
-      receiveNews: true,
-      participate: true,
+      receiveNews: false,
+      participate: false,
       termsAndConditions: false
     },
     enableReinitialize: true,
