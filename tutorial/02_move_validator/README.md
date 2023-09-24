@@ -79,7 +79,7 @@ given depth is reached, and the game outcome is not obvious, use an algorithm to
 determine without further recursive inspection if the position is winning).[^1]
 
 Due to the complexity of the task at hand, we won't be building a fully-fledged
-move validator/generator. We will be playing around a bit, however!
+move validator/generator. We will be dipping our toes, though!
 
 [^1]: There's some nuance to this, as it's not often phrased this way elsewhere.
   Though most chess engines do involve some two-step process which involves _try

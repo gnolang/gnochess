@@ -55,10 +55,6 @@ type Position struct {
 	B     Board
 	Moves []Move
 	Flags PositionFlags
-
-	// Halfmoves since the last pawn move or capture.
-	// https://www.chessprogramming.org/Halfmove_Clock
-	HalfMoveClock uint16
 }
 
 // NewPosition returns a new Position, set up with the initial board position.
@@ -76,7 +72,7 @@ func (p Position) clone() Position {
 	// ideally, since we're always using Position as a value, not a reference,
 	// we don't need this.
 
-	b, m, f, hmc, h := p.B, p.Moves, p.Flags, p.HalfMoveClock, p.Hashes
+	b, m, f, h := p.B, p.Moves, p.Flags, p.Hashes
 	return Position{b, m, f, hmc, h}
 }
 
@@ -136,7 +132,7 @@ func (p Position) EncodeFEN() string {
 		p.Flags.CastlingRights(), // 2: castling ability
 		"-",                      // 3: e.p. target square
 
-		strconv.Itoa(int(p.HalfMoveClock)), // 4: halfmove clock
+		strconv.Itoa(0), // 4: halfmove clock
 		strconv.Itoa(len(p.Moves)/2 + 1),   // 5: fullmove counter
 	}
 
@@ -162,17 +158,21 @@ func (p Position) EncodeFEN() string {
 // Caller must guarantee m.To and m.From to be valid (<64).
 func (p Position) ValidateMove(m Move) (newP Position, valid bool) {
 	// XXX: This below is a Gno bug! In Go we don't need to do this (Position is
-	// a value, not a reference), but in Gno there is a bug whereby the underlying
+	// a value, not a pointer), but in Gno there is a bug whereby the underlying
 	// p still holds (some) references.
 	// Just a small reminder that the software is not _beta_ quality, it's
 	// very, very alpha, and it's a shame the Greek alphabet doesn't allow me
-	// to go backwards to express how early in development we still are.
+	// to go backwards to express how many ugly bugs you can still expect to find.
 	p := oldp.clone()
 
 	if p.B[m.To].StripColor() == PieceKing {
 		return
 	}
 
+	return p.validateMove(m)
+}
+
+func (p Position) ValidateMove(m Move) (newP Position, valid bool) {
 	piece := p.B[m.From]
 
 	// piece moved must be of player's color
@@ -198,11 +198,24 @@ func (p Position) ValidateMove(m Move) (newP Position, valid bool) {
 
 	switch piece.StripColor() {
 	case PieceRook:
+		// TODO
+		// move horizontally/vertically
+		// remove castling right if moving from original position!
 	case PieceKnight:
+		// TODO
+		// move L-shaped
 	case PieceBishop:
+		// TODO
+		// move diagonally
 	case PieceQueen:
+		// TODO
+		// move diagonally/horiz/vertically
 	case PieceKing:
+		// TODO
+		// move 1sq in all directions
 	case PiecePawn:
+		// TODO
+		// move 1sq in the direction of the opponent
 	}
 
 	if p.B[m.To].StripColor() == PieceKing {
@@ -215,16 +228,9 @@ func (p Position) ValidateMove(m Move) (newP Position, valid bool) {
 	capture := p.B[m.To] != PieceEmpty
 	p.B[m.From], p.B[m.To] = PieceEmpty, p.B[m.From]
 	p.Flags = newFlags
+	p.Moves = append([]Move{}, p.Moves...)
 	p.Moves = append(p.Moves, m)
 
-	// halfmove clock + hashes logic
-	if piece.StripColor() == PiecePawn || capture {
-		// reset both
-		p.HalfMoveClock = 0
-		p.Hashes = nil
-	} else {
-		p.HalfMoveClock++
-	}
 	ep := byte(255)
 	if p.Flags&EnPassant != 0 {
 		ep = byte(p.Flags & MaskEnPassant)
@@ -424,7 +430,8 @@ func (p Position) checkEnPassant(c Color, sq Square) Square {
 }
 
 // GenMoves implements a rudimentary move generator.
-// This is not used beyond aiding in determing stalemate and doing perft tests.
+// It tries to move each piece of p.Color into every other position in the board,
+// which is not occupied by a piece of the same colour.
 // Each generated move is passed to cb.
 // If cb returns an error, it is returned without processing further moves.
 func (p Position) GenMoves(cb func(Position, Move) error) error {
@@ -435,30 +442,18 @@ func (p Position) GenMoves(cb func(Position, Move) error) error {
 		}
 
 		from := Square(sq)
-
 		pstrip := piece.StripColor()
-		// If the piece is a pawn, and they are on the second last row, we know
-		// that whatever move they do (advance, or take diagonally) they're going
-		// to promote.
-		prom := pstrip == PiecePawn &&
-			((color == White && from>>3 == 6) ||
-				(color == Black && from>>3 == 1))
 
-		// delta generator needs to know if p is black
-		if pstrip == PiecePawn && color == Black {
-			pstrip |= Black.Piece()
-		}
-
-		var err error
-		deltaGenerator(pstrip, func(delta Delta) byte {
-			// create move; if the resulting square is oob, continue
+		for to := Square(0); i <= 64; i++ {
+			if to == from || p.B[to].Color() == color {
+				continue
+			}
+			prom := pstrip == PiecePawn &&
+				((color == White && to>>3 == 7) ||
+					(color == Black && to>>3 == 0 )
 			m := Move{
 				From: from,
-				To:   from.Apply(delta),
-			}
-			if m.To == SquareInvalid ||
-				(p.B[m.To] != PieceEmpty && p.B[m.To].Color() == color) {
-				return deltaGenStopLinear
+				To: to,
 			}
 
 			// handle promotion case
@@ -469,15 +464,15 @@ func (p Position) GenMoves(cb func(Position, Move) error) error {
 			// if it's a valid move, call cb on it
 			newp, ok := p.ValidateMove(m)
 			if !ok {
-				return deltaGenOK
+				continue
 			}
 			if err = cb(newp, m); err != nil {
-				return deltaGenStop
+				return err
 			}
 
 			// if we've promoted, handle the cases where we've promoted to a non-queen.
 			if !prom {
-				return deltaGenOK
+				continue
 			}
 
 			for _, promPiece := range [...]Piece{PieceRook, PieceKnight, PieceBishop} {
@@ -487,104 +482,10 @@ func (p Position) GenMoves(cb func(Position, Move) error) error {
 					return deltaGenStop
 				}
 			}
-			return deltaGenOK
-		})
-		if err != nil {
-			return err
 		}
+
 	}
 	return nil
-}
-
-const (
-	// carry on normally
-	deltaGenOK = iota
-	// if the generator is doing a linear attack (ie. rook, bishop, queen),
-	// then stop that (there is a piece of same colour in the way.)
-	deltaGenStopLinear
-	// abort generation asap.
-	deltaGenStop
-)
-
-/*func init() {
-	for i := PiecePawn; i <= PieceKing; i++ {
-		println("generator ", i.String())
-		deltaGenerator(i, func(d Delta) byte {
-			println("  ", d[0], d[1])
-			return deltaGenOK
-		})
-	}
-}*/
-
-// deltaGenerator generates the possible ways in which p can move.
-// the callback may return one of the three deltaGen* values.
-func deltaGenerator(p Piece, cb func(d Delta) byte) {
-	doLinear := func(d Delta) bool {
-		for i := int8(1); i <= 7; i++ {
-			switch cb(d.Mul(i)) {
-			case deltaGenStopLinear:
-				return false
-			case deltaGenStop:
-				return true
-			}
-		}
-		return false
-	}
-	rotate := func(d Delta, lin bool) bool {
-		for i := 0; i < 4; i++ {
-			if lin {
-				if doLinear(d) {
-					return true
-				}
-			} else {
-				if cb(d) == deltaGenStop {
-					return true
-				}
-			}
-
-			d = d.Rot()
-		}
-		return false
-	}
-
-	// In the following, we use logical OR's to do conditional evaluation
-	// (if the first item returns true, the second won't be evaluated)
-	switch p {
-	case PiecePawn, PiecePawn | PieceBlack:
-		dir := int8(1)
-		if p.Color() == Black {
-			dir = -1
-		}
-		// try moving 1sq forward; if we get StopLinear, don't try to do 2sq.
-		fw := cb(Delta{dir, 0})
-		if fw == deltaGenStop {
-			return
-		}
-		if fw != deltaGenStopLinear {
-			if cb(Delta{dir * 2, 0}) == deltaGenStop {
-				return
-			}
-		}
-
-		_ = cb(Delta{dir, 1}) == deltaGenStop ||
-			cb(Delta{dir, -1}) == deltaGenStop
-
-	case PieceRook:
-		rotate(Delta{0, 1}, true)
-	case PieceBishop:
-		rotate(Delta{1, 1}, true)
-	case PieceKnight:
-		_ = rotate(Delta{1, 2}, false) ||
-			rotate(Delta{2, 1}, false)
-	case PieceQueen:
-		_ = rotate(Delta{0, 1}, true) ||
-			rotate(Delta{1, 1}, true)
-	case PieceKing:
-		_ = rotate(Delta{0, 1}, false) ||
-			rotate(Delta{1, 1}, false) ||
-			cb(Delta{0, 2}) == deltaGenStop ||
-			cb(Delta{0, -2}) == deltaGenStop
-	}
 }
 
 // Color determines a player's color -- either white or black.
