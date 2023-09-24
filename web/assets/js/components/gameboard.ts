@@ -287,6 +287,8 @@ const Gameboard = class extends Component {
       // Fetch the move history to check for a capture
       const moveHistory = this.chess.history({ verbose: true });
       console.log(moveHistory);
+
+      //TODO: not sure we need it
       if (moveHistory.length == 0) {
         console.log(moveHistory.length == 0);
         // Do we need this? there is a this.engine(); at the end of the function
