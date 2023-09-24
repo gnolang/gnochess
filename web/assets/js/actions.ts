@@ -1,4 +1,4 @@
-import {saveToLocalStorage} from './utils/localstorage';
+import { saveToLocalStorage } from './utils/localstorage';
 import {
   defaultFaucetTokenKey,
   defaultMnemonicKey,
@@ -11,16 +11,24 @@ import {
   Player,
   Promotion
 } from './types/types';
-import {defaultTxFee, GnoWallet, GnoWSProvider} from '@gnolang/gno-js-client';
-import {BroadcastTxCommitResult, TM2Error, TransactionEndpoint} from '@gnolang/tm2-js-client';
-import {generateMnemonic} from './utils/crypto.ts';
+import {
+  defaultTxFee,
+  GnoWallet,
+  GnoJSONRPCProvider
+} from '@gnolang/gno-js-client';
+import {
+  BroadcastTxCommitResult,
+  TM2Error,
+  TransactionEndpoint
+} from '@gnolang/tm2-js-client';
+import { generateMnemonic } from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
-import {constructFaucetError} from './utils/errors.ts';
-import {AlreadyInLobbyError, ErrorTransform} from './errors.ts';
+import { constructFaucetError } from './utils/errors.ts';
+import { AlreadyInLobbyError, ErrorTransform } from './errors.ts';
 
 // ENV values //
-const wsURL: string = Config.GNO_WS_URL;
+// const wsURL: string = Config.GNO_WS_URL;
 const chessRealm: string = Config.GNO_CHESS_REALM;
 const faucetURL: string = Config.FAUCET_URL;
 const defaultGasWanted: Long = new Long(10_000_000);
@@ -38,12 +46,11 @@ const decodeRealmResponse = (resp: string) => {
  *
  * Always use as Actions.getInstance()
  */
-// @ts-ignore
 class Actions {
   private static instance: Actions;
 
   private wallet: GnoWallet | null = null;
-  private provider: GnoWSProvider | null = null;
+  private provider: GnoJSONRPCProvider | null = null;
   private faucetToken: string | null = null;
   private isInTheLobby = false;
 
@@ -85,7 +92,7 @@ class Actions {
     this.wallet = await GnoWallet.fromMnemonic(mnemonic);
 
     // Initialize the provider
-    this.provider = new GnoWSProvider(wsURL);
+    this.provider = new GnoJSONRPCProvider('http://127.0.0.1:26657');
 
     // Connect the wallet to the provider
     this.wallet.connect(this.provider);
@@ -569,7 +576,7 @@ class Actions {
     }
 
     // Close out the WS connection
-    this.provider.closeConnection();
+    // this.provider.closeConnection();
   }
 
   /**
