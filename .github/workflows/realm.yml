@@ -20,5 +20,5 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: 'stable'
-      - run: go install github.com/gnolang/gno/gnovm/cmd/gno
-      - run: gno test --verbose ./realm
+      - run: go mod download -x
+      - run: go run github.com/gnolang/gno/gnovm/cmd/gno test -verbose .
