@@ -4,10 +4,21 @@ import mailchimp from '@mailchimp/mailchimp_marketing';
 import type { Handler, HandlerEvent } from '@netlify/functions';
 
 import { CONFIG } from './config';
-import { SubscribeRequest } from './types';
 import subscribeUserSchema from './schemas/users.schema';
 import { RedisClient } from './services/redis';
 import getRandomToken from './helpers/token.helper';
+
+interface SubscribeRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  githubHandle: string;
+  socialHandle: string;
+  interests: string;
+  receiveNews: boolean;
+  participate: boolean;
+  termsAndConditions: boolean;
+}
 
 const ajv = new Ajv();
 ajvFormats(ajv);
@@ -25,6 +36,8 @@ export async function handler(event: HandlerEvent): Handler {
   try {
     // Validate the request
     const subscribeRequest: SubscribeRequest = JSON.parse(event.body);
+
+    console.log(subscribeRequest)
 
     const isValid: boolean = ajv.validate(
       subscribeUserSchema,
