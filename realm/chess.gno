@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/avl"
-	"gno.land/p/demo/ufmt"
 )
 
 // realm state
@@ -221,7 +220,10 @@ func xNewGame(opponentRaw string, seconds, increment int) string {
 
 	opponent := parsePlayer(opponentRaw)
 	caller := std.GetOrigCaller()
-	assertUserNotInLobby(caller)
+
+	if isUserInLobby(caller) {
+		panic("you are already in the lobby")
+	}
 
 	return newGame(caller, opponent, seconds, increment).json()
 }

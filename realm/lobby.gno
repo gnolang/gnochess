@@ -1,7 +1,6 @@
 package chess
 
 import (
-	"math"
 	"std"
 	"time"
 
@@ -84,7 +83,9 @@ func LobbyJoin(seconds, increment int) {
 	caller := std.GetOrigCaller()
 
 	assertGamesFinished(getUserGames(caller))
-	assertUserNotInLobby(caller)
+	if isUserInLobby(caller) {
+		return
+	}
 
 	// remove caller from lobbyPlayer2Game, so LobbyGameFound
 	// returns the right value.
@@ -95,14 +96,16 @@ func LobbyJoin(seconds, increment int) {
 	refreshLobby(tc)
 }
 
-func assertUserNotInLobby(caller std.Address) {
+func isUserInLobby(caller std.Address) bool {
 	for _, sublob := range lobby {
 		for _, pl := range sublob {
 			if pl.player.Address == caller {
-				panic("you are already in the lobby")
+				return true
 			}
 		}
 	}
+
+	return false
 }
 
 // refreshLobby serves to run through the lobby, kick timed out users, and see if any users
