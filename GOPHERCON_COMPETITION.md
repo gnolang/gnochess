@@ -50,7 +50,8 @@ Join us on this adventure! We eagerly await the discussions, feedback, and innov
    - Max limit: Depends on quality and quantity.
    - Potential Total: Up to 30,000 points.
 
-🎉 **The Grand Raffle**:
+## 🎉 The Grand Raffle:
+
 Once the competition concludes, we'll hold the grand raffle.
 Your accumulated points determine your chances of winning.
 The more points you have, the higher your chances!
