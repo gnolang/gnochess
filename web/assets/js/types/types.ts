@@ -133,9 +133,8 @@ export interface Player {
   correspondence: PlayerRating;
 }
 
-export interface Rating {
-  wins: number;
-  losses: number;
-  draws: number;
-  games: number;
+export enum Category {
+  BLITZ = 'Blitz',
+  RAPID = 'Rapid',
+  GLOBAL = 'Global'
 }
