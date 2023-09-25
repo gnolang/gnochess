@@ -3,13 +3,7 @@ import { truncateString } from '../utils/truncate';
 import { avatarize } from '../utils/avatar';
 
 import Actions from '../actions';
-import { Player, PlayerRating } from '../types/types.ts';
-
-enum Category {
-  BLITZ = 'Blitz',
-  RAPID = 'Rapid',
-  GLOBAL = 'Global'
-}
+import { Category, Player, PlayerRating } from '../types/types.ts';
 
 interface DashboardScore
   extends Pick<PlayerRating, 'wins' | 'losses' | 'draws'> {
@@ -135,15 +129,14 @@ const Dashboard = class extends Component {
     const actions = await Actions.getInstance();
 
     try {
-      const leaderboard: Player[] = await actions.getLeaderboard();
+      const blitzLeaderboard: Player[] = await actions.getLeaderboard(
+        Category.BLITZ
+      );
+      const rapidLeaderboard: Player[] = await actions.getLeaderboard(
+        Category.RAPID
+      );
 
-      const blitzRanking: Player[] = leaderboard.sort(
-        (a, b) => a.blitz.position - b.blitz.position
-      );
-      const rapidRanking: Player[] = leaderboard.sort(
-        (a, b) => a.rapid.position - b.rapid.position
-      );
-      const leaders: Player[][] = [blitzRanking, rapidRanking];
+      const leaders: Player[][] = [blitzLeaderboard, rapidLeaderboard];
 
       const leaderMapped = leaders.map((leadMap: Player[]) => {
         return leadMap

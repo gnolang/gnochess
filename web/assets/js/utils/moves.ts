@@ -1,4 +1,4 @@
-import {Promotion} from '../types/types.ts';
+import {Category, Promotion} from '../types/types.ts';
 
 /**
  * Prepares the promotion parameter
@@ -16,5 +16,20 @@ export const preparePromotion = (promotion: Promotion): string => {
       return '5';
     default:
       return '0';
+  }
+};
+
+/**
+ * Prepares the category parameter for the leaderboard
+ * @param {Category} category the requested category
+ */
+export const prepareCategory = (category: Category): string => {
+  switch (category) {
+    case Category.RAPID:
+      return 'rapid';
+    case Category.BLITZ:
+      return 'blitz';
+    default:
+      return 'correspondence';
   }
 };
