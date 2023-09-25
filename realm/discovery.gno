@@ -279,7 +279,7 @@ func Leaderboard(category string) string {
 	buf.WriteByte('[')
 	for idx, entry := range leaderboard[cat] {
 		p, _ := playerStore.Get(entry.addr.String())
-		d, err := p.(Player).MarshalJSON()
+		d, err := p.(*Player).MarshalJSON()
 		checkErr(err)
 		buf.Write(d)
 		if idx != len(leaderboard[cat])-1 {
