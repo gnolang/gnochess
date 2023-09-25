@@ -77,7 +77,7 @@ const Gamecontrols = class extends Component {
 
     //async events
     //TODO: still in use? (destory as well)
-    Events.on('drawPropal', this._getDrawProposition.bind(this));
+    // Events.on('drawPropal', this._getDrawProposition.bind(this));
 
     //tl
     this.validationTL = gsap
@@ -140,7 +140,7 @@ const Gamecontrols = class extends Component {
     } else if (this.action === action && direct) {
       if (this.pendingDraw) {
         // if pending draw refused
-        this._declineOffer();
+        await this._declineOffer();
       }
       this.action = 'void';
       this[action === 'resign' ? 'disableCtr1TL' : 'disableCtr0TL'].reverse();
@@ -232,6 +232,11 @@ const Gamecontrols = class extends Component {
       const actions: Actions = await Actions.getInstance();
       const game = await actions.getGame(this.gameId);
       if (this.drawRequestAdress !== game.draw_offerer) {
+        console.log(game.draw_offerer);
+        console.log(this.drawRequestAdress);
+
+        console.log('getDrawProposition from _actionWatcher');
+
         this.drawRequestAdress = game.draw_offerer;
         this.drawAllowed = true;
         this._getDrawProposition();
@@ -261,7 +266,7 @@ const Gamecontrols = class extends Component {
   }
 
   destroy() {
-    Events.off('drawPropal');
+    // Events.off('drawPropal');
     clearInterval(this.pendingDraw);
     clearInterval(this.watcher);
     this.validationTL.kill();

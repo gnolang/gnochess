@@ -103,6 +103,9 @@ const Gameboard = class extends Component {
         throw new Error('invalid move');
       }
 
+      console.log('gameState.state: ' + gameState.state);
+      console.log('gameover: ' + gameover);
+
       let status: GameState = GameState.CHECKMATED;
 
       if (gameover === GameState.NOMOVE) {
