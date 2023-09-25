@@ -199,7 +199,14 @@ const Gameoptions = class extends Component {
       if (actions.getFaucetToken()) {
         this._clickOnCtrl1(null, true);
       }
-
+      if (!actions.hasWallet()) {
+        this.disabled = true //Works but ideally should provide the "Login" flow
+      }
+      actions.getBalance().then((balance)=> {
+        if (!balance || balance==0) {
+          this.disabled=true //Works but ideally button should not visually respond to clicking + "play" label switched to "insufficient funds"
+        }
+      });
       this.appear();
     });
   }

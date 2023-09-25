@@ -142,7 +142,17 @@ class Actions {
   public getWalletAddress() {
     return this.wallet?.getAddress();
   }
+  
+  public hasWallet() {
+    return !!this.wallet;
+  }
 
+  /**
+   * Return user Balance
+   */
+  public async getBalance() {
+    return await this.wallet?.getBalance("ugnot");
+  }
   /**
    * Performs a transaction, handling common error cases and transforming them
    * into known error types.
