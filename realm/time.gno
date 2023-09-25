@@ -69,7 +69,9 @@ func (tc *TimeControl) AddMove() (valid bool) {
 	} else {
 		tc.BlackTime = nd
 	}
-	tc.MoveTimestamps = append(tc.MoveTimestamps, time.Now())
+	// https://github.com/gnolang/gno/pull/1170
+	mts := append([]time.Time{}, tc.MoveTimestamps...)
+	tc.MoveTimestamps = append(mts, time.Now())
 	return true
 }
 
