@@ -220,21 +220,21 @@ func execMain(cfg *rootCfg) error {
 	// Create the client (HTTP)
 	cli := tm2Client.NewClient(cfg.remote)
 
+	redisOpts, err := redis.ParseURL(cfg.redisURL)
+	if err != nil {
+		return err
+	}
+	redisClient := redis.NewClient(redisOpts)
+
 	// Prepare the middlewares
 	middlewares := []faucet.Middleware{
-		prepareFundMiddleware(cli, fundLimit),
+		prepareFundMiddleware(cli, fundLimit, redisClient),
 	}
 
 	// TODO temporary
 	if len(cfg.allowedTokens) != 0 {
 		middlewares = append(middlewares, prepareTokenListMiddleware(cfg.allowedTokens))
 	} else {
-		redisOpts, err := redis.ParseURL(cfg.redisURL)
-		if err != nil {
-			return err
-		}
-		redisClient := redis.NewClient(redisOpts)
-
 		middlewares = append(middlewares, prepareTokenMiddleware(redisClient))
 	}
 
@@ -358,7 +358,7 @@ func (w *waiter) wait() error {
 }
 
 // prepareFundMiddleware prepares the fund (balance) validation middleware
-func prepareFundMiddleware(client client.Client, fundLimit std.Coins) faucet.Middleware {
+func prepareFundMiddleware(client client.Client, fundLimit std.Coins, redisClient *redis.Client) faucet.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Parse the request to extract the address
@@ -387,6 +387,31 @@ func prepareFundMiddleware(client client.Client, fundLimit std.Coins) faucet.Mid
 				http.Error(w, "Invalid request", http.StatusBadRequest)
 
 				return
+			}
+
+			token := r.Context().Value("token").(string)
+
+			keys, _, err := redisClient.SScan(r.Context(), "TOKEN_ADDRESSES", 0, "*:"+request.To, 1).Result()
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			// DO WE REALLY WANT AN ADDRESS TO NO BE ABLE TO ASK A SECOND TIME MONEY FROM THE FAUCET ?
+			for _, k := range keys {
+				if strings.Contains(k, request.To) {
+					http.Error(w, "address already receive tokens", http.StatusInternalServerError)
+					return
+				}
+			}
+
+			_, err = redisClient.HSet(r.Context(), "TOKEN:"+token, "address", request.To).Result()
+			if err != nil {
+				http.Error(w, "Failed to store token address", http.StatusInternalServerError)
+			}
+
+			_, err = redisClient.SAdd(r.Context(), "TOKEN_ADDRESSES", token+":"+request.To).Result()
+			if err != nil {
+				http.Error(w, "Failed to store TOKEN_ADDRESSES", http.StatusInternalServerError)
 			}
 
 			// Extract the beneficiary address
@@ -435,6 +460,9 @@ func prepareTokenListMiddleware(tokens []string) faucet.Middleware {
 			// Fetch the faucet token
 			token := r.Header.Get(tokenKey)
 
+			req := r.WithContext(context.WithValue(r.Context(), "token", token))
+			*r = *req
+
 			// Make sure the token is valid
 			if _, valid := tokenMap[token]; !valid {
 				http.Error(w, "Invalid faucet token", http.StatusForbidden)
@@ -454,6 +482,9 @@ func prepareTokenMiddleware(redisClient *redis.Client) faucet.Middleware {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Fetch the faucet token
 			token := r.Header.Get(tokenKey)
+
+			req := r.WithContext(context.WithValue(r.Context(), "token", token))
+			*r = *req
 
 			res, err := redisClient.HGet(r.Context(), "TOKEN:"+token, "used").Result()
 			if err != nil {
