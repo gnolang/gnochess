@@ -3,7 +3,7 @@ module github.com/gnolang/gnochess
 go 1.20
 
 require (
-	github.com/gnolang/gno v0.0.0-20230925194719-93ff7df52280
+	github.com/gnolang/gno v0.0.0-20230925211159-9c7c0a577eb6
 	github.com/jaekwon/testify v1.6.1
 	github.com/rogpeppe/go-internal v1.11.0
 )
