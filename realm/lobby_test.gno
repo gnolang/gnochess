@@ -165,7 +165,6 @@ func TestLobbyGameFound(t *testing.T) {
 
 func TestLobbyJoin_HasOpenGames(t *testing.T) {
 	cleanup()
-	std.TestSetOrigCaller(white)
 	g := &Game{
 		ID:    "123",
 		White: white,
@@ -176,12 +175,12 @@ func TestLobbyJoin_HasOpenGames(t *testing.T) {
 	addToUser2Games(white, g)
 	addToUser2Games(black, g)
 
-	defer func() {
-		e := recover()
-		if !strings.Contains(fmt.Sprint(e), "game 123 is not yet finished") {
-			t.Errorf("expecting 'game is not finished' panic, got %v", e)
-		}
-	}()
-
+	std.TestSetOrigCaller(white)
 	LobbyJoin(10*60, 5)
+	if g.State != GameStateResigned {
+		t.Errorf("state wrong: want %d got %d", GameStateResigned, g.State)
+	}
+	if g.Winner != WinnerBlack {
+		t.Errorf("winner wrong: want %q got %q", "black", g.Winner)
+	}
 }
