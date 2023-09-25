@@ -200,7 +200,9 @@ func getPlayer(addr std.Address) *Player {
 		p.CategoryInfo[cat] = CategoryInfo{
 			PlayerRating: pr,
 		}
-		playerRatings[cat] = append(playerRatings[cat], pr)
+		// https://github.com/gnolang/gno/pull/1170
+		prs := append([]*PlayerRating{}, playerRatings[cat]...)
+		playerRatings[cat] = append(prs, pr)
 	}
 	playerStore.Set(addr.String(), p)
 	return p
@@ -387,6 +389,9 @@ func parseFilters(filters string) (r listGamesFilters) {
 		if idx < 0 {
 			panic("invalid filter: " + part)
 		}
+		// TODO: this is likely to misbehave due to https://github.com/gnolang/gno/issues/1135
+		// This is unlikely to cause much of an issue here, as we can expect player/white/black/finished
+		// to only exist once, though it should be kept in mind if/when adding additional filters.
 		filt, pred := part[:idx+1], part[idx+1:]
 		switch filt {
 		case "player:":
