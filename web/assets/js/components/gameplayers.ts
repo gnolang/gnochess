@@ -73,7 +73,7 @@ const Gameplayers = class extends Component {
     this.DOM.timer.innerHTML = `${pad(minutes)}:${pad(seconds)}`;
   }
 
-  async startTimer() {
+  async startTimer(gameId: string) {
     clearInterval(this.clock);
     const actions: Actions = await Actions.getInstance();
 
@@ -87,7 +87,7 @@ const Gameplayers = class extends Component {
         this.DOM.timer.innerHTML = `00:00`;
         try {
           // Claim timeout. If no error, timeout succeeded
-          await actions.claimTimeout(this.gameId);
+          await actions.claimTimeout(gameId);
           this.call('engine', [GameState.TIMEOUT], 'gameboard'); // let engine know timer is finished
         } catch (e) {
           this.call(

@@ -265,7 +265,7 @@ const Gameboard = class extends Component {
           await exitforFirstMove();
         }, timer); //30sec first move
       } else {
-        this.call('startTimer', [init], 'gameplayers', 'me');
+        this.call('startTimer', [this.gameId], 'gameplayers', 'me');
       }
     } else {
       // Rival turn to play
@@ -274,7 +274,7 @@ const Gameboard = class extends Component {
       clearTimeout(this.initMoveTimer);
       this.call('stopTimer', [init], 'gameplayers', 'me');
       if (!this.rivalFirstMove) {
-        this.call('startTimer', [init], 'gameplayers', 'rival');
+        this.call('startTimer', [this.gameId], 'gameplayers', 'rival');
       } else {
         this.rivalFirstMove = false;
       }
