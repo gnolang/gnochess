@@ -1,7 +1,7 @@
 import { Component } from 'sevejs';
 import { gsap } from 'gsap';
 import { Chess } from 'chess.js';
-import { type Colors, GameState, Promotion } from '../types/types';
+import { type Colors, GameState, Promotion, Winner } from '../types/types';
 import Actions from '../actions.ts';
 
 const Gameboard = class extends Component {
@@ -162,12 +162,18 @@ const Gameboard = class extends Component {
           this.gameId,
           GameState.CHECKMATED
         );
+
+        const winnerColor = gameState.winner === Winner.BLACK ? 'b' : 'w';
+        const amIwinner = winnerColor === this.color ? 'me' : 'rival';
+
+        console.log('winnerColor :' + winnerColor);
+        console.log('amIwinner :' + amIwinner);
         if (valid) {
           this.call(
             'finishGame',
             ['winner', gameState.state],
             'gameplayers',
-            this.color === this.chess.turn() ? 'me' : 'rival'
+            amIwinner
           );
           setFinalState();
         }
