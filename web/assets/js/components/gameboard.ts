@@ -1,7 +1,7 @@
 import { Component } from 'sevejs';
 import { gsap } from 'gsap';
 import { Chess } from 'chess.js';
-import { type Colors, type GameoverType, Promotion } from '../types/types';
+import { type Colors, GameState, Promotion } from '../types/types';
 import Actions from '../actions.ts';
 
 const Gameboard = class extends Component {
@@ -21,11 +21,13 @@ const Gameboard = class extends Component {
     this.initMoveTimer = null;
     this.checkOngoingTimer = null;
     this.firstMove = true;
+    this.rivalFirstMove = true;
 
     this.DOM.board = this.DOM.el.querySelector('#js-game');
     this.DOM.promotionBtns = [...this.DOM.el.querySelectorAll('.js-topromote')];
     this.DOM.moves = [];
     this.DOM.promoteModal = this.DOM.el.querySelector('#js-promote-modal');
+    this.rivalTimeout;
 
     // @ts-ignore
     this.board = Chessboard(this.DOM.board, {
@@ -71,90 +73,138 @@ const Gameboard = class extends Component {
     return this.chess.moveNumber();
   }
 
-  async engine(init = false, gameover?: GameoverType) {
+  async engine(init = false, gameover?: GameState) {
     console.log('engine called');
     const actions: Actions = await Actions.getInstance();
 
     const gameState = await actions.getGame(this.gameId);
+    console.log(gameState.state);
 
-    if (gameover === 'resigned') {
-      const valid = await actions.isGameOver(this.gameId, 'timeout');
-      // the player asking for a request quit the board so only the remaining one will live during this finishGame call
-      if (valid)
-        this.call('finishGame', ['winner', 'resigned'], 'gameplayers', 'me');
-    }
+    // TODO: this should be  handled by gameState.state === 'resigned' under
+    // if (gameover === 'resigned') {
+    //   const valid = await actions.isGameOver(this.gameId, 'timeout');
+    //   // the player asking for a request quit the board so only the remaining one will live during this finishGame call
+    //   if (valid)
+    //     this.call('finishGame', ['winner', 'resigned'], 'gameplayers', 'me');
+    // }
 
     if (gameState.state !== 'open' || this.chess.isGameOver() || gameover) {
       console.log('GAME OVER!');
+
+      const setFinalState = () => {
+        clearTimeout(this.rivalTimeout);
+        this.allowedToMove = false;
+        this.call('stopTimer', [true], 'gameplayers', 'me');
+        this.call('stopTimer', [true], 'gameplayers', 'rival');
+        this.call('disappear', '', 'gamecontrols');
+      };
 
       if (gameState.state === 'invalid') {
         throw new Error('invalid move');
       }
 
-      let status: GameoverType = 'checkmate';
+      let status: GameState = GameState.CHECKMATED;
 
-      if (gameover === 'timeout' || gameState.state === 'timeout') {
-        status = 'timeout';
+      if (gameover === GameState.NOMOVE) {
+        console.log('gameover for nomove');
+        setFinalState();
+        this.call('finishGame', ['Timeout', 'timout'], 'gameplayers', 'me');
+      }
+
+      if (
+        gameover === GameState.TIMEOUT ||
+        gameState.state === GameState.TIMEOUT
+      ) {
         console.log('gameover for timeout');
         clearTimeout(this.checkOngoingTimer);
         const game = await actions.getGame(this.gameId);
         if (game.winner == 'none') {
+          console.log('no winner -> abandon');
+          setFinalState();
           this.call('finishGame', ['abandon', status], 'gameplayers', 'rival');
         } else {
-          const valid = await actions.isGameOver(this.gameId, 'timeout');
-          if (valid)
+          const valid = await actions.isGameOver(
+            this.gameId,
+            GameState.TIMEOUT
+          );
+          console.log('timeout with rival');
+
+          if (valid) {
             this.call(
               'finishGame',
-              ['winner', status],
+              ['winner', 'timeout'],
               'gameplayers',
               this.color === this.chess.turn() ? 'rival' : 'me'
             );
+            setFinalState();
+          }
         }
       }
 
-      if (this.chess.isCheckmate() || gameState.state === 'checkmated') {
-        status = 'checkmate';
-        const valid = await actions.isGameOver(this.gameId, 'checkmate');
-        if (valid)
+      if (
+        this.chess.isCheckmate() ||
+        gameState.state === GameState.CHECKMATED
+      ) {
+        console.log('gameover for checkmate');
+
+        const valid = await actions.isGameOver(
+          this.gameId,
+          GameState.CHECKMATED
+        );
+        if (valid) {
           this.call(
             'finishGame',
-            ['winner', status],
+            ['winner', gameState.state],
             'gameplayers',
             this.color === this.chess.turn() ? 'me' : 'rival'
           );
+          setFinalState();
+        }
       }
 
       const isEngineDrawn =
-        gameState.state === 'stalemate' ||
-        gameState.state === 'drawn_75_move' ||
-        gameState.state === 'drawn_5_fold' ||
-        gameState.state === 'drawn_50_move' ||
-        gameState.state === 'drawn_3_fold' ||
-        gameState.state === 'drawn_insufficient' ||
-        gameState.state === 'drawn_by_agreement';
+        gameState.state === GameState.STALEMATE ||
+        gameState.state === GameState.DRAWN_75_MOVE ||
+        gameState.state === GameState.DRAWN_5_FOLD ||
+        gameState.state === GameState.DRAWN_50_MOVE ||
+        gameState.state === GameState.DRAWN_3_FOLD ||
+        gameState.state === GameState.DRAWN_INSUFFICIENT ||
+        gameState.state === GameState.DRAWN_BY_AGREEMENT;
 
-      if (isEngineDrawn || this.chess.isDraw() || gameover === 'draw') {
-        status = this.chess.isStalemate()
-          ? 'stalemate'
-          : this.chess.isThreefoldRepetition()
-          ? 'threefoldRepetition'
-          : this.chess.isInsufficientMaterial()
-          ? 'insufficientMaterial'
-          : 'draw';
-        const valid = await actions.isGameOver(this.gameId, status);
-        if (valid)
-          this.call('finishGame', ['draw', status], 'gameplayers', 'me');
+      if (isEngineDrawn || this.chess.isDraw()) {
+        // const status = this.chess.isStalemate()
+        //   ? 'stalemate'
+        //   : this.chess.isThreefoldRepetition()
+        //   ? 'threefoldRepetition'
+        //   : this.chess.isInsufficientMaterial()
+        //   ? 'insufficientMaterial'
+        //   : 'draw';
+        const valid = await actions.isGameOver(this.gameId, gameState.state);
+        if (valid) {
+          console.log('gameover for draw');
+          this.call(
+            'finishGame',
+            ['draw', gameState.state],
+            'gameplayers',
+            'me'
+          );
+          setFinalState();
+        }
       }
 
-      if (gameState.state === 'resigned') {
-        const valid = await actions.isGameOver(this.gameId, 'checkmate');
-        if (valid)
-          this.call('finishGame', ['winner', status], 'gameplayers', 'me');
+      if (gameState.state === GameState.RESIGNED) {
+        console.log('gameover for resigned');
+        //TODO: why checkmate -> "await actions.isGameOver(this.gameId, 'checkmate');"
+        // const valid = await actions.isGameOver(this.gameId, 'checkmate');
+        // if (valid)
+        this.call(
+          'finishGame',
+          ['winner', gameState.state],
+          'gameplayers',
+          'me'
+        );
+        setFinalState();
       }
-
-      this.call('stopTimer', [true], 'gameplayers', 'me');
-      this.call('stopTimer', [true], 'gameplayers', 'rival');
-      this.call('disappear', '', 'gamecontrols');
 
       return;
     }
@@ -185,19 +235,19 @@ const Gameboard = class extends Component {
         // const currentDate = new Date();
         // const diffDate = startDate.getTime() - currentDate.getTime();
 
-        const exitforTimeout = async () => {
+        const exitforFirstMove = async () => {
           console.log('exitforTimeout called -> Ive not player under 30s');
           try {
             // Claim timeout. If no error, timeout succeeded
             await actions.claimTimeout(this.gameId);
-            this.call(this.engine(false, 'timeout'));
+            this.engine(false, GameState.NOMOVE);
           } catch (e) {
             this.call(
               'appear',
               ['Invalid claim timeout request', 'error'],
               'toast'
             );
-            this.call(this.engine(false, 'timeout')); //TODO: create a fail "exit" gameover in the engine
+            this.engine(false, GameState.NOMOVE); //TODO: create a fail "exit" gameover in the engine
             // Timeout request is invalid
             // for the user (I assume fire event to end game)
           }
@@ -209,12 +259,12 @@ const Gameboard = class extends Component {
 
         if (timer <= 0) {
           // if date too old (> 30sec )
-          await exitforTimeout();
+          await exitforFirstMove();
           throw new Error('Game party started too long time ago');
         }
 
         this.initMoveTimer = setTimeout(async () => {
-          await exitforTimeout();
+          await exitforFirstMove();
         }, timer); //30sec first move
       } else {
         this.call('startTimer', [init], 'gameplayers', 'me');
@@ -225,8 +275,10 @@ const Gameboard = class extends Component {
       // If less than 1 move it means rival 30s first move - no timer
       clearTimeout(this.initMoveTimer);
       this.call('stopTimer', [init], 'gameplayers', 'me');
-      if (this.getMoveNumber() > 1) {
+      if (!this.rivalFirstMove) {
         this.call('startTimer', [init], 'gameplayers', 'rival');
+      } else {
+        this.rivalFirstMove = false;
       }
       this.allowedToMove = false;
       this.rivalMove();
@@ -247,7 +299,14 @@ const Gameboard = class extends Component {
           clearInterval(this.checkOngoingTimer);
 
           // TODO @Alexis this doesn't necessarily need to be a timeout type
-          this.engine(false, 'timeout');
+
+          //TODO: noMove gameover: the other should be check by game.state in engine
+          const gameState = await actions.getGame(this.gameId);
+          const state: GameState =
+            this.rivalFirstMove || this.firstMove
+              ? GameState.NOMOVE
+              : gameState.state;
+          this.engine(false, state);
         }
       } catch (e) {
         console.error('isGameOngoing doesnt work : ' + e);
@@ -259,7 +318,7 @@ const Gameboard = class extends Component {
     console.log('get rival move');
     const actions: Actions = await Actions.getInstance();
 
-    let retryTimeout: NodeJS.Timeout;
+    // let retryTimeout: NodeJS.Timeout;
 
     const checkRivalMove = async () => {
       console.log('checkRivalMove start');
@@ -268,7 +327,7 @@ const Gameboard = class extends Component {
 
       if (this.chess.fen() === currentFen) {
         // No changes, set up the next tick
-        retryTimeout = setTimeout(checkRivalMove, 500);
+        this.rivalTimeout = setTimeout(checkRivalMove, 500);
         console.log('same fen');
         return;
       }
@@ -276,7 +335,7 @@ const Gameboard = class extends Component {
       console.log(this.chess.fen());
       console.log(currentFen);
 
-      clearTimeout(retryTimeout);
+      clearTimeout(this.rivalTimeout);
 
       // Update the game state
       this.chess.load(gameState.position.fen);
@@ -310,7 +369,7 @@ const Gameboard = class extends Component {
       await this.engine();
     };
 
-    retryTimeout = setTimeout(checkRivalMove, 0);
+    this.rivalTimeout = setTimeout(checkRivalMove, 0);
   }
 
   async promote(): Promise<Promotion> {

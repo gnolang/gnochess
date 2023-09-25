@@ -206,6 +206,7 @@ const Gamecontrols = class extends Component {
   }
 
   private _getDrawProposition() {
+    this.DOM.timer.innerHTML = this.timer;
     gsap.set(this.DOM.timer, { autoAlpha: 1, display: 'inline-block' });
 
     this.pendingDraw = setInterval(() => {
@@ -222,6 +223,10 @@ const Gamecontrols = class extends Component {
     console.log('propal received');
   }
 
+  // TODO: remove for V1 because we are removing the draw propal from v1
+  // and resign is already managed by intervalCheckForOngoingGame()
+  // TODO: resolve this resign duplicate for v2
+
   private async _actionWatcher() {
     const watcherFunc = async () => {
       const actions: Actions = await Actions.getInstance();
@@ -232,10 +237,11 @@ const Gamecontrols = class extends Component {
         this._getDrawProposition();
       }
 
-      if (game.state === 'resigned') {
-        clearInterval(this.watcher);
-        this.call('engine', [false, 'resigned'], 'gameboard');
-      }
+      // if (game.state === 'resigned') {
+      //   console.log('watcher get resigned');
+      //   clearInterval(this.watcher);
+      //   this.call('engine', [false, 'resigned'], 'gameboard');
+      // }
     };
     this.watcher = setInterval(watcherFunc, 1000);
   }

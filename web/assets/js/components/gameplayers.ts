@@ -1,12 +1,7 @@
 import { Component } from 'sevejs';
 import { gsap } from 'gsap';
 import { truncateString } from '../utils/truncate';
-import {
-  type Colors,
-  type GameoverType,
-  GameTime,
-  GameType
-} from '../types/types';
+import { type Colors, GameState, GameTime, GameType } from '../types/types';
 
 const Gameplayers = class extends Component {
   constructor(opts: any) {
@@ -39,7 +34,12 @@ const Gameplayers = class extends Component {
     });
   }
 
-  config(time: GameTime, color: Colors, address: string = '', category: GameType) {
+  config(
+    time: GameTime,
+    color: Colors,
+    address: string = '',
+    category: GameType
+  ) {
     //-- config game --
     //config token + type
     this.DOM.token.innerHTML = truncateString(address, 4, 4);
@@ -107,8 +107,9 @@ const Gameplayers = class extends Component {
     this.DOM.pawns.appendChild(pawnEl);
   }
 
-  finishGame(type = 'Winner', status: GameoverType = 'checkmate') {
+  finishGame(type = 'Winner', status = GameState.CHECKMATED) {
     // ICI draw
+    console.log('finishGame - type: ' + type + ' status: ' + status);
     this.DOM.el.querySelector('.js-playergamegameovertitle').innerHTML = type;
     this.DOM.el.querySelector('.js-playergametype').innerHTML =
       this.category + ' - ' + status;

@@ -1,24 +1,32 @@
-import {saveToLocalStorage} from './utils/localstorage';
+import { saveToLocalStorage } from './utils/localstorage';
 import {
-    defaultFaucetTokenKey,
-    defaultMnemonicKey,
-    drawRequestTimer,
-    Game,
-    type GameoverType,
-    type GameSettings,
-    GameState,
-    GameTime,
-    Player,
-    Promotion
+  defaultFaucetTokenKey,
+  defaultMnemonicKey,
+  drawRequestTimer,
+  Game,
+  //   type GameoverType,
+  type GameSettings,
+  GameState,
+  GameTime,
+  Player,
+  Promotion
 } from './types/types';
-import {defaultTxFee, GnoJSONRPCProvider, GnoWallet} from '@gnolang/gno-js-client';
-import {BroadcastTxCommitResult, TM2Error, TransactionEndpoint} from '@gnolang/tm2-js-client';
-import {generateMnemonic} from './utils/crypto.ts';
+import {
+  defaultTxFee,
+  GnoJSONRPCProvider,
+  GnoWallet
+} from '@gnolang/gno-js-client';
+import {
+  BroadcastTxCommitResult,
+  TM2Error,
+  TransactionEndpoint
+} from '@gnolang/tm2-js-client';
+import { generateMnemonic } from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
-import {constructFaucetError} from './utils/errors.ts';
-import {AlreadyInLobbyError, ErrorTransform} from './errors.ts';
-import {preparePromotion} from './utils/moves.ts';
+import { constructFaucetError } from './utils/errors.ts';
+import { AlreadyInLobbyError, ErrorTransform } from './errors.ts';
+import { preparePromotion } from './utils/moves.ts';
 
 // ENV values //
 // const wsURL: string = Config.GNO_WS_URL; TODO temporarily disabled
@@ -330,7 +338,7 @@ class Actions {
    * @param gameID the ID of the running game
    * @param type the game-over state types
    */
-  async isGameOver(gameID: string, type: GameoverType): Promise<boolean> {
+  async isGameOver(gameID: string, type: GameState): Promise<boolean> {
     // Fetch the game state
     const game: Game = await this.getGame(gameID);
 
