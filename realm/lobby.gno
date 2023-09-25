@@ -1,8 +1,10 @@
 package chess
 
 import (
+	"bytes"
 	"math"
 	"std"
+	"strconv"
 	"time"
 
 	"gno.land/p/demo/avl"
@@ -63,8 +65,16 @@ var (
 )
 
 // XXX: REMOVE BEFORE PRODUCTION
-func LobbyData() ([tcLobbyMax][]lobbyPlayer, avl.Tree) {
-	return lobby, lobbyPlayer2Game
+func LobbyData() string {
+	var buf bytes.Buffer
+	for idx, sublob := range lobby {
+		buf.WriteString("Sublobby " + strconv.Itoa(idx))
+		for _, player := range sublob {
+			buf.WriteString("- " + player.player.Address.String())
+		}
+		buf.WriteByte('\n')
+	}
+	return buf.String()
 }
 
 func LobbyJoin(seconds, increment int) {
