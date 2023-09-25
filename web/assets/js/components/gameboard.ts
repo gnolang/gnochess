@@ -36,10 +36,6 @@ const Gameboard = class extends Component {
       moveSpeed: 1
     });
     this.board.start();
-
-    // setTimeout(() => {
-    //   this.call('finishGame', ['winner', 'vblabla'], 'gameplayers', 'me');
-    // }, 4000);
   }
 
   _onSnapEnd() {
@@ -83,14 +79,6 @@ const Gameboard = class extends Component {
 
     const gameState = await actions.getGame(this.gameId);
     console.log(gameState.state);
-
-    // TODO: this should be  handled by gameState.state === 'resigned' under
-    // if (gameover === 'resigned') {
-    //   const valid = await actions.isGameOver(this.gameId, 'timeout');
-    //   // the player asking for a request quit the board so only the remaining one will live during this finishGame call
-    //   if (valid)
-    //     this.call('finishGame', ['winner', 'resigned'], 'gameplayers', 'me');
-    // }
 
     if (gameState.state !== 'open' || this.chess.isGameOver() || gameover) {
       console.log('GAME OVER!');
@@ -189,13 +177,6 @@ const Gameboard = class extends Component {
         gameState.state === GameState.DRAWN_BY_AGREEMENT;
 
       if (isEngineDrawn || this.chess.isDraw()) {
-        // const status = this.chess.isStalemate()
-        //   ? 'stalemate'
-        //   : this.chess.isThreefoldRepetition()
-        //   ? 'threefoldRepetition'
-        //   : this.chess.isInsufficientMaterial()
-        //   ? 'insufficientMaterial'
-        //   : 'draw';
         const valid = await actions.isGameOver(this.gameId, gameState.state);
         if (valid) {
           console.log('gameover for draw');
@@ -211,9 +192,6 @@ const Gameboard = class extends Component {
 
       if (gameState.state === GameState.RESIGNED) {
         console.log('gameover for resigned');
-        //TODO: why checkmate -> "await actions.isGameOver(this.gameId, 'checkmate');"
-        // const valid = await actions.isGameOver(this.gameId, 'checkmate');
-        // if (valid)
         setFinalState();
         this.call(
           'finishGame',
