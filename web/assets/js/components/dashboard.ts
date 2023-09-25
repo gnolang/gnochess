@@ -129,38 +129,56 @@ const Dashboard = class extends Component {
     const actions = await Actions.getInstance();
 
     try {
-      const blitzLeaderboard: Player[] = await actions.getLeaderboard(
-        Category.BLITZ
-      );
-      const rapidLeaderboard: Player[] = await actions.getLeaderboard(
-        Category.RAPID
-      );
-
-      const leaders: Player[][] = [blitzLeaderboard, rapidLeaderboard];
-
-      const leaderMapped = leaders.map((leadMap: Player[]) => {
-        return leadMap
-          .map((lead: any) => {
-            avatarize(lead.token);
-            return `<li class="dashboard-avatar">
-                    <div class="dashboard-avatar_img"><div class="dashboard-avatar_bg" style="filter: brightness(${avatarize(
-                      lead.token
-                    )})"></div><img src="/img/mini-gopher.png" alt="avatar"/></div>
-                    <div class="dashboard-avatar_info">${truncateString(
-                      lead.token,
-                      2,
-                      2
-                    )}</div>
-              </li>`;
-          })
-          .reduce((acc: any, curr: any) => acc + curr);
-      });
-
       const DOMrapid = document.getElementById('js-dashrapidleaderboard');
       const DOMblitz = document.getElementById('js-dashblitzleaderboard');
 
-      if (DOMblitz) DOMblitz.innerHTML = leaderMapped[0];
-      if (DOMrapid) DOMrapid.innerHTML = leaderMapped[1];
+      const generateAvatarHTML = (players: Player[]): string[] => {
+        return players.map((player: Player) => {
+          return `<li class="dashboard-avatar">
+                    <div class="dashboard-avatar_img"><div class="dashboard-avatar_bg" style="filter: brightness(${avatarize(
+                      player.address
+                    )})"></div><img src="/img/mini-gopher.png" alt="avatar"/></div>
+                    <div class="dashboard-avatar_info">${truncateString(
+                      player.address,
+                      10,
+                      10
+                    )}</div>
+              </li>`;
+        });
+      };
+
+      // Generate the HTML code for the players
+      const blitzHTML = generateAvatarHTML(
+        await actions.getLeaderboard(Category.BLITZ)
+      );
+
+      const rapidHTML = generateAvatarHTML(
+        await actions.getLeaderboard(Category.RAPID)
+      );
+
+      // TODO @Alexis, please add something prettier
+      let DOMRapidHTML = 'No players found :(';
+      let DOMBlitzHTML = 'No players found :(';
+
+      if (rapidHTML.length > 0) {
+        DOMRapidHTML = rapidHTML.reduce(
+          (prev: string, next: string) => prev + next
+        );
+      }
+
+      if (blitzHTML.length > 0) {
+        DOMBlitzHTML = blitzHTML.reduce(
+          (prev: string, next: string) => prev + next
+        );
+      }
+
+      if (DOMblitz) {
+        DOMblitz.innerHTML = DOMBlitzHTML;
+      }
+
+      if (DOMrapid) {
+        DOMrapid.innerHTML = DOMRapidHTML;
+      }
     } catch (e) {
       console.error('Error: Dashboard method _feedLeaderboard issue', e);
       this.call(
