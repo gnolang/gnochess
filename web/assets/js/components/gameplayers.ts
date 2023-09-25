@@ -1,12 +1,7 @@
 import { Component } from 'sevejs';
 import { gsap } from 'gsap';
 import { truncateString } from '../utils/truncate';
-import {
-  type Colors,
-  type GameoverType,
-  GameTime,
-  GameType
-} from '../types/types';
+import { type Colors, GameState, GameTime, GameType } from '../types/types';
 
 const Gameplayers = class extends Component {
   constructor(opts: any) {
@@ -39,7 +34,12 @@ const Gameplayers = class extends Component {
     });
   }
 
-  config(time: GameTime, color: Colors, address: string = '', category: GameType) {
+  config(
+    time: GameTime,
+    color: Colors,
+    address: string = '',
+    category: GameType
+  ) {
     //-- config game --
     //config token + type
     this.DOM.token.innerHTML = truncateString(address, 4, 4);
@@ -107,9 +107,13 @@ const Gameplayers = class extends Component {
     this.DOM.pawns.appendChild(pawnEl);
   }
 
-  finishGame(type = 'Winner', status: GameoverType = 'checkmate') {
-    // ICI draw
-    this.DOM.el.querySelector('.js-playergamegameovertitle').innerHTML = type;
+  finishGame(type = 'Winner', status = GameState.CHECKMATED) {
+    console.log('finishGame - type: ' + type + ' status: ' + status);
+    const playergamegameovertitle = this.DOM.el.querySelector(
+      '.js-playergamegameovertitle'
+    );
+    console.log('playergamegameovertitle ' + playergamegameovertitle);
+    playergamegameovertitle.innerHTML = type;
     this.DOM.el.querySelector('.js-playergametype').innerHTML =
       this.category + ' - ' + status;
     this.DOM.el.querySelector('.js-playerpoints').innerHTML = `${this.call(
@@ -137,6 +141,7 @@ const Gameplayers = class extends Component {
   }
 
   destroy() {
+    console.log('player is destroyed');
     clearInterval(this.clock);
   }
 };
