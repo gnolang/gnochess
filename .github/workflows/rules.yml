@@ -1,11 +1,9 @@
-name: realm
+name: rules
 
 on:
   pull_request:
     paths:
-      - "realm/**"
-      - "Makefile"
-      - "go.sum"
+      - "realm/rules.gno"
   push:
     branches:
       - master
@@ -21,4 +19,4 @@ jobs:
         with:
           go-version: 'stable'
       - run: go mod download -x
-      - run: go run github.com/gnolang/gno/gnovm/cmd/gno test -verbose -run 'Test([^P]|P[^e])' ./realm
+      - run: go run github.com/gnolang/gno/gnovm/cmd/gno test -verbose -run 'TestPerft' ./realm
