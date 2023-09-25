@@ -2,6 +2,7 @@ import { Component } from 'sevejs';
 import { gsap } from 'gsap';
 import { truncateString } from '../utils/truncate';
 import { type Colors, GameState, GameTime, GameType } from '../types/types';
+import Actions from '../actions.ts';
 
 const Gameplayers = class extends Component {
   constructor(opts: any) {
@@ -40,6 +41,7 @@ const Gameplayers = class extends Component {
     address: string = '',
     category: GameType
   ) {
+    console.log(time);
     //-- config game --
     //config token + type
     this.DOM.token.innerHTML = truncateString(address, 4, 4);
@@ -47,8 +49,8 @@ const Gameplayers = class extends Component {
     this.category = category;
 
     //config timer
-    this.increment = time.increment;
-    this.timer = time.time * 60; //min to sec
+    this.increment = 0; //time.increment;
+    this.timer = 70; //time.time * 60; //min to sec
     this._createTime(this.timer);
 
     //config pawn color
@@ -71,19 +73,34 @@ const Gameplayers = class extends Component {
     this.DOM.timer.innerHTML = `${pad(minutes)}:${pad(seconds)}`;
   }
 
-  startTimer() {
+  async startTimer() {
     clearInterval(this.clock);
+    const actions: Actions = await Actions.getInstance();
 
     this.timerActive = true;
 
-    const clockAction = () => {
+    const clockAction = async () => {
       this.timer--;
-      this._createTime(this.timer);
 
       if (this.timer <= 0) {
         clearInterval(this.clock);
         this.DOM.timer.innerHTML = `00:00`;
-        this.call('engine', ['timeout'], 'gameboard'); // let engine know timer is finished
+        try {
+          // Claim timeout. If no error, timeout succeeded
+          await actions.claimTimeout(this.gameId);
+          this.call('engine', [GameState.TIMEOUT], 'gameboard'); // let engine know timer is finished
+        } catch (e) {
+          this.call(
+            'appear',
+            ['Invalid claim timeout request', 'error'],
+            'toast'
+          );
+          this.call('engine', [GameState.TIMEOUT], 'gameboard'); // let engine know timer is finished
+          // Timeout request is invalid
+          // for the user (I assume fire event to end game)
+        }
+      } else {
+        this._createTime(this.timer);
       }
     };
 
@@ -141,7 +158,6 @@ const Gameplayers = class extends Component {
   }
 
   destroy() {
-    console.log('player is destroyed');
     clearInterval(this.clock);
   }
 };

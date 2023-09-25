@@ -117,6 +117,7 @@ const Gameboard = class extends Component {
         console.log('gameover for timeout');
         clearTimeout(this.checkOngoingTimer);
         const game = await actions.getGame(this.gameId);
+        console.log(game);
         if (game.winner == 'none') {
           console.log('no winner -> abandon');
           this.call('finishGame', ['abandon', status], 'gameplayers', 'rival');
@@ -127,13 +128,15 @@ const Gameboard = class extends Component {
             GameState.TIMEOUT
           );
           console.log('timeout with rival');
+          const winnerColor = gameState.winner === Winner.BLACK ? 'b' : 'w';
+          const amIwinner = winnerColor === this.color ? 'me' : 'rival';
 
           if (valid) {
             this.call(
               'finishGame',
               ['winner', 'timeout'],
               'gameplayers',
-              this.color === this.chess.turn() ? 'me' : 'rival'
+              amIwinner
             );
             setFinalState();
           }
