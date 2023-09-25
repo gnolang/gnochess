@@ -614,7 +614,6 @@ class Actions {
     }
 
     // Close out the WS connection
-    // TODO Temporarily disabled
     this.provider.closeConnection();
   }
 
