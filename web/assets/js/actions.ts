@@ -4,7 +4,6 @@ import {
   defaultMnemonicKey,
   drawRequestTimer,
   Game,
-  //   type GameoverType,
   type GameSettings,
   GameState,
   GameTime,
@@ -40,6 +39,14 @@ const cleanUpRealmReturn = (ret: string) => {
 };
 const decodeRealmResponse = (resp: string) => {
   return cleanUpRealmReturn(atob(resp));
+};
+const parsedJSONOrRaw = (data: string, nob64 = false) => {
+  const decoded = nob64 ? cleanUpRealmReturn(data) : decodeRealmResponse(data);
+  try {
+    return JSON.parse(decoded);
+  } finally {
+    return decoded;
+  }
 };
 
 /**
@@ -131,19 +138,32 @@ class Actions {
     return this.faucetToken || localStorage.getItem(defaultFaucetTokenKey);
   }
 
+  private gkLog(): Boolean {
+    const wnd = window as { gnokeyLog?: Boolean };
+    return typeof wnd.gnokeyLog !== 'undefined' && wnd.gnokeyLog;
+  }
+
   /**
    * Performs a transaction, handling common error cases and transforming them
    * into known error types.
    */
   public async callMethod(
-    path: string,
     method: string,
     args: string[] | null,
     gasWanted: Long = defaultGasWanted
   ): Promise<BroadcastTxCommitResult> {
+    const gkLog = this.gkLog();
     try {
-      return (await this.wallet?.callMethod(
-        path,
+      if (gkLog) {
+        const gkArgs = args?.map((arg) => '-args ' + arg).join(' ') ?? '';
+        console.info(
+          `$ gnokey maketx call -broadcast ` +
+            `-pkgpath ${chessRealm} -gas-wanted ${gasWanted} -gas-fee ${defaultTxFee} ` +
+            `-func ${method} ${gkArgs} test1`
+        );
+      }
+      const resp = (await this.wallet?.callMethod(
+        chessRealm,
         method,
         args,
         TransactionEndpoint.BROADCAST_TX_COMMIT,
@@ -153,6 +173,14 @@ class Actions {
           gasWanted: gasWanted
         }
       )) as BroadcastTxCommitResult;
+      if (gkLog) {
+        console.info('response:', resp);
+        const respData = resp.deliver_tx.ResponseBase.Data;
+        if (respData !== null) {
+          console.info('response (parsed):', parsedJSONOrRaw(respData));
+        }
+      }
+      return resp;
     } catch (e) {
       const ex = e as { log?: string; message?: string } | undefined;
       if (
@@ -160,10 +188,35 @@ class Actions {
         typeof ex?.message !== 'undefined' &&
         ex.message.includes('abci.StringError')
       ) {
-        throw ErrorTransform(e as TM2Error);
+        e = ErrorTransform(e as TM2Error);
+      }
+      if (gkLog) {
+        console.info('error:', e);
       }
       throw e;
     }
+  }
+
+  public async evaluateExpression(expr: string): Promise<string> {
+    const gkLog = this.gkLog();
+    if (gkLog) {
+      const quotesEscaped = expr.replace(/'/g, `'\\''`);
+      console.info(
+        `$ gnokey query vm/qeval --data '${chessRealm}'$'\\n''${quotesEscaped}'`
+      );
+    }
+
+    const resp = (await this.provider?.evaluateExpression(
+      chessRealm,
+      expr
+    )) as string;
+
+    if (gkLog) {
+      console.info('response:', parsedJSONOrRaw(resp, true));
+    }
+
+    // Parse the response
+    return resp;
   }
 
   /****************
@@ -179,7 +232,7 @@ class Actions {
     const seconds = time.time * 60;
     // Join the waiting lobby
     try {
-      await this.callMethod(chessRealm, 'LobbyJoin', [
+      await this.callMethod('LobbyJoin', [
         seconds.toString(),
         time.increment.toString()
       ]);
@@ -196,7 +249,7 @@ class Actions {
       return await this.waitForGame();
     } catch (e) {
       // Unable to find the game, cancel the search
-      await this.callMethod(chessRealm, 'LobbyQuit', null);
+      await this.callMethod('LobbyQuit', null);
       this.quitLobby();
       // Propagate the error
       throw new Error('unable to find game');
@@ -218,7 +271,6 @@ class Actions {
   private async lookForGame(): Promise<BroadcastTxCommitResult> {
     if (!this.isInTheLobby) throw new Error('Left the lobby');
     return (await this.callMethod(
-      chessRealm,
       'LobbyGameFound',
       null
     )) as BroadcastTxCommitResult;
@@ -291,8 +343,7 @@ class Actions {
    * @param gameID the ID of the running game
    */
   public async getGame(gameID: string): Promise<Game> {
-    const gameResponse: string = (await this.provider?.evaluateExpression(
-      chessRealm,
+    const gameResponse: string = (await this.evaluateExpression(
       `GetGame("${gameID}")`
     )) as string;
 
@@ -314,7 +365,7 @@ class Actions {
     promotion: Promotion = Promotion.NO_PROMOTION
   ): Promise<Game> {
     // Make the move
-    const moveResponse = await this.callMethod(chessRealm, 'MakeMove', [
+    const moveResponse = await this.callMethod('MakeMove', [
       gameID,
       from,
       to,
@@ -352,9 +403,7 @@ class Actions {
    */
   async requestDraw(gameID: string, timeout?: number): Promise<Game> {
     // Make the request
-    const drawResponse = await this.callMethod(chessRealm, 'DrawOffer', [
-      gameID
-    ]);
+    const drawResponse = await this.callMethod('DrawOffer', [gameID]);
 
     // Parse the response from the node
     const drawResponseRaw: string | null =
@@ -391,9 +440,7 @@ class Actions {
 
   async claimTimeout(gameID: string): Promise<Game> {
     // Make the request
-    const response = await this.callMethod(chessRealm, 'ClaimTimeout', [
-      gameID
-    ]);
+    const response = await this.callMethod('ClaimTimeout', [gameID]);
 
     // Parse the response from the node
     const claimTimeoutRaw: string | null =
@@ -419,11 +466,9 @@ class Actions {
       const fetchInterval = setInterval(async () => {
         try {
           // Get the game
-          const getGameResponse: string =
-            (await this.provider?.evaluateExpression(
-              chessRealm,
-              `GetGame(${gameID})`
-            )) as string;
+          const getGameResponse: string = (await this.evaluateExpression(
+            `GetGame(${gameID})`
+          )) as string;
 
           // Parse the response
           const game: Game = JSON.parse(cleanUpRealmReturn(getGameResponse));
@@ -469,9 +514,7 @@ class Actions {
    */
   async requestResign(gameID: string): Promise<Game> {
     // Make the request
-    const resignResponse = await this.callMethod(chessRealm, 'Resign', [
-      gameID
-    ]);
+    const resignResponse = await this.callMethod('Resign', [gameID]);
 
     // Parse the response from the node
     const resignResponseRaw: string | null =
@@ -490,9 +533,7 @@ class Actions {
    */
   async declineDraw(gameID: string): Promise<Game> {
     // Make the request
-    const declineResponse = await this.callMethod(chessRealm, 'DrawRefuse', [
-      gameID
-    ]);
+    const declineResponse = await this.callMethod('DrawRefuse', [gameID]);
 
     // Parse the response from the node
     const declineResponseRaw: string | null =
@@ -511,7 +552,7 @@ class Actions {
    */
   async acceptDraw(gameID: string): Promise<Game> {
     // Make the request
-    const acceptResponse = await this.callMethod(chessRealm, 'Draw', [gameID]);
+    const acceptResponse = await this.callMethod('Draw', [gameID]);
 
     // Parse the response from the node
     const acceptResponseRaw: string | null =
@@ -544,11 +585,9 @@ class Actions {
    * ordered by their position in the leaderboard
    */
   async getLeaderboard(): Promise<Player[]> {
-    const leaderboardResponse: string =
-      (await this.provider?.evaluateExpression(
-        chessRealm,
-        'Leaderboard()'
-      )) as string;
+    const leaderboardResponse: string = (await this.evaluateExpression(
+      'Leaderboard()'
+    )) as string;
 
     // Parse the response
     return JSON.parse(cleanUpRealmReturn(leaderboardResponse));
@@ -559,8 +598,7 @@ class Actions {
    * @param playerID the ID of the player (can be address or @username)
    */
   async getPlayer(playerID: string): Promise<Player> {
-    const playerResponse: string = (await this.provider?.evaluateExpression(
-      chessRealm,
+    const playerResponse: string = (await this.evaluateExpression(
       `GetPlayer("${playerID}")`
     )) as string;
 
