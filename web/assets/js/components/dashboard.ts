@@ -82,7 +82,7 @@ const Dashboard = class extends Component {
 
   private _feedUserRating(player: Player) {
     const playerRapidRating: PlayerRating = player.rapid;
-    const playerBlitzRating: PlayerRating = player.rapid;
+    const playerBlitzRating: PlayerRating = player.blitz;
 
     const rapidRating = {
       wins: playerRapidRating.wins,
