@@ -109,7 +109,11 @@ const Gameplayers = class extends Component {
 
   finishGame(type = 'Winner', status = GameState.CHECKMATED) {
     console.log('finishGame - type: ' + type + ' status: ' + status);
-    this.DOM.el.querySelector('.js-playergamegameovertitle').innerHTML = type;
+    const playergamegameovertitle = this.DOM.el.querySelector(
+      '.js-playergamegameovertitle'
+    );
+    console.log('playergamegameovertitle ' + playergamegameovertitle);
+    playergamegameovertitle.innerHTML = type;
     this.DOM.el.querySelector('.js-playergametype').innerHTML =
       this.category + ' - ' + status;
     this.DOM.el.querySelector('.js-playerpoints').innerHTML = `${this.call(

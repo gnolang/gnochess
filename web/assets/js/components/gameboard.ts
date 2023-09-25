@@ -36,6 +36,10 @@ const Gameboard = class extends Component {
       moveSpeed: 1
     });
     this.board.start();
+
+    setTimeout(() => {
+      this.call('finishGame', ['winner', 'vblabla'], 'gameplayers', 'me');
+    }, 4000);
   }
 
   _onSnapEnd() {
@@ -114,8 +118,8 @@ const Gameboard = class extends Component {
         gameState.state === GameState.ABORTED
       ) {
         console.log('gameover for aborted');
-        setFinalState();
         this.call('finishGame', ['Aborted', 'Aborted'], 'gameplayers', 'me');
+        setFinalState();
       }
 
       if (
@@ -127,8 +131,8 @@ const Gameboard = class extends Component {
         const game = await actions.getGame(this.gameId);
         if (game.winner == 'none') {
           console.log('no winner -> abandon');
-          setFinalState();
           this.call('finishGame', ['abandon', status], 'gameplayers', 'rival');
+          setFinalState();
         } else {
           const valid = await actions.isGameOver(
             this.gameId,
@@ -189,13 +193,13 @@ const Gameboard = class extends Component {
         const valid = await actions.isGameOver(this.gameId, gameState.state);
         if (valid) {
           console.log('gameover for draw');
+          setFinalState();
           this.call(
             'finishGame',
             ['draw', gameState.state],
             'gameplayers',
             'me'
           );
-          setFinalState();
         }
       }
 
@@ -204,13 +208,13 @@ const Gameboard = class extends Component {
         //TODO: why checkmate -> "await actions.isGameOver(this.gameId, 'checkmate');"
         // const valid = await actions.isGameOver(this.gameId, 'checkmate');
         // if (valid)
+        setFinalState();
         this.call(
           'finishGame',
           ['winner', gameState.state],
           'gameplayers',
           'me'
         );
-        setFinalState();
       }
 
       return;
