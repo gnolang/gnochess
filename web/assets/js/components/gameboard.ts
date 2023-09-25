@@ -105,13 +105,17 @@ const Gameboard = class extends Component {
 
       console.log('gameState.state: ' + gameState.state);
       console.log('gameover: ' + gameover);
+      clearTimeout(this.initMoveTimer);
 
       let status: GameState = GameState.CHECKMATED;
 
-      if (gameover === GameState.NOMOVE) {
-        console.log('gameover for nomove');
+      if (
+        gameover === GameState.ABORTED &&
+        gameState.state === GameState.ABORTED
+      ) {
+        console.log('gameover for aborted');
         setFinalState();
-        this.call('finishGame', ['Timeout', 'timout'], 'gameplayers', 'me');
+        this.call('finishGame', ['Aborted', 'Aborted'], 'gameplayers', 'me');
       }
 
       if (
@@ -243,14 +247,14 @@ const Gameboard = class extends Component {
           try {
             // Claim timeout. If no error, timeout succeeded
             await actions.claimTimeout(this.gameId);
-            this.engine(false, GameState.NOMOVE);
+            this.engine(false, GameState.ABORTED);
           } catch (e) {
             this.call(
               'appear',
               ['Invalid claim timeout request', 'error'],
               'toast'
             );
-            this.engine(false, GameState.NOMOVE); //TODO: create a fail "exit" gameover in the engine
+            this.engine(false, GameState.ABORTED); //TODO: create a fail "exit" gameover in the engine
             // Timeout request is invalid
             // for the user (I assume fire event to end game)
           }
@@ -307,7 +311,7 @@ const Gameboard = class extends Component {
           const gameState = await actions.getGame(this.gameId);
           const state: GameState =
             this.rivalFirstMove || this.firstMove
-              ? GameState.NOMOVE
+              ? GameState.ABORTED
               : gameState.state;
           this.engine(false, state);
         }

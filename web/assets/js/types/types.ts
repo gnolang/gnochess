@@ -56,7 +56,6 @@ export enum Winner {
 }
 
 export enum GameState {
-  NOMOVE = 'no_move', //special one for 30s rule
   INVALID = 'invalid',
   OPEN = 'open',
   CHECKMATED = 'checkmated',
