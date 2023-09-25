@@ -88,14 +88,14 @@ const Gameplayers = class extends Component {
         try {
           // Claim timeout. If no error, timeout succeeded
           await actions.claimTimeout(gameId);
-          this.call('engine', [GameState.TIMEOUT], 'gameboard'); // let engine know timer is finished
+          this.call('engine', [false, GameState.TIMEOUT], 'gameboard'); // let engine know timer is finished
         } catch (e) {
           this.call(
             'appear',
             ['Invalid claim timeout request', 'error'],
             'toast'
           );
-          this.call('engine', [GameState.TIMEOUT], 'gameboard'); // let engine know timer is finished
+          this.call('engine', [false, GameState.TIMEOUT], 'gameboard'); // let engine know timer is finished
           // Timeout request is invalid
           // for the user (I assume fire event to end game)
         }
