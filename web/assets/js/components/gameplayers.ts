@@ -141,6 +141,7 @@ const Gameplayers = class extends Component {
   }
 
   destroy() {
+    console.log('player is destroyed');
     clearInterval(this.clock);
   }
 };

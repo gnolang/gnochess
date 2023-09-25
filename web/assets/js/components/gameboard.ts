@@ -145,7 +145,7 @@ const Gameboard = class extends Component {
               'finishGame',
               ['winner', 'timeout'],
               'gameplayers',
-              this.color === this.chess.turn() ? 'rival' : 'me'
+              this.color === this.chess.turn() ? 'me' : 'rival'
             );
             setFinalState();
           }
