@@ -49,8 +49,8 @@ const Gameplayers = class extends Component {
     this.category = category;
 
     //config timer
-    this.increment = 0; //time.increment;
-    this.timer = 70; //time.time * 60; //min to sec
+    this.increment = time.increment;
+    this.timer = time.time * 60; //min to sec
     this._createTime(this.timer);
 
     //config pawn color
@@ -87,10 +87,12 @@ const Gameplayers = class extends Component {
         this.DOM.timer.innerHTML = `00:00`;
         try {
           // Claim timeout. If no error, timeout succeeded
-          await actions.claimTimeout(gameId);
+          const claimTimeout = await actions.claimTimeout(gameId);
+          console.log(claimTimeout);
           this.call('engine', [false, GameState.TIMEOUT], 'gameboard'); // let engine know timer is finished
           console.log('claimTimeout did  work for ' + gameId);
         } catch (e) {
+          console.log(e);
           console.log('claimTimeout did not work for ' + gameId);
           this.call(
             'appear',
