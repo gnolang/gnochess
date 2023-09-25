@@ -20,7 +20,6 @@ const Gamecontrols = class extends Component {
     this.action = 'void' as GameAction;
     this.pendingDraw = false;
     this.timer = drawRequestTimer;
-    this.drawRequestAdress = null;
     this.drawAllowed = true;
     this.watcher = null;
 
@@ -32,7 +31,7 @@ const Gamecontrols = class extends Component {
       },
       draw: {
         title: 'Draw',
-        content: 'Do you really want to offer a draw?',
+        content: '⚠️ The draw will be available soon!',
         btn: 'Confirm'
       },
       offer: {
@@ -74,10 +73,6 @@ const Gamecontrols = class extends Component {
       target: this.DOM.ctrConfirm,
       cb: this._clickOnConfirm.bind(this)
     });
-
-    //async events
-    //TODO: still in use? (destory as well)
-    Events.on('drawPropal', this._getDrawProposition.bind(this));
 
     //tl
     this.validationTL = gsap
@@ -121,6 +116,7 @@ const Gamecontrols = class extends Component {
     this.DOM.ctrConfirmContent.innerHTML = this.contents[action].btn;
   }
 
+  //TODO: refactor the multiaction btn to get something simple
   async _clickOnCtr(action: GameAction, direct: boolean) {
     if (this.action === 'void') {
       this._updateContent(action);
@@ -140,7 +136,7 @@ const Gamecontrols = class extends Component {
     } else if (this.action === action && direct) {
       if (this.pendingDraw) {
         // if pending draw refused
-        this._declineOffer();
+        await this._declineOffer();
       }
       this.action = 'void';
       this[action === 'resign' ? 'disableCtr1TL' : 'disableCtr0TL'].reverse();
@@ -154,6 +150,7 @@ const Gamecontrols = class extends Component {
     }
   }
 
+  //TODO: refactor the multiaction btn to get something simple
   private async _clickOnConfirm() {
     const actions: Actions = await Actions.getInstance();
 
@@ -179,6 +176,7 @@ const Gamecontrols = class extends Component {
         this.drawAllowed = false;
         const game: Game = await actions.requestDraw(this.gameId);
         if (game.state === GameState.DRAWN_BY_AGREEMENT) {
+          clearInterval(this.pendingDraw);
           this.call('engine', [false, 'draw'], 'gameboard');
           this.waitingTL.reverse();
         }
@@ -205,44 +203,56 @@ const Gamecontrols = class extends Component {
     this.pendingDraw = null;
   }
 
-  private _getDrawProposition() {
-    gsap.set(this.DOM.timer, { autoAlpha: 1, display: 'inline-block' });
+  //   private _getDrawProposition() {
+  //     this.DOM.timer.innerHTML = this.timer;
+  //     gsap.set(this.DOM.timer, { autoAlpha: 1, display: 'inline-block' });
 
-    this.pendingDraw = setInterval(() => {
-      this.timer--;
-      this.DOM.timer.innerHTML = this.timer;
+  //     this.pendingDraw = setInterval(async () => {
+  //       this.timer--;
+  //       this.DOM.timer.innerHTML = this.timer;
 
-      if (this.timer <= 0) {
-        this._clickOnCtr('draw', true);
-        this.timer = drawRequestTimer;
-        clearInterval(this.pendingDraw);
-      }
-    }, 1000);
-    this._clickOnCtr('offer', false);
-    console.log('propal received');
-  }
+  //       if (this.timer <= 0) {
+  //         await this._clickOnCtr('draw', true);
+  //         this.timer = drawRequestTimer;
+  //         clearInterval(this.pendingDraw);
+  //       }
+  //     }, 1000);
+  //     this._clickOnCtr('offer', false);
+  //     console.log('propal received');
+  //   }
 
-  private async _actionWatcher() {
-    const watcherFunc = async () => {
-      const actions: Actions = await Actions.getInstance();
-      const game = await actions.getGame(this.gameId);
-      if (this.drawRequestAdress !== game.draw_offerer) {
-        this.drawRequestAdress = game.draw_offerer;
-        this.drawAllowed = true;
-        this._getDrawProposition();
-      }
+  // TODO: remove for V1 because we are removing the draw propal from v1
+  // and resign is already managed by intervalCheckForOngoingGame()
+  // TODO: resolve this resign duplicate for v2
 
-      if (game.state === 'resigned') {
-        clearInterval(this.watcher);
-        this.call('engine', [false, 'resigned'], 'gameboard');
-      }
-    };
-    this.watcher = setInterval(watcherFunc, 1000);
-  }
+  //   private async _actionWatcher() {
+  //     const watcherFunc = async () => {
+  //       const actions: Actions = await Actions.getInstance();
+  //       const game = await actions.getGame(this.gameId);
+  //       const userAddress = await actions.getWalletAddress();
+  //       if (
+  //         userAddress !== game.draw_offerer &&
+  //         userAddress !== undefined &&
+  //         game.draw_offerer !== null
+  //       ) {
+  //         console.log('getDrawProposition from _actionWatcher');
+
+  //         this.drawAllowed = true;
+  //         this._getDrawProposition();
+  //       }
+
+  //       // if (game.state === 'resigned') {
+  //       //   console.log('watcher get resigned');
+  //       //   clearInterval(this.watcher);
+  //       //   this.call('engine', [false, 'resigned'], 'gameboard');
+  //       // }
+  //     };
+  //     this.watcher = setInterval(watcherFunc, 1000);
+  //   }
 
   appear(gameId: string) {
     this.gameId = gameId;
-    this._actionWatcher();
+    // this._actionWatcher();
     gsap.to(this.DOM.el, { autoAlpha: 1, display: 'flex' });
   }
 
@@ -255,7 +265,7 @@ const Gamecontrols = class extends Component {
   }
 
   destroy() {
-    Events.off('drawPropal');
+    // Events.off('drawPropal');
     clearInterval(this.pendingDraw);
     clearInterval(this.watcher);
     this.validationTL.kill();

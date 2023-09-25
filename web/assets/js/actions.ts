@@ -4,7 +4,6 @@ import {
     defaultMnemonicKey,
     drawRequestTimer,
     Game,
-    type GameoverType,
     type GameSettings,
     GameState,
     GameTime,
@@ -134,6 +133,13 @@ class Actions {
   private gkLog(): Boolean {
     const wnd = window as { gnokeyLog?: Boolean };
     return typeof wnd.gnokeyLog !== 'undefined' && wnd.gnokeyLog;
+  }
+
+  /**
+   * Return user Addres
+   */
+  public getWalletAddress() {
+    return this.wallet?.getAddress();
   }
 
   /**
@@ -388,7 +394,7 @@ class Actions {
    * @param gameID the ID of the running game
    * @param type the game-over state types
    */
-  async isGameOver(gameID: string, type: GameoverType): Promise<boolean> {
+  async isGameOver(gameID: string, type: GameState): Promise<boolean> {
     // Fetch the game state
     const game: Game = await this.getGame(gameID);
 

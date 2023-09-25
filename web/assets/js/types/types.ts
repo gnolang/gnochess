@@ -1,17 +1,17 @@
 export type Colors = 'w' | 'b';
-export type GameoverType =
-  | 'checkmate'
-  | 'timeout'
-  | 'noMove'
-  | 'draw'
-  | 'stalemate'
-  | 'threefoldRepetition'
-  | 'insufficientMaterial'
-  | 'drawn_5_fold'
-  | 'drawn_75_move'
-  | 'drawn_50_move'
-  | 'drawn_3_fold'
-  | 'resigned';
+// export type GameoverType =
+//   | 'checkmate'
+//   | 'timeout'
+//   | 'noMove'
+//   | 'draw'
+//   | 'stalemate'
+//   | 'threefoldRepetition'
+//   | 'insufficientMaterial'
+//   | 'drawn_5_fold'
+//   | 'drawn_75_move'
+//   | 'drawn_50_move'
+//   | 'drawn_3_fold'
+//   | 'resigned';
 
 export type Move = {
   from: string;
