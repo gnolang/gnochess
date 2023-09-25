@@ -504,7 +504,9 @@ const Gameboard = class extends Component {
   }
 
   destroy() {
+    console.log('gameboard destroyed');
     clearTimeout(this.initMoveTimer);
+    clearTimeout(this.rivalTimeout);
     clearInterval(this.checkOngoingTimer);
     this.chess.clear();
     this.board.destroy();
