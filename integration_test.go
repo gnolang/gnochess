@@ -52,7 +52,7 @@ func generateGenesisFile(genesispath, target string) error {
 	return nil
 }
 
-func TestTestdata(t *testing.T) {
+func TestIntegration(t *testing.T) {
 	ts := integration.SetupGnolandTestScript(t, "testdata")
 
 	goModPath, err := exec.Command("go", "env", "GOMOD").CombinedOutput()
