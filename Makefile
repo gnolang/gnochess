@@ -97,6 +97,9 @@ z_use_remote_gno: ## Use the remote 'github.com/gnolang/gno' module and remove a
 z_test_realm: ## Test the realm.
 	go run github.com/gnolang/gno/gnovm/cmd/gno test --verbose ./realm
 
+z_test_integration: ## Test the realm.
+	go test -v -run='TestIntegration/.*'  .
+
 z_build_realm: ## Precompile and build the generated Go files. Assumes a working clone of gno in ../gno.
 	mkdir -p ../gno/examples/gno.land/r/gnochess
 	cp -rf realm/*.gno ../gno/examples/gno.land/r/gnochess
