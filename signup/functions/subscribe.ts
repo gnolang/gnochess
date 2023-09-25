@@ -32,7 +32,27 @@ mailchimp.setConfig({
   server: CONFIG.MAILCHIMP_API_SERVER
 });
 
+const headers =
+  process.env.NODE_ENV !== 'production'
+    ? {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+      }
+    : {};
+
 export async function handler(event: HandlerEvent): Handler {
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers
+    };
+  } else if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405
+    };
+  }
+
   try {
     // Validate the request
     const subscribeRequest: SubscribeRequest = JSON.parse(event.body);
@@ -47,6 +67,7 @@ export async function handler(event: HandlerEvent): Handler {
     if (!isValid) {
       return {
         statusCode: 400,
+        headers,
         body: JSON.stringify({ errors: 'Unable to validate request' })
       };
     }
@@ -55,6 +76,7 @@ export async function handler(event: HandlerEvent): Handler {
     if (subscribeRequest.termsAndConditions !== subscribeRequest.participate) {
       return {
         statusCode: 400,
+        headers,
         body: JSON.stringify({ errors: { message: 'Request is invalid' } })
       };
     }
@@ -97,6 +119,7 @@ export async function handler(event: HandlerEvent): Handler {
     // Success return
     return {
       statusCode: 200,
+      headers,
       body: JSON.stringify({ message: 'User subscribed' })
     };
   } catch (err) {
@@ -107,6 +130,7 @@ export async function handler(event: HandlerEvent): Handler {
 
     return {
       statusCode: 500,
+      headers,
       body: JSON.stringify({ errors: { message: 'Unable to subscribe user' } })
     };
   }
