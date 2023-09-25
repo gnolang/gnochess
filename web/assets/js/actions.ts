@@ -1,5 +1,6 @@
 import {saveToLocalStorage} from './utils/localstorage';
 import {
+    Category,
     defaultFaucetTokenKey,
     defaultMnemonicKey,
     drawRequestTimer,
@@ -17,7 +18,7 @@ import Long from 'long';
 import Config from './config.ts';
 import {constructFaucetError} from './utils/errors.ts';
 import {AlreadyInLobbyError, ErrorTransform, NotInLobbyError} from './errors.ts';
-import {preparePromotion} from './utils/moves.ts';
+import {prepareCategory, preparePromotion} from './utils/moves.ts';
 
 // ENV values //
 // const wsURL: string = Config.GNO_WS_URL; TODO temporarily disabled
@@ -216,6 +217,13 @@ class Actions {
 
     // Parse the response
     return resp;
+  }
+
+  /**
+   * Fetches the current user's wallet address
+   */
+  public async getUserAddress(): Promise<string> {
+    return (await this.wallet?.getAddress()) as string;
   }
 
   /****************
@@ -589,9 +597,9 @@ class Actions {
    * Fetches a list of all players,
    * ordered by their position in the leaderboard
    */
-  async getLeaderboard(): Promise<Player[]> {
+  async getLeaderboard(category: Category): Promise<Player[]> {
     const leaderboardResponse: string = (await this.evaluateExpression(
-      'Leaderboard()'
+      `Leaderboard("${prepareCategory(category)}")`
     )) as string;
 
     // Parse the response
