@@ -146,8 +146,8 @@ func refreshLobby(tc tcLobby) {
 	for i := 0; i < len(lobby[tc]); i++ {
 		if now.Sub(lobby[tc][i].seenAt) >= time.Second*30 {
 			// https://github.com/gnolang/gno/pull/1170
-			newLobby := append([]lobbyPlayer{}, lobby[tc][:i])
-			lobby[tc] = append(newLobby, lobby[tc][i+1:])
+			newLobby := append([]lobbyPlayer{}, lobby[tc][:i]...)
+			lobby[tc] = append(newLobby, lobby[tc][i+1:]...)
 			i--
 		}
 	}
@@ -200,8 +200,8 @@ func lobbyMatch(tc tcLobby, p1, p2 int) {
 		p1, p2 = p2, p1
 	}
 	// https://github.com/gnolang/gno/pull/1170
-	nl := append([]lobbyPlayer, lobby[tc][:p1]...)
-	nl := append(nl, lobby[tc][p1+1:p2]...)
+	nl := append([]lobbyPlayer{}, lobby[tc][:p1]...)
+	nl = append(nl, lobby[tc][p1+1:p2]...)
 	nl = append(nl, lobby[tc][p2+1:]...)
 	lobby[tc] = nl
 
@@ -254,8 +254,8 @@ func LobbyQuit() {
 		for i, pl := range sublob {
 			if pl.player.Address == caller {
 				// https://github.com/gnolang/gno/pull/1170
-				newLobby := append([]lobbyPlayer, sublob[:i])
-				newLobby = append(newLobby, sublob[i+1:])
+				newLobby := append([]lobbyPlayer{}, sublob[:i]...)
+				newLobby = append(newLobby, sublob[i+1:]...)
 				lobby[tc] = newLobby
 				lobbyPlayer2Game.Remove(caller.String())
 				return
