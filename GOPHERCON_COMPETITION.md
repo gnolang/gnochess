@@ -18,8 +18,6 @@ We apologize in advance for any bugs you might encounter and truly appreciate yo
 
 Join us on this adventure! We eagerly await the discussions, feedback, and innovations that will stem from this competition.
 
----
-
 ## 🔍 Point Breakdown**
 
 1. **Chess Games Completion**: 
