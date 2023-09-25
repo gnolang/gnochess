@@ -264,6 +264,7 @@ const Gameboard = class extends Component {
     const checkRivalMove = async () => {
       console.log('checkRivalMove start');
       const gameState = await actions.getGame(this.gameId);
+      // Hack to sanitize the fen returned by the realm
       const currentFen = new Chess(gameState.position.fen).fen();
 
       if (this.chess.fen() === currentFen) {
@@ -278,32 +279,24 @@ const Gameboard = class extends Component {
 
       clearTimeout(retryTimeout);
 
-      // Update the game state
-      this.chess.load(gameState.position.fen);
+      // Find the move that matches the current fen
+      const moves = this.chess.moves({ verbose: true });
+      const nextMove = moves.find((move: any) => move.after === currentFen);
+
+      // Fallback to loading the fen if we can't find the move
+      const move = nextMove
+        ? this.chess.move(nextMove)
+        : this.chess.load(currentFen);
 
       const chessFen: string = this.chess.fen();
       this.board.position(chessFen);
 
-      // Fetch the move history to check for a capture
-      const moveHistory = this.chess.history({ verbose: true });
-      console.log(moveHistory);
-
-      //TODO: not sure we need it
-      if (moveHistory.length == 0) {
-        console.log(moveHistory.length == 0);
-        // Do we need this? there is a this.engine(); at the end of the function
-        //   await this.engine();
-        // return;
-      }
-
-      const lastMove = moveHistory[moveHistory.length - 1];
-
-      if (lastMove?.captured) {
+      if (move?.captured) {
         this.call(
           'capturePawn',
-          [lastMove.captured],
+          [move.captured],
           'gameplayers',
-          lastMove.color === this.color ? 'me' : 'rival'
+          move.color === this.color ? 'me' : 'rival'
         );
       }
       console.log('engine called here');

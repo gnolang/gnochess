@@ -1,8 +1,10 @@
 package chess
 
 import (
+	"bytes"
 	"math"
 	"std"
+	"strconv"
 	"time"
 
 	"gno.land/p/demo/avl"
@@ -63,8 +65,16 @@ var (
 )
 
 // XXX: REMOVE BEFORE PRODUCTION
-func LobbyData() ([tcLobbyMax][]lobbyPlayer, avl.Tree) {
-	return lobby, lobbyPlayer2Game
+func LobbyData() string {
+	var buf bytes.Buffer
+	for idx, sublob := range lobby {
+		buf.WriteString("Sublobby " + strconv.Itoa(idx))
+		for _, player := range sublob {
+			buf.WriteString("- " + player.player.Address.String())
+		}
+		buf.WriteByte('\n')
+	}
+	return buf.String()
 }
 
 func LobbyJoin(seconds, increment int) {
@@ -83,7 +93,16 @@ func LobbyJoin(seconds, increment int) {
 	// Ensure that user's previous games are finished (or timed out).
 	caller := std.GetOrigCaller()
 
-	assertGamesFinished(getUserGames(caller))
+	games := getUserGames(caller)
+	// XXX: temporary to avoid ever prohibiting a user from joining the lobby.
+	// when possible, change back to assertGamesFinished(games)
+	for _, g := range games {
+		if !g.State.IsFinished() {
+			if err := resign(g); err != nil {
+				panic("internal error (could not resign game " + g.ID + "): " + err.Error())
+			}
+		}
+	}
 	assertUserNotInLobby(caller)
 
 	// remove caller from lobbyPlayer2Game, so LobbyGameFound
@@ -229,11 +248,11 @@ func LobbyQuit() {
 		for i, pl := range sublob {
 			if pl.player.Address == caller {
 				lobby[tc] = append(sublob[:i], sublob[i+1:]...)
+				lobbyPlayer2Game.Remove(caller.String())
 				return
 			}
 		}
 	}
-	lobbyPlayer2Game.Remove(caller.String())
 
 	panic("you are not in the lobby")
 }
