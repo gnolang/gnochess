@@ -37,9 +37,9 @@ const Gameboard = class extends Component {
     });
     this.board.start();
 
-    setTimeout(() => {
-      this.call('finishGame', ['winner', 'vblabla'], 'gameplayers', 'me');
-    }, 4000);
+    // setTimeout(() => {
+    //   this.call('finishGame', ['winner', 'vblabla'], 'gameplayers', 'me');
+    // }, 4000);
   }
 
   _onSnapEnd() {
