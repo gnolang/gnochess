@@ -144,6 +144,13 @@ class Actions {
   }
 
   /**
+   * Return user Addres
+   */
+  public getWalletAddress() {
+    return this.wallet?.getAddress();
+  }
+
+  /**
    * Performs a transaction, handling common error cases and transforming them
    * into known error types.
    */

@@ -108,7 +108,6 @@ const Gameplayers = class extends Component {
   }
 
   finishGame(type = 'Winner', status = GameState.CHECKMATED) {
-    // ICI draw
     console.log('finishGame - type: ' + type + ' status: ' + status);
     this.DOM.el.querySelector('.js-playergamegameovertitle').innerHTML = type;
     this.DOM.el.querySelector('.js-playergametype').innerHTML =
