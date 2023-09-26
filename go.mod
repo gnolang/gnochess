@@ -2,7 +2,11 @@ module github.com/gnolang/gnochess
 
 go 1.20
 
-require github.com/gnolang/gno v0.0.0-20230922075615-67b75bafbe3c
+require (
+	github.com/gnolang/gno v0.0.0-20230926053156-5c40bc5a7984
+	github.com/jaekwon/testify v1.6.1
+	github.com/rogpeppe/go-internal v1.11.0
+)
 
 require (
 	github.com/btcsuite/btcd v0.22.0-beta.0.20220111032746-97732e52810c // indirect
@@ -32,6 +36,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rs/cors v1.10.0 // indirect
+	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c // indirect
 	go.etcd.io/bbolt v1.3.7 // indirect
 	go.opencensus.io v0.22.5 // indirect
@@ -44,4 +49,5 @@ require (
 	golang.org/x/term v0.12.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

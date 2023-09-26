@@ -183,10 +183,8 @@ func (g *Game) saveResult() {
 	// Save in playerStore.
 	playerStore.Set(w.Address.String(), w)
 	playerStore.Set(b.Address.String(), b)
-	if g.Winner != WinnerDraw {
-		leaderboard[cat], _ = leaderboard[cat].push(g.White, owr, w.CategoryInfo[cat].Rating)
-		leaderboard[cat], _ = leaderboard[cat].push(g.Black, obr, b.CategoryInfo[cat].Rating)
-	}
+	leaderboard[cat], _ = leaderboard[cat].push(g.White, owr, w.CategoryInfo[cat].Rating)
+	leaderboard[cat], _ = leaderboard[cat].push(g.Black, obr, b.CategoryInfo[cat].Rating)
 }
 
 func getPlayer(addr std.Address) *Player {
@@ -194,17 +192,26 @@ func getPlayer(addr std.Address) *Player {
 	if ok {
 		return praw.(*Player)
 	}
-	p := &Player{Address: addr}
+	p := new(Player)
+	p.Address = addr
 	for _, cat := range categoryList {
 		pr := NewPlayerRating(addr)
 		p.CategoryInfo[cat] = CategoryInfo{
 			PlayerRating: pr,
 		}
-		playerRatings[cat] = append(playerRatings[cat], pr)
+		// https://github.com/gnolang/gno/pull/1170
+		prs := append([]*PlayerRating{}, playerRatings[cat]...)
+		playerRatings[cat] = append(prs, pr)
 	}
 	playerStore.Set(addr.String(), p)
+	// XXX: This assignment is not needed, but it seems to mark to the realm store
+	// that we we "need" this value and it should not be deleted,
+	// removing the "unexpected object with id" panic.
+	_xxPlayer = p
 	return p
 }
+
+var _xxPlayer *Player
 
 type lbEntry struct {
 	addr  std.Address
@@ -224,14 +231,17 @@ func (lb leaderboardType) find(score float64, addr std.Address) (int, bool) {
 	i := sort.Search(len(lb), func(i int) bool {
 		return lb[i].score <= score
 	})
+
 	if addr == "" || i == len(lb) {
 		return i, false
 	}
-	for j := 0; lb[i+j].score == score; j++ {
+
+	for j := 0; i+j < len(lb) && lb[i+j].score == score; j++ {
 		if lb[i+j].addr == addr {
 			return i + j, true
 		}
 	}
+
 	return i, false
 }
 
@@ -387,6 +397,9 @@ func parseFilters(filters string) (r listGamesFilters) {
 		if idx < 0 {
 			panic("invalid filter: " + part)
 		}
+		// TODO: this is likely to misbehave due to https://github.com/gnolang/gno/issues/1135
+		// This is unlikely to cause much of an issue here, as we can expect player/white/black/finished
+		// to only exist once, though it should be kept in mind if/when adding additional filters.
 		filt, pred := part[:idx+1], part[idx+1:]
 		switch filt {
 		case "player:":

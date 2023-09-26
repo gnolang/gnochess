@@ -36,13 +36,13 @@ type Game struct {
 	CreatedAt   time.Time    `json:"created_at"`
 	DrawOfferer *std.Address `json:"draw_offerer"` // set on draw offers
 	Concluder   *std.Address `json:"concluder"`    // set on non-auto draws, and aborts
-
-	Time *TimeControl `json:"time"`
 }
 
 func (g Game) json() string {
 	s, err := g.MarshalJSON()
-	checkErr(err)
+	if err != nil {
+		panic(err.Error())
+	}
 	return string(s)
 }
 
@@ -86,12 +86,7 @@ func (g Game) MarshalJSON() (_ []byte, err error) {
 	b.WriteString(`"creator":"` + g.Creator.String() + `",`)
 	b.WriteString(`"created_at":"` + g.CreatedAt.Format(time.RFC3339) + `",`)
 	b.WriteString(`"draw_offerer":` + nilAddr(g.DrawOfferer) + ",")
-	b.WriteString(`"concluder":` + nilAddr(g.Concluder) + ",")
-
-	mjson("time", g.Time, false)
-	if err != nil {
-		return
-	}
+	b.WriteString(`"concluder":` + nilAddr(g.Concluder))
 
 	b.WriteByte('}')
 	return b.Bytes(), nil
@@ -207,12 +202,7 @@ func (g GameState) IsFinished() bool {
 // seconds is the amount of time given to play to each player; increment
 // is by how many seconds the player's time should be increased when they make a move.
 // seconds <= 0 means no time control (correspondence).
-//
-// XXX: Disabled for GnoChess production temporarily. (prefixed with x for unexported)
-// Ideally, we'd need this to work either by not forcing users not to have
-// parallel games OR by introducing a "request" system, so that a game is not
-// immediately considered "open" when calling NewGame.
-func xNewGame(opponentRaw string, seconds, increment int) string {
+func NewGame(opponentRaw string, seconds, increment int) string {
 	std.AssertOriginCall()
 
 	if seconds >= 0 && increment < 0 {
@@ -221,7 +211,6 @@ func xNewGame(opponentRaw string, seconds, increment int) string {
 
 	opponent := parsePlayer(opponentRaw)
 	caller := std.GetOrigCaller()
-	assertUserNotInLobby(caller)
 
 	return newGame(caller, opponent, seconds, increment).json()
 }
@@ -237,13 +226,10 @@ func getUserGames(user std.Address) []*Game {
 
 func assertGamesFinished(games []*Game) {
 	for _, g := range games {
-		if g.State.IsFinished() {
-			continue
-		}
-		err := g.claimTimeout()
-		if err != nil {
+		if !g.State.IsFinished() {
 			panic("can't start new game: game " + g.ID + " is not yet finished")
 		}
+		continue
 	}
 }
 
@@ -271,7 +257,6 @@ func newGame(caller, opponent std.Address, seconds, increment int) *Game {
 		State:     GameStateOpen,
 		Creator:   caller,
 		CreatedAt: time.Now(),
-		Time:      NewTimeControl(seconds, increment),
 	}
 	if isBlack {
 		g.White, g.Black = g.Black, g.White
@@ -366,27 +351,6 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 		panic("you are not allowed to make a move at this time")
 	}
 
-	// game is time controlled? add move to time control
-	if g.Time != nil {
-		valid := g.Time.AddMove()
-		if !valid && len(g.Position.Moves) < 2 {
-			g.State = GameStateAborted
-			g.Concluder = &caller
-			g.Winner = WinnerNone
-			return g.json()
-		}
-		if !valid {
-			g.State = GameStateTimeout
-			if caller == g.White {
-				g.Winner = WinnerBlack
-			} else {
-				g.Winner = WinnerWhite
-			}
-			g.saveResult()
-			return g.json()
-		}
-	}
-
 	// validate move
 	m := Move{
 		From: SquareFromString(from),
@@ -435,199 +399,6 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 		g.Winner = WinnerDraw
 	}
 	g.DrawOfferer = nil
-	g.saveResult()
-
-	return g.json()
-}
-
-func (g *Game) claimTimeout() error {
-	// no assert origin call or caller check: anyone can claim a game to have
-	// finished in timeout.
-
-	if g.Time == nil {
-		return errors.New("game is not time controlled")
-	}
-
-	// game is time controlled? add move to time control
-	to := g.Time.TimedOut()
-	if !to {
-		return errors.New("game is not timed out")
-	}
-
-	if nmov := len(g.Position.Moves); nmov < 2 {
-		g.State = GameStateAborted
-		if nmov == 1 {
-			g.Concluder = &g.Black
-		} else {
-			g.Concluder = &g.White
-		}
-		g.Winner = WinnerNone
-		return nil
-	}
-
-	g.State = GameStateTimeout
-	if len(g.Position.Moves)&1 == 0 {
-		g.Winner = WinnerBlack
-	} else {
-		g.Winner = WinnerWhite
-	}
-	g.DrawOfferer = nil
-	g.saveResult()
-
-	return nil
-}
-
-// ClaimTimeout should be called when the caller believes the game has resulted
-// in a timeout.
-func ClaimTimeout(gameID string) string {
-	g := getGame(gameID, true)
-
-	err := g.claimTimeout()
-	checkErr(err)
-
-	return g.json()
-}
-
-func Abort(gameID string) string {
-	std.AssertOriginCall()
-
-	g := getGame(gameID, true)
-	err := abort(g)
-	if err != nil {
-		panic(err.Error())
-	}
-	return g.json()
-}
-
-func abort(g *Game) error {
-	if len(g.Position.Moves) >= 2 {
-		return errors.New("game can no longer be aborted; if you wish to quit, resign")
-	}
-
-	caller := std.GetOrigCaller()
-	if caller != g.White && caller != g.Black {
-		return errors.New("you are not involved in this game")
-	}
-	g.State = GameStateAborted
-	g.Concluder = &caller
-	g.DrawOfferer = nil
-	g.Winner = WinnerNone
-
-	return nil
-}
-
-func Resign(gameID string) string {
-	std.AssertOriginCall()
-
-	g := getGame(gameID, true)
-	err := resign(g)
-	if err != nil {
-		panic(err.Error())
-	}
-	return g.json()
-}
-
-func resign(g *Game) error {
-	if len(g.Position.Moves) < 2 {
-		return abort(g)
-	}
-	caller := std.GetOrigCaller()
-	switch caller {
-	case g.Black:
-		g.State = GameStateResigned
-		g.Winner = WinnerWhite
-	case g.White:
-		g.State = GameStateResigned
-		g.Winner = WinnerBlack
-	default:
-		return errors.New("you are not involved in this game")
-	}
-	g.DrawOfferer = nil
-	g.saveResult()
-
-	return nil
-}
-
-// DrawOffer creates a draw offer in the current game, if one doesn't already
-// exist.
-func DrawOffer(gameID string) string {
-	std.AssertOriginCall()
-
-	g := getGame(gameID, true)
-	caller := std.GetOrigCaller()
-
-	switch {
-	case caller != g.Black && caller != g.White:
-		panic("you are not involved in this game")
-	case g.DrawOfferer != nil:
-		panic("a draw offer in this game already exists")
-	}
-
-	g.DrawOfferer = &caller
-	return g.json()
-}
-
-// DrawRefuse refuse a draw offer in the given game.
-func DrawRefuse(gameID string) string {
-	std.AssertOriginCall()
-
-	g := getGame(gameID, true)
-	caller := std.GetOrigCaller()
-
-	switch {
-	case caller != g.Black && caller != g.White:
-		panic("you are not involved in this game")
-	case g.DrawOfferer == nil:
-		panic("no draw offer present")
-	case *g.DrawOfferer == caller:
-		panic("can't refuse an offer you sent yourself")
-	}
-
-	g.DrawOfferer = nil
-	return g.json()
-}
-
-// Draw implements draw by agreement, as well as "single-party" draw:
-// - Threefold repetition (§9.2)
-// - Fifty-move rule (§9.3)
-// - Insufficient material (§9.4)
-// Note: stalemate happens as a consequence of a Move, and thus is handled in that function.
-func Draw(gameID string) string {
-	std.AssertOriginCall()
-
-	g := getGame(gameID, true)
-
-	caller := std.GetOrigCaller()
-	if caller != g.Black && caller != g.White {
-		panic("you are not involved in this game")
-	}
-
-	// accepted draw offer (do early to avoid gas for g.Position.IsFinished())
-	if g.DrawOfferer != nil && *g.DrawOfferer != caller {
-		g.State = GameStateDrawnByAgreement
-		g.Winner = WinnerDraw
-		g.Concluder = &caller
-
-		g.saveResult()
-
-		return g.json()
-	}
-
-	o := g.Position.IsFinished()
-	switch {
-	case o&Can50Move != 0:
-		g.State = GameStateDrawn50Move
-	case o&Can3Fold != 0:
-		g.State = GameStateDrawn3Fold
-	case o&CanInsufficient != 0:
-		g.State = GameStateDrawnInsufficient
-	default:
-		panic("this game can't be automatically drawn")
-	}
-	g.Concluder = &caller
-	g.Winner = WinnerDraw
-	g.DrawOfferer = nil
-
 	g.saveResult()
 
 	return g.json()
