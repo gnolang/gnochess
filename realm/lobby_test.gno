@@ -177,10 +177,10 @@ func TestLobbyJoin_HasOpenGames(t *testing.T) {
 
 	std.TestSetOrigCaller(white)
 	LobbyJoin(10*60, 5)
-	if g.State != GameStateResigned {
-		t.Errorf("state wrong: want %d got %d", GameStateResigned, g.State)
+	if g.State != GameStateAborted {
+		t.Errorf("state wrong: want %d got %d", GameStateAborted, g.State)
 	}
-	if g.Winner != WinnerBlack {
-		t.Errorf("winner wrong: want %q got %q", "black", g.Winner)
+	if g.Winner != WinnerNone {
+		t.Errorf("winner wrong: want %q got %q", "none", g.Winner)
 	}
 }
