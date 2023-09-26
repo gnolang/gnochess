@@ -4,11 +4,21 @@ import mailchimp from '@mailchimp/mailchimp_marketing';
 import type { Handler, HandlerEvent } from '@netlify/functions';
 
 import { CONFIG } from './config';
-import { SubscribeRequest } from './types';
 import subscribeUserSchema from './schemas/users.schema';
 import { RedisClient } from './services/redis';
-import RequestHelper from './helpers/requests.helper';
 import getRandomToken from './helpers/token.helper';
+
+interface SubscribeRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  githubHandle: string;
+  socialHandle: string;
+  interests: string;
+  receiveNews: boolean;
+  participate: boolean;
+  termsAndConditions: boolean;
+}
 
 const ajv = new Ajv();
 ajvFormats(ajv);
@@ -22,10 +32,33 @@ mailchimp.setConfig({
   server: CONFIG.MAILCHIMP_API_SERVER
 });
 
+const headers =
+  process.env.NODE_ENV !== 'production'
+    ? {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+      }
+    : {};
+
 export async function handler(event: HandlerEvent): Handler {
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers
+    };
+  } else if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405
+    };
+  }
+
   try {
     // Validate the request
     const subscribeRequest: SubscribeRequest = JSON.parse(event.body);
+
+    // Intentional; TODO Remove
+    console.log(subscribeRequest);
 
     const isValid: boolean = ajv.validate(
       subscribeUserSchema,
@@ -34,7 +67,8 @@ export async function handler(event: HandlerEvent): Handler {
     if (!isValid) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ errors: ajv.errors })
+        headers,
+        body: JSON.stringify({ errors: 'Unable to validate request' })
       };
     }
 
@@ -42,7 +76,8 @@ export async function handler(event: HandlerEvent): Handler {
     if (subscribeRequest.termsAndConditions !== subscribeRequest.participate) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ errors: { message: 'Bad request' } })
+        headers,
+        body: JSON.stringify({ errors: { message: 'Request is invalid' } })
       };
     }
 
@@ -63,7 +98,6 @@ export async function handler(event: HandlerEvent): Handler {
         MMERGE9: subscribeRequest.receiveNews ? 'Yes' : 'No',
         MMERGE10: subscribeRequest.termsAndConditions ? 'Yes' : 'No'
       }
-      // TODO add tags
     });
 
     await redisClient.storeUserToken(subscribeRequest.email, token);
@@ -81,9 +115,11 @@ export async function handler(event: HandlerEvent): Handler {
     if (journeyResponse != null) {
       throw new Error(journeyResponse);
     }
+
     // Success return
     return {
       statusCode: 200,
+      headers,
       body: JSON.stringify({ message: 'User subscribed' })
     };
   } catch (err) {
@@ -91,9 +127,11 @@ export async function handler(event: HandlerEvent): Handler {
       req: event.body,
       message: err
     });
+
     return {
       statusCode: 500,
-      body: JSON.stringify({ errors: { message: 'Unabled to subsribe user' } })
+      headers,
+      body: JSON.stringify({ errors: { message: 'Unable to subscribe user' } })
     };
   }
 }

@@ -1,7 +1,8 @@
 import { Component } from 'sevejs';
 import { gsap } from 'gsap';
 import { truncateString } from '../utils/truncate';
-import { type Colors, type GameoverType } from '../types/types';
+import { type Colors, GameState, GameTime, GameType } from '../types/types';
+import Actions from '../actions.ts';
 
 const Gameplayers = class extends Component {
   constructor(opts: any) {
@@ -24,6 +25,7 @@ const Gameplayers = class extends Component {
   appear() {
     gsap.to(this.DOM.el, { autoAlpha: 1, display: 'flex' });
   }
+
   disappear() {
     gsap.to('.player-info', { '--banner-x': '-100%' });
     return gsap.to(this.DOM.el, {
@@ -33,16 +35,22 @@ const Gameplayers = class extends Component {
     });
   }
 
-  config(time: number[], color: Colors, token = '', category: string) {
+  config(
+    time: GameTime,
+    color: Colors,
+    address: string = '',
+    category: GameType
+  ) {
+    console.log(time);
     //-- config game --
     //config token + type
-    this.DOM.token.innerHTML = truncateString(token, 4, 4);
+    this.DOM.token.innerHTML = truncateString(address, 4, 4);
     this.color = color;
     this.category = category;
 
     //config timer
-    this.increment = time[1];
-    this.timer = time[0] * 60; //min to sec
+    this.increment = time.increment;
+    this.timer = time.time * 60; //min to sec
     this._createTime(this.timer);
 
     //config pawn color
@@ -65,24 +73,44 @@ const Gameplayers = class extends Component {
     this.DOM.timer.innerHTML = `${pad(minutes)}:${pad(seconds)}`;
   }
 
-  startTimer() {
+  async startTimer(gameId: string) {
     clearInterval(this.clock);
+    const actions: Actions = await Actions.getInstance();
 
     this.timerActive = true;
 
-    const clockAction = () => {
+    const clockAction = async () => {
       this.timer--;
-      this._createTime(this.timer);
 
       if (this.timer <= 0) {
         clearInterval(this.clock);
         this.DOM.timer.innerHTML = `00:00`;
-        this.call('engine', ['timeout'], 'gameboard'); // let engine know timer is finished
+        try {
+          // Claim timeout. If no error, timeout succeeded
+          const claimTimeout = await actions.claimTimeout(gameId);
+          console.log(claimTimeout);
+          this.call('engine', [false, GameState.TIMEOUT], 'gameboard'); // let engine know timer is finished
+          console.log('claimTimeout did  work for ' + gameId);
+        } catch (e) {
+          console.log(e);
+          console.log('claimTimeout did not work for ' + gameId);
+          this.call(
+            'appear',
+            ['Invalid claim timeout request', 'error'],
+            'toast'
+          );
+          this.call('engine', [false, GameState.TIMEOUT], 'gameboard'); // let engine know timer is finished
+          // Timeout request is invalid
+          // for the user (I assume fire event to end game)
+        }
+      } else {
+        this._createTime(this.timer);
       }
     };
 
     this.clock = setInterval(clockAction, 1000);
   }
+
   stopTimer(gameover = false) {
     clearInterval(this.clock);
     if (this.timerActive) {
@@ -100,9 +128,13 @@ const Gameplayers = class extends Component {
     this.DOM.pawns.appendChild(pawnEl);
   }
 
-  finishGame(type = 'Winner', status: GameoverType = 'checkmate') {
-    // ICI draw
-    this.DOM.el.querySelector('.js-playergamegameovertitle').innerHTML = type;
+  finishGame(type = 'Winner', status = GameState.CHECKMATED) {
+    console.log('finishGame - type: ' + type + ' status: ' + status);
+    const playergamegameovertitle = this.DOM.el.querySelector(
+      '.js-playergamegameovertitle'
+    );
+    console.log('playergamegameovertitle ' + playergamegameovertitle);
+    playergamegameovertitle.innerHTML = type;
     this.DOM.el.querySelector('.js-playergametype').innerHTML =
       this.category + ' - ' + status;
     this.DOM.el.querySelector('.js-playerpoints').innerHTML = `${this.call(

@@ -20,15 +20,14 @@ func cleanup() {
 	playerStore = avl.Tree{}
 	leaderboard = [CategoryMax]leaderboardType{}
 	lobby = [tcLobbyMax][]lobbyPlayer{}
-	lobbyUpdatedAt = [tcLobbyMax]time.Time{}
-	playerGameID = avl.Tree{}
+	lobbyPlayer2Game = avl.Tree{}
 	playerRatings = [CategoryMax][]*PlayerRating{}
 }
 
 func TestNewGame(t *testing.T) {
 	cleanup()
 
-	g := NewGame(std.DerivePkgAddr("xx").String(), 0, 0)
+	g := xNewGame(std.DerivePkgAddr("xx").String(), 0, 0)
 	println(g)
 }
 
@@ -56,24 +55,22 @@ processing is stopped on that line.
 
 <command>:
 
-	newgame [<seconds> [<increment>]]
+	newgame [<white> <black> [<seconds> [<increment>]]]
 		stores game ID in buffer #id.
-		always calls as white, creating a new game against black.
-	move <black|white|auto> <lan_move>
+		<white> and <black> are two addresses. if they are not passed, <white>
+		assumes value "white" and <black> "black"
+	move <player> <lan_move>
 		lan_move is in the same format as Move.String.
-		auto inverts from the last move's color.
 		retrieves game id from #id.
-	draw <black|white|auto>
-	drawoffer <black|white|auto>
-	timeout <black|white|auto>
+	draw <player>
+	drawoffer <player>
+	abort <player>
+	timeout <player>
 		(ClaimTimeout)
-	resign <black|white|auto>
+	resign <player>
 	game [<id>]
 		if not given, id is retrieved from buffer #id.
 	player <player>
-		player values "white" and "black" are auto converted to their
-		addresses.
-
 	name <predicate>
 		sets the name of the test to predicate.
 	copy <dst> [<src>]
@@ -82,6 +79,10 @@ processing is stopped on that line.
 		(don't specify the #; ie: copy oldresult result)
 	sleep <seconds>
 		sleep for the given amount of seconds (float).
+
+NOTE: for all values of <player>, including <white> and <black> in newgame,
+the addresses are passed prefixed by "g1", and the matching checkers should
+expect this.
 
 <checker>:
 
@@ -96,21 +97,42 @@ processing is stopped on that line.
 */
 var commandTests = [...]string{
 	`	name NewGameNegativeIncrement
-		newgame 10 -5 #panic containssp negative increment invalid
+		newgame white black 10 -5 #panic containssp negative increment invalid
 	`,
 	`	name NewGameDouble
 		newgame
-		newgame #panic contains game with opponent is still ongoing
+		newgame #panic contains is not yet finished
+	`,
+	`	name NewGameWithSelf
+		newgame white white #panic contains game with yourself
+	`,
+	// ColoursInvert within games played by two players
+	`	name ColoursInvert
+		newgame
+		move white e2e4
+		move black e7e5
+		move white f1c4
+		resign white
+		newgame
+		# contains "white":"g1black" "black":"g1white"
+		#id equal 000000002
+	`,
+	// Otherwise, invert from p1's history.
+	`	name ColoursInvert3p
+		newgame p1 p2 #! contains "white":"g1p1" "black":"g1p2"
+		move p1 e2e4
+		abort p1
+		newgame p1 p3 # contains "white":"g1p3" "black":"g1p1"
 	`,
 	`	name ScholarsMate
 		newgame #id equal 000000001
-		move auto e2e4
-		move auto e7e5
-		move auto f1c4
-		move auto b8c6
-		move auto d1f3
-		move auto d7d6
-		move auto f3f7
+		move white e2e4
+		move black e7e5
+		move white f1c4
+		move black b8c6
+		move white d1f3
+		move black d7d6
+		move white f3f7
 		copy moveres
 		game # equal #moveres
 		# contains "state":"checkmated" "winner":"white"
@@ -122,10 +144,10 @@ var commandTests = [...]string{
 	`,
 	`	name DrawByAgreement
 		newgame
-		move auto e2e4
-		move auto e7e5
-		move auto f1c4
-		move auto b8c6
+		move white e2e4
+		move black e7e5
+		move white f1c4
+		move black b8c6
 		copy moveres
 		game # equal #moveres
 		# contains "open" "concluder":null "draw_offerer":null
@@ -134,20 +156,68 @@ var commandTests = [...]string{
 		draw black
 		# contains "drawn_by_agreement" "concluder":"g1black" "draw_offerer":"g1white"
 	`,
+	`	name AbortFirstMove
+		newgame
+		abort white # contains "winner":"none" "concluder":"g1white"
+	`,
+
+	`	name ThreefoldRepetition
+		newgame
+
+		move white g1f3
+		move black g8f6
+		move white f3g1
+		move black f6g8
+
+		move white g1f3
+		move black g8f6
+		move white f3g1
+		move black f6g8
+
+		draw black # contains "winner":"draw" "concluder":"g1black"
+		# contains "state":"drawn_3_fold"
+	`,
+	`	name FivefoldRepetition
+		newgame
+
+		move white g1f3
+		move black g8f6
+		move white f3g1
+		move black f6g8
+
+		move white g1f3
+		move black g8f6
+		move white f3g1
+		move black f6g8
+
+		move white g1f3
+		move black g8f6
+		move white f3g1
+		move black f6g8
+
+		move white g1f3
+		move black g8f6
+		move white f3g1
+		move black f6g8
+
+		# contains "winner":"draw" "concluder":null "state":"drawn_5_fold"
+
+		move white g1f3 #panic contains game is already finished
+	`,
 	`	name TimeoutAborted
-		newgame 3
-		move auto e2e4 #! contains "state":"open"
+		newgame white black 3
+		move white e2e4 #! contains "state":"open"
 		sleep 31
-		move auto e7e5
+		move black e7e5
 		game
 		# contains e2e4
 		# contains "aborted"
 		# contains "concluder":"g1black"
 	`,
 	`	name TimeoutAbandoned
-		newgame 1
-		move auto e2e4
-		move auto e7e5
+		newgame white black 1
+		move white e2e4
+		move black e7e5
 		sleep 61
 		timeout black
 		# contains "state":"timeout" "winner":"black"
@@ -182,14 +252,14 @@ func (tc testCommandFunc) Run(t *testing.T, bufs map[string]string) { tc(t, bufs
 
 // testCommandColorID represents a testCommand, which uses a function of the
 // form func(gameID string) string (hence ID), and that takes as the first
-// parameter the values <white|black|auto>.
+// parameter a <player> which will be the caller.
 type testCommandColorID struct {
 	fn   func(string) string
 	addr std.Address
 }
 
-func newTestCommandColorID(fn func(string) string, s string, addr std.Address) testCommandRunner {
-	return &testCommandColorID{fn, addr}
+func newTestCommandColorID(fn func(string) string, s string, addr string) testCommandRunner {
+	return &testCommandColorID{fn, std.Address("g1" + addr)}
 }
 
 func (tc *testCommandColorID) Run(t *testing.T, bufs map[string]string) {
@@ -198,12 +268,13 @@ func (tc *testCommandColorID) Run(t *testing.T, bufs map[string]string) {
 }
 
 type testCommandNewGame struct {
+	w, b          std.Address
 	seconds, incr int
 }
 
 func (tc *testCommandNewGame) Run(t *testing.T, bufs map[string]string) {
-	std.TestSetOrigCaller(white)
-	res := NewGame(black, tc.seconds, tc.incr)
+	std.TestSetOrigCaller(tc.w)
+	res := xNewGame(string(tc.b), tc.seconds, tc.incr)
 	bufs["result"] = res
 
 	const idMagicString = `"id":"`
@@ -279,30 +350,11 @@ func parseCommandTest(t *testing.T, command string) (funcs []testCommandRunner, 
 	lines := strings.Split(command, "\n")
 	atoi := func(s string) int {
 		n, err := strconv.Atoi(s)
-		if err != nil {
-			panic(err)
-		}
+		checkErr(err)
 		return n
 	}
 	// used to detect whether to auto-add a panic checker
 	var hasPanicChecker bool
-	// so first move, if auto, is white
-	lastMove := black
-	parseColor := func(s string) std.Address {
-		switch s {
-		case "black":
-			return black
-		case "white":
-			return white
-		case "auto":
-			if lastMove == white {
-				return black
-			}
-			return white
-		default:
-			panic("invalid color " + s)
-		}
-	}
 	panicChecker := func(lineNum int, testName string) testCommandRunner {
 		return testCommandChecker{testCommandFunc(
 			func(t *testing.T, bufs map[string]string) {
@@ -340,25 +392,28 @@ func parseCommandTest(t *testing.T, command string) (funcs []testCommandRunner, 
 		switch cmd {
 		case "": // move on
 		case "newgame":
+			w, b := white, black
 			var seconds, incr int
 			switch len(command) {
 			case 1:
-			case 2:
-				seconds = atoi(command[1])
+			case 5:
+				incr = atoi(command[4])
+				fallthrough
+			case 4:
+				seconds = atoi(command[3])
+				fallthrough
 			case 3:
-				seconds, incr = atoi(command[1]), atoi(command[2])
+				w, b = std.Address("g1"+command[1]), std.Address("g1"+command[2])
 			default:
 				panic("invalid newgame command " + line)
 			}
 			funcs = append(funcs,
-				&testCommandNewGame{seconds, incr},
+				&testCommandNewGame{w, b, seconds, incr},
 			)
 		case "move":
 			if len(command) != 3 {
 				panic("invalid move command " + line)
 			}
-			addr := parseColor(command[1])
-			lastMove = addr
 			if len(command[2]) < 4 || len(command[2]) > 5 {
 				panic("invalid lan move " + command[2])
 			}
@@ -371,19 +426,21 @@ func parseCommandTest(t *testing.T, command string) (funcs []testCommandRunner, 
 				}
 			}
 			funcs = append(funcs, &testCommandMove{
-				addr:      addr,
+				addr:      std.Address("g1" + command[1]),
 				from:      from,
 				to:        to,
 				promotion: promotion,
 			})
+		case "abort":
+			funcs = append(funcs, newTestCommandColorID(Abort, "abort", command[1]))
 		case "draw":
-			funcs = append(funcs, newTestCommandColorID(Draw, "draw", parseColor(command[1])))
+			funcs = append(funcs, newTestCommandColorID(Draw, "draw", command[1]))
 		case "drawoffer":
-			funcs = append(funcs, newTestCommandColorID(DrawOffer, "drawoffer", parseColor(command[1])))
+			funcs = append(funcs, newTestCommandColorID(DrawOffer, "drawoffer", command[1]))
 		case "timeout":
-			funcs = append(funcs, newTestCommandColorID(ClaimTimeout, "timeout", parseColor(command[1])))
+			funcs = append(funcs, newTestCommandColorID(ClaimTimeout, "timeout", command[1]))
 		case "resign":
-			funcs = append(funcs, newTestCommandColorID(Resign, "resign", parseColor(command[1])))
+			funcs = append(funcs, newTestCommandColorID(Resign, "resign", command[1]))
 		case "game":
 			if len(command) > 2 {
 				panic("invalid game command " + line)
@@ -397,14 +454,7 @@ func parseCommandTest(t *testing.T, command string) (funcs []testCommandRunner, 
 			if len(command) != 2 {
 				panic("invalid player command " + line)
 			}
-			v := command[1]
-			switch v {
-			case "white":
-				v = string(white)
-			case "black":
-				v = string(black)
-			}
-			funcs = append(funcs, &testCommandPlayer{v})
+			funcs = append(funcs, &testCommandPlayer{"g1" + command[1]})
 		case "name":
 			testName = strings.Join(command[1:], " ")
 		case "copy":

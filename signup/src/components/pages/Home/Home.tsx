@@ -36,8 +36,8 @@ const Home: FC<IHomeProps> = () => {
       githubHandle: '',
       socialHandle: '',
       interests: 'General Gno.land',
-      receiveNews: true,
-      participate: true,
+      receiveNews: false,
+      participate: false,
       termsAndConditions: false
     },
     enableReinitialize: true,
@@ -283,13 +283,23 @@ const Home: FC<IHomeProps> = () => {
               >
                 Please confirm you accept the{' '}
                 <a
-                  href={'https://hackmd.io'}
+                  href={'https://gnochess.com/docs/gnochess-terms-and-conditions-9-21-23.pdf'}
                   target={'_blank'}
                   style={{
                     textDecoration: 'underline'
                   }}
                 >
-                  Terms and Conditions{' '}
+                  Terms and Conditions
+                </a>
+                {' '}and the{' '}
+                <a
+                  href={'https://gnochess.com/docs/gnochess-privacy-policy-9-21-23.pdf'}
+                  target={'_blank'}
+                  style={{
+                    textDecoration: 'underline'
+                  }}
+                >
+                  Privacy Policy
                 </a>
               </Checkbox>
               <FormHelperText>
@@ -303,11 +313,11 @@ const Home: FC<IHomeProps> = () => {
           <Box>
             <Button
               rightIcon={<BsSend />}
-              variant="outline"
+              variant='outline'
               padding={6}
               isLoading={submitting}
               loadingText={'Submitting'}
-              spinner={<Spinner size={'md'} color="green" />}
+              spinner={<Spinner size={'md'} color='green' />}
               spinnerPlacement={'end'}
               type={'submit'}
             >

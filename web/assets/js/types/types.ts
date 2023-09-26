@@ -1,17 +1,17 @@
 export type Colors = 'w' | 'b';
-export type GameoverType =
-  | 'checkmate'
-  | 'timeout'
-  | 'noMove'
-  | 'draw'
-  | 'stalemate'
-  | 'threefoldRepetition'
-  | 'insufficientMaterial'
-  | 'drawn_5_fold'
-  | 'drawn_75_move'
-  | 'drawn_50_move'
-  | 'drawn_3_fold'
-  | 'resigned';
+// export type GameoverType =
+//   | 'checkmate'
+//   | 'timeout'
+//   | 'noMove'
+//   | 'draw'
+//   | 'stalemate'
+//   | 'threefoldRepetition'
+//   | 'insufficientMaterial'
+//   | 'drawn_5_fold'
+//   | 'drawn_75_move'
+//   | 'drawn_50_move'
+//   | 'drawn_3_fold'
+//   | 'resigned';
 
 export type Move = {
   from: string;
@@ -35,12 +35,17 @@ export interface GameTime {
   increment: number;
 }
 
+export enum GameType {
+  BLITZ = 'blitz',
+  RAPID = 'rapid'
+}
+
 export enum Promotion {
   NO_PROMOTION = 0,
-  QUEEN = 'Q',
-  BISHOP = 'B',
-  KNIGHT = 'N',
-  ROOK = 'R'
+  QUEEN = 'q',
+  BISHOP = 'b',
+  KNIGHT = 'n',
+  ROOK = 'r'
 }
 
 export enum Winner {
@@ -128,9 +133,8 @@ export interface Player {
   correspondence: PlayerRating;
 }
 
-export interface Rating {
-  wins: number;
-  losses: number;
-  draws: number;
-  games: number;
+export enum Category {
+  BLITZ = 'Blitz',
+  RAPID = 'Rapid',
+  GLOBAL = 'Global'
 }

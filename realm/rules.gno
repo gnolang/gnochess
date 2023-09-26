@@ -426,6 +426,7 @@ func (oldp Position) validateMove(m Move) (_ Position, ok bool) {
 	capture := p.B[m.To] != PieceEmpty
 	p.B[m.From], p.B[m.To] = PieceEmpty, p.B[m.From]
 	p.Flags = newFlags
+	p.Moves = append([]Move{}, p.Moves...)
 	p.Moves = append(p.Moves, m)
 
 	// halfmove clock + hashes logic
@@ -508,28 +509,28 @@ type Board [64]Piece
 
 // NewBoard returns a Board normally set up at the initial position for standard
 // chess.
-func NewBoard() Board { return defaultBoard }
+func NewBoard() Board {
+	return Board{
+		// row 1
+		p['R'], p['N'], p['B'], p['Q'],
+		p['K'], p['B'], p['N'], p['R'],
+		// row 2
+		p['P'], p['P'], p['P'], p['P'],
+		p['P'], p['P'], p['P'], p['P'],
 
-var defaultBoard = Board{
-	// row 1
-	p['R'], p['N'], p['B'], p['Q'],
-	p['K'], p['B'], p['N'], p['R'],
-	// row 2
-	p['P'], p['P'], p['P'], p['P'],
-	p['P'], p['P'], p['P'], p['P'],
+		// rows 3, 4, 5, 6
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
 
-	// rows 3, 4, 5, 6
-	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0,
-
-	// row 7
-	p['p'], p['p'], p['p'], p['p'],
-	p['p'], p['p'], p['p'], p['p'],
-	// row 8
-	p['r'], p['n'], p['b'], p['q'],
-	p['k'], p['b'], p['n'], p['r'],
+		// row 7
+		p['p'], p['p'], p['p'], p['p'],
+		p['p'], p['p'], p['p'], p['p'],
+		// row 8
+		p['r'], p['n'], p['b'], p['q'],
+		p['k'], p['b'], p['n'], p['r'],
+	}
 }
 
 func (b Board) findPiece(pWant Piece) Square {

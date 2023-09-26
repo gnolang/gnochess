@@ -1,13 +1,9 @@
 import { Component } from 'sevejs';
 import { gsap } from 'gsap';
-import { GameTime } from '../types/types.ts';
+import { GameTime, GameType } from '../types/types.ts';
 import Actions from '../actions.ts';
 import Events from '../utils/events.ts';
 
-enum GameType {
-  BLITZ = 'blitz',
-  RAPID = 'rapid'
-}
 
 interface Options {
   token: string;

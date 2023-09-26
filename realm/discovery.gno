@@ -26,29 +26,26 @@ const (
 	CategoryMax
 )
 
+var categoryString = [CategoryMax]string{
+	Blitz:          "blitz",
+	Rapid:          "rapid",
+	Correspondence: "correspondence",
+}
+
 var categoryList = [...]Category{Blitz, Rapid, Correspondence}
 
 func (c Category) String() string {
-	// TODO: convert to array map, for both string and FromString
-	switch c {
-	case Blitz:
-		return "blitz"
-	case Rapid:
-		return "rapid"
-	case Correspondence:
-		return "correspondence"
+	if c > CategoryMax || categoryString[c] == "" {
+		panic("invalid category")
 	}
-	panic("invalid category")
+	return categoryString[c]
 }
 
 func CategoryFromString(s string) Category {
-	switch s {
-	case "blitz":
-		return Blitz
-	case "rapid":
-		return Rapid
-	case "correspondence":
-		return Correspondence
+	for i, cs := range categoryString {
+		if s == cs {
+			return Category(i)
+		}
 	}
 	panic("invalid category")
 }
@@ -84,9 +81,7 @@ func GetPlayer(player string) string {
 		panic("player not found")
 	}
 	b, err := v.(*Player).MarshalJSON()
-	if err != nil {
-		panic(err)
-	}
+	checkErr(err)
 	return string(b)
 }
 
@@ -153,7 +148,7 @@ func (p Player) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func saveGameResult(g *Game) {
+func (g *Game) saveResult() {
 	w, b := getPlayer(g.White), getPlayer(g.Black)
 
 	cat := g.Time.Category()
@@ -199,17 +194,26 @@ func getPlayer(addr std.Address) *Player {
 	if ok {
 		return praw.(*Player)
 	}
-	p := &Player{Address: addr}
+	p := new(Player)
+	p.Address = addr
 	for _, cat := range categoryList {
 		pr := NewPlayerRating(addr)
 		p.CategoryInfo[cat] = CategoryInfo{
 			PlayerRating: pr,
 		}
-		playerRatings[cat] = append(playerRatings[cat], pr)
+		// https://github.com/gnolang/gno/pull/1170
+		prs := append([]*PlayerRating{}, playerRatings[cat]...)
+		playerRatings[cat] = append(prs, pr)
 	}
 	playerStore.Set(addr.String(), p)
+	// XXX: This assignment is not needed, but it seems to mark to the realm store
+	// that we we "need" this value and it should not be deleted,
+	// removing the "unexpected object with id" panic.
+	_xxPlayer = p
 	return p
 }
+
+var _xxPlayer *Player
 
 type lbEntry struct {
 	addr  std.Address
@@ -284,10 +288,8 @@ func Leaderboard(category string) string {
 	buf.WriteByte('[')
 	for idx, entry := range leaderboard[cat] {
 		p, _ := playerStore.Get(entry.addr.String())
-		d, err := p.(Player).MarshalJSON()
-		if err != nil {
-			panic(err)
-		}
+		d, err := p.(*Player).MarshalJSON()
+		checkErr(err)
 		buf.Write(d)
 		if idx != len(leaderboard[cat])-1 {
 			buf.WriteByte(',')
@@ -394,6 +396,9 @@ func parseFilters(filters string) (r listGamesFilters) {
 		if idx < 0 {
 			panic("invalid filter: " + part)
 		}
+		// TODO: this is likely to misbehave due to https://github.com/gnolang/gno/issues/1135
+		// This is unlikely to cause much of an issue here, as we can expect player/white/black/finished
+		// to only exist once, though it should be kept in mind if/when adding additional filters.
 		filt, pred := part[:idx+1], part[idx+1:]
 		switch filt {
 		case "player:":
@@ -423,9 +428,7 @@ func parseFilters(filters string) (r listGamesFilters) {
 			r.minID = pred
 		case "limit:":
 			n, err := strconv.Atoi(pred)
-			if err != nil {
-				panic(err)
-			}
+			checkErr(err)
 			r.limit = n
 		case "sort:":
 			r.reverse = pred == "desc"
