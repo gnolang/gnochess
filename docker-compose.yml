@@ -1,0 +1,108 @@
+version: "3"
+
+volumes:
+  gnonode: {}
+  faucet: {}
+
+services:
+  gnoland:
+    image: ghcr.io/gnolang/gno/gnochess:latest
+    environment:
+      - LOG_LEVEL=4
+    command: ["gnoland", "start", "-genesis-max-vm-cycles", "100000000"]
+    volumes:
+      - "gnonode:/opt/gno/src/testdir"
+      - "./util/devnet/config.toml:/opt/gno/src/gno.land/testdir/config/config.toml"
+    working_dir: /opt/gno/src/gno.land
+    ports:
+      - 26657:26657
+    restart: on-failure
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "10"
+        max-size: "100m"
+
+  deployer:
+    build: ./util/devnet/deployer
+    restart: on-failure
+    depends_on:
+      - gnoland
+    volumes:
+      - "./realm:/realm"
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "10"
+        max-size: "100m"
+
+  web:
+    build: ./web
+    ports:
+      - 1313:1313
+    restart: on-failure
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "10"
+        max-size: "100m"
+    volumes:
+      - ./web:/app
+    environment:
+      VITE_GNO_WS_URL: "http://localhost:26657/websocket"
+      VITE_GNO_JSONRPC_URL: "http://localhost:26657"
+      VITE_GNO_CHESS_REALM: "gno.land/r/demo/chess1"
+      VITE_FAUCET_URL: "http://localhost:5050"
+
+  redis:
+    image: "redis:7.2"
+    ports:
+      - "6379:6379"
+
+  faucet:
+    image: golang:1.20
+    depends_on:
+      - "redis"
+      - "gnoland"
+    command:
+      - "go"
+      - "run"
+      - "."
+      - "--remote"
+      - "http://gnoland:26657"
+      - "--listen-address"
+      - "0.0.0.0:5050"
+      - "--mnemonic"
+      - "source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast" # test1
+      - "--redis-url"
+      - "redis://redis:6379"
+    working_dir: "/app"
+    volumes:
+      - "faucet:/go"
+      - "./faucet:/app"
+
+  signup-web:
+    image: node
+    command: ["yarn", "run", "dev", "--host=0.0.0.0", "--port=8080"]
+    working_dir: "/app"
+    volumes:
+      - "./signup:/app"
+    ports:
+      - "8080:8080"
+    environment:
+      VITE_API_BASE_URL: "localhost:8080"
+      VITE_NETLIFY_FUNCTIONS_URL: "http://localhost:9000"
+
+  signup-functions:
+    image: williamjackson/netlify-cli
+    depends_on:
+      - redis
+    command: ["functions:serve", "-f", "./functions", "-p", "9000"]
+    working_dir: "/app"
+    volumes:
+      - "./signup:/app"
+    ports:
+      - "9000:9000"
+    environment:
+      NODE_ENV: "development"
+      REDIS_URL: "redis://redis:6379"
