@@ -91,7 +91,7 @@ the task of doing, we will let you simply fill in the fun parts...
 
 Open up `rules.gno` -- you should see the rough structure of a move generator
 that we've implemented for this workshop. In fact, it is a trimmed down version
-of the one we're using for [the full GnoChess dApp](../../realm/rules.gno), but
+of the one we're using for [the full GnoChess dApp](../../r/chess/rules.gno), but
 let's not get ahead of ourselves.
 
 By scrolling down to the `Position.validateMove` method, you should be able to
