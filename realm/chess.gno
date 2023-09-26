@@ -658,5 +658,4 @@ func Draw(gameID string) string {
 	g.saveResult()
 
 	return g.json()
-
 }
