@@ -4,7 +4,6 @@ import { GameTime, GameType } from '../types/types.ts';
 import Actions from '../actions.ts';
 import Events from '../utils/events.ts';
 
-
 interface Options {
   token: string;
   category: GameType;
@@ -196,15 +195,20 @@ const Gameoptions = class extends Component {
 
     //checkstep
     Actions.getInstance().then((actions) => {
-      if (actions.getFaucetToken()) {
+      if (actions.getFaucetToken() && actions.hasWallet()) {
         this._clickOnCtrl1(null, true);
       }
-      if (!actions.hasWallet()) {
-        this.disabled = true //Works but ideally should provide the "Login" flow
-      }
-      actions.getBalance().then((balance)=> {
-        if (!balance || balance==0) {
-          this.disabled=true //Works but ideally button should not visually respond to clicking + "play" label switched to "insufficient funds"
+
+      actions.getBalance().then((balance) => {
+        if (!balance || balance == 0) {
+          gsap.set(this.DOM.ctrl1, {
+            background: '#D9D9D9',
+            color: '#FFFFFF',
+            boxShadow: '0px 0px 0px 0px rgba(255,255,255,0)',
+            cursor: 'default'
+          });
+          this.DOM.ctrl1.innerHTML = 'insufficient funds';
+          this.disabled = true; //Works but ideally button should not visually respond to clicking + "play" label switched to "insufficient funds"
         }
       });
       this.appear();
@@ -223,7 +227,8 @@ const Gameoptions = class extends Component {
 
   private async _clickOnCtrl0() {
     this.currentState--;
-
+    console.log(this.currentState);
+    if (this.currentState < 0) this.call('goTo', ['/'], 'router');
     if (this.disabled === true) return;
 
     if (this.currentState === 1) {
