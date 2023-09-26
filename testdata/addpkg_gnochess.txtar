@@ -2,4 +2,4 @@ gnoland start -genesis-balances-file=${TMPDIR}/genesis_balances.txt -genesis-max
 
 sleep 500ms
 
-gnokey maketx addpkg -pkgdir ${ROOTDIR}/realm -pkgpath gno.land/r/demo/chess -gas-wanted 20000000 -gas-fee 1ugnot -chainid=tendermint_test -broadcast test1
+gnokey maketx addpkg -pkgdir ${ROOTDIR}/realm -pkgpath gno.land/r/demo/chess2 -gas-wanted 20000000 -gas-fee 1ugnot -chainid=tendermint_test -broadcast test1

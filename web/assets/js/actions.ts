@@ -11,17 +11,9 @@ import {
   Player,
   Promotion
 } from './types/types';
-import {
-  defaultTxFee,
-  GnoJSONRPCProvider,
-  GnoWallet
-} from '@gnolang/gno-js-client';
-import {
-  BroadcastTxCommitResult,
-  TM2Error,
-  TransactionEndpoint
-} from '@gnolang/tm2-js-client';
-import { generateMnemonic } from './utils/crypto.ts';
+import {defaultTxFee, GnoWallet, GnoWSProvider} from '@gnolang/gno-js-client';
+import {BroadcastTxCommitResult, TM2Error, TransactionEndpoint} from '@gnolang/tm2-js-client';
+import {generateMnemonic} from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
 import { constructFaucetError } from './utils/errors.ts';
@@ -33,8 +25,7 @@ import {
 import { prepareCategory, preparePromotion } from './utils/moves.ts';
 
 // ENV values //
-// const wsURL: string = Config.GNO_WS_URL; TODO temporarily disabled
-const JSONRPCURL: string = Config.GNO_JSONRPC_URL;
+const wsURL: string = Config.GNO_WS_URL;
 const chessRealm: string = Config.GNO_CHESS_REALM;
 const faucetURL: string = Config.FAUCET_URL;
 const defaultGasWanted: Long = new Long(10_000_000);
@@ -64,7 +55,7 @@ class Actions {
   private static instance: Actions;
 
   private wallet: GnoWallet | null = null;
-  private provider: GnoJSONRPCProvider | null = null;
+  private provider: GnoWSProvider | null = null;
   private faucetToken: string | null = null;
   private isInTheLobby = false;
 
@@ -106,7 +97,7 @@ class Actions {
     this.wallet = await GnoWallet.fromMnemonic(mnemonic);
 
     // Initialize the provider
-    this.provider = new GnoJSONRPCProvider(JSONRPCURL);
+    this.provider = new GnoWSProvider(wsURL);
 
     // Connect the wallet to the provider
     this.wallet.connect(this.provider);
@@ -659,8 +650,7 @@ class Actions {
     }
 
     // Close out the WS connection
-    // TODO Temporarily disabled
-    // this.provider.closeConnection();
+    this.provider.closeConnection();
   }
 
   /**
