@@ -117,6 +117,8 @@ var commandTests = [...]string{
 		newgame
 		# contains "white":"g1black" "black":"g1white"
 		#id equal 000000002
+		stats white # contains moves:2 started:2 won:0 lost:1 timedout:0 resigned:1 drawn:0 serious:0
+		stats black # contains moves:1 started:2 won:1 lost:0 timedout:0 resigned:0 drawn:0 serious:0
 	`,
 	// Otherwise, invert from p1's history.
 	`	name ColoursInvert3p

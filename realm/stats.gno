@@ -114,13 +114,17 @@ func (g Game) updateEndgameStats() {
 	case WinnerWhite:
 		stats.white.WonGames++
 		stats.black.LostGames++
+		if g.State == GameStateResigned {
+			stats.black.ResignedGames++
+		}
 	case WinnerBlack:
 		stats.black.WonGames++
 		stats.white.LostGames++
+		if g.State == GameStateResigned {
+			stats.white.ResignedGames++
+		}
 	case WinnerDraw:
 		stats.black.DrawnGames++
 		stats.white.DrawnGames++
 	}
-
-	// XXX: resigned
 }
