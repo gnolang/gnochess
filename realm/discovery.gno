@@ -194,7 +194,8 @@ func getPlayer(addr std.Address) *Player {
 	if ok {
 		return praw.(*Player)
 	}
-	p := &Player{Address: addr}
+	p := new(Player)
+	p.Address = addr
 	for _, cat := range categoryList {
 		pr := NewPlayerRating(addr)
 		p.CategoryInfo[cat] = CategoryInfo{
@@ -205,8 +206,14 @@ func getPlayer(addr std.Address) *Player {
 		playerRatings[cat] = append(prs, pr)
 	}
 	playerStore.Set(addr.String(), p)
+	// XXX: This assignment is not needed, but it seems to mark to the realm store
+	// that we we "need" this value and it should not be deleted,
+	// removing the "unexpected object with id" panic.
+	_xxPlayer = p
 	return p
 }
+
+var _xxPlayer *Player
 
 type lbEntry struct {
 	addr  std.Address
