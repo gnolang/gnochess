@@ -7,7 +7,7 @@ import (
 )
 
 type playerStats struct {
-	Addr          std.Address // Not stored when in avl.Tree, but lasily filled when returning a single or collection of player stats for other contracts.
+	Addr          std.Address // Not stored when in avl.Tree, but lazily filled for public-facing helpers returning playerStats.
 	Moves         uint
 	StartedGames  uint
 	WonGames      uint
@@ -15,7 +15,7 @@ type playerStats struct {
 	TimedoutGames uint
 	ResignedGames uint
 	DrawnGames    uint
-	SeriousGames  uint // finished, or resigned/drawn after 20 full moves (40 turns)
+	SeriousGames  uint // finished, or resigned/drawn after 20 full moves (40 turns), used for the raffle.
 	// later we can add achievements:
 	// SuperFastAchievement // if a game is finished in less than N seconds.
 	// OnlyPawnsAchievement // winning with only pawns, etc.
@@ -39,9 +39,9 @@ func AllPlayerStats() []playerStats {
 	ret := []playerStats{}
 
 	allPlayerStats.Iterate("", "", func(addrString string, v interface{}) bool {
-		stats := *(v.(*playerStats))
-		stats.Addr = std.Address(addrString)
-		ret = append(ret, stats)
+		// stats := *(v.(*playerStats))
+		// stats.Addr = std.Address(addrString)
+		// ret = append(ret, stats)
 		return false
 	})
 
