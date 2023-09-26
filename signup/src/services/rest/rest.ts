@@ -7,7 +7,7 @@ const baseUrl = Config.API_BASE_URL;
 export class RestService {
   static async post<T>(params: RequestParams) {
     let url = `${window.location.protocol}//${baseUrl}/api/${params.url}`;
-    if (Config.NETLIFY_FUNCTIONS_URL !== '') {
+    if (Config.NETLIFY_FUNCTIONS_URL) {
       url = `${Config.NETLIFY_FUNCTIONS_URL}/.netlify/functions/${params.url}`;
     }
 
