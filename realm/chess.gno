@@ -492,21 +492,28 @@ func Abort(gameID string) string {
 	std.AssertOriginCall()
 
 	g := getGame(gameID, true)
+	err := abort(g)
+	if err != nil {
+		panic(err.Error())
+	}
+	return g.json()
+}
 
+func abort(g *Game) error {
 	if len(g.Position.Moves) >= 2 {
-		panic("game can no longer be aborted; if you wish to quit, resign")
+		return errors.New("game can no longer be aborted; if you wish to quit, resign")
 	}
 
 	caller := std.GetOrigCaller()
 	if caller != g.White && caller != g.Black {
-		panic("you are not involved in this game")
+		return errors.New("you are not involved in this game")
 	}
 	g.State = GameStateAborted
 	g.Concluder = &caller
 	g.DrawOfferer = nil
 	g.Winner = WinnerNone
 
-	return g.json()
+	return nil
 }
 
 func Resign(gameID string) string {
@@ -521,6 +528,9 @@ func Resign(gameID string) string {
 }
 
 func resign(g *Game) error {
+	if len(g.Position.Moves) < 2 {
+		return abort(g)
+	}
 	caller := std.GetOrigCaller()
 	switch caller {
 	case g.Black:
