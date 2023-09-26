@@ -56,7 +56,6 @@ const Gameboard = class extends Component {
         cb: this.selectCell.bind(this)
       });
     });
-    this.intervalCheckForOngoingGame();
   }
 
   showScoreBoard(winner: Colors) {
@@ -265,39 +264,22 @@ const Gameboard = class extends Component {
     }
   }
 
-  private async intervalCheckForOngoingGame() {
-    const actions: Actions = await Actions.getInstance();
-    this.checkOngoingTimer = setInterval(async () => {
-      console.log('isGameOngoing is asked');
-      try {
-        const ongoing = await actions.isGameOngoing(this.gameId);
-        console.log('isGameOngoing is resolved');
-        console.log(ongoing);
-
-        if (!ongoing) {
-          console.log('game stopped');
-          clearInterval(this.checkOngoingTimer);
-
-          // TODO @Alexis this doesn't necessarily need to be a timeout type
-
-          //TODO: noMove gameover: the other should be check by game.state in engine
-          const gameState = await actions.getGame(this.gameId);
-          const state: GameState =
-            this.rivalFirstMove || this.firstMove
-              ? GameState.ABORTED
-              : gameState.state;
-          this.engine(false, state);
-        }
-      } catch (e) {
-        console.error('isGameOngoing doesnt work : ' + e);
-      }
-    }, 3000);
-  }
   async setGameState() {
     const actions: Actions = await Actions.getInstance();
     this.gameState = await actions.getGame(this.gameId);
-    if (this.gameState.state !== 'open') return;
-    setTimeout(this.setGameState, 500);
+
+    const ongoing = this.gameState === GameState.OPEN;
+
+    if (!ongoing) {
+      console.log('game stopped');
+      const state: GameState =
+        this.rivalFirstMove || this.firstMove
+          ? GameState.ABORTED
+          : this.gameState.state;
+      this.engine(false, state);
+    } else {
+      setTimeout(this.setGameState, 500);
+    }
   }
   async rivalMove() {
     console.log('get rival move');
