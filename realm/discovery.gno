@@ -183,10 +183,8 @@ func (g *Game) saveResult() {
 	// Save in playerStore.
 	playerStore.Set(w.Address.String(), w)
 	playerStore.Set(b.Address.String(), b)
-	if g.Winner != WinnerDraw {
-		leaderboard[cat], _ = leaderboard[cat].push(g.White, owr, w.CategoryInfo[cat].Rating)
-		leaderboard[cat], _ = leaderboard[cat].push(g.Black, obr, b.CategoryInfo[cat].Rating)
-	}
+	leaderboard[cat], _ = leaderboard[cat].push(g.White, owr, w.CategoryInfo[cat].Rating)
+	leaderboard[cat], _ = leaderboard[cat].push(g.Black, obr, b.CategoryInfo[cat].Rating)
 }
 
 func getPlayer(addr std.Address) *Player {
