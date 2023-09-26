@@ -195,22 +195,12 @@ const Gameoptions = class extends Component {
 
     //checkstep
     Actions.getInstance().then((actions) => {
+      // User needs a faucet and wallet to be able to autopass the step-0 (connection)
       if (actions.getFaucetToken() && actions.hasWallet()) {
+        // @AlexM - We miss a promise somewhere because actions.hasWallet() is false when you reload the /play page
         this._clickOnCtrl1(null, true);
       }
 
-      actions.getBalance().then((balance) => {
-        if (!balance || balance == 0) {
-          gsap.set(this.DOM.ctrl1, {
-            background: '#D9D9D9',
-            color: '#FFFFFF',
-            boxShadow: '0px 0px 0px 0px rgba(255,255,255,0)',
-            cursor: 'default'
-          });
-          this.DOM.ctrl1.innerHTML = 'insufficient funds';
-          this.disabled = true; //Works but ideally button should not visually respond to clicking + "play" label switched to "insufficient funds"
-        }
-      });
       this.appear();
     });
   }
@@ -266,11 +256,34 @@ const Gameoptions = class extends Component {
             return;
           }
         }
+
         this.DOM.ctrl1.innerHTML = this.states[this.currentState].ctrls[1];
+
+        // Check if user has a wallet but insufficient funds, if not, then impossible to enter the lobby
+        let hasEnoughFund = true;
+        await actions.getBalance().then((balance) => {
+          if (!balance || balance == 0) {
+            hasEnoughFund = false;
+
+            this.DOM.ctrl1.innerHTML = 'insufficient funds';
+            this.disabled = true;
+            this._clickOnCtrl0(); //
+          }
+        });
 
         this.switchAnimation1[immediate ? 'progress' : 'play'](
           immediate ? 1 : 0
-        );
+        ).then(() => {
+          // If not enough fund, set btn to be not UI clickable after appear animation
+          if (!hasEnoughFund) {
+            gsap.to(this.DOM.ctrl1, {
+              background: '#D9D9D9',
+              color: '#FFFFFF',
+              boxShadow: '0px 0px 0px 0px rgba(255,255,255,0)',
+              cursor: 'default'
+            });
+          }
+        });
 
         break;
       }

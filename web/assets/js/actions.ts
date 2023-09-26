@@ -1,24 +1,36 @@
-import {saveToLocalStorage} from './utils/localstorage';
+import { saveToLocalStorage } from './utils/localstorage';
 import {
-    Category,
-    defaultFaucetTokenKey,
-    defaultMnemonicKey,
-    drawRequestTimer,
-    Game,
-    type GameSettings,
-    GameState,
-    GameTime,
-    Player,
-    Promotion
+  Category,
+  defaultFaucetTokenKey,
+  defaultMnemonicKey,
+  drawRequestTimer,
+  Game,
+  type GameSettings,
+  GameState,
+  GameTime,
+  Player,
+  Promotion
 } from './types/types';
-import {defaultTxFee, GnoJSONRPCProvider, GnoWallet} from '@gnolang/gno-js-client';
-import {BroadcastTxCommitResult, TM2Error, TransactionEndpoint} from '@gnolang/tm2-js-client';
-import {generateMnemonic} from './utils/crypto.ts';
+import {
+  defaultTxFee,
+  GnoJSONRPCProvider,
+  GnoWallet
+} from '@gnolang/gno-js-client';
+import {
+  BroadcastTxCommitResult,
+  TM2Error,
+  TransactionEndpoint
+} from '@gnolang/tm2-js-client';
+import { generateMnemonic } from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
-import {constructFaucetError} from './utils/errors.ts';
-import {AlreadyInLobbyError, ErrorTransform, NotInLobbyError} from './errors.ts';
-import {prepareCategory, preparePromotion} from './utils/moves.ts';
+import { constructFaucetError } from './utils/errors.ts';
+import {
+  AlreadyInLobbyError,
+  ErrorTransform,
+  NotInLobbyError
+} from './errors.ts';
+import { prepareCategory, preparePromotion } from './utils/moves.ts';
 
 // ENV values //
 // const wsURL: string = Config.GNO_WS_URL; TODO temporarily disabled
@@ -142,7 +154,7 @@ class Actions {
   public getWalletAddress() {
     return this.wallet?.getAddress();
   }
-  
+
   public hasWallet() {
     return !!this.wallet;
   }
@@ -151,7 +163,7 @@ class Actions {
    * Return user Balance
    */
   public async getBalance() {
-    return await this.wallet?.getBalance("ugnot");
+    return await this.wallet?.getBalance('ugnoot');
   }
   /**
    * Performs a transaction, handling common error cases and transforming them
