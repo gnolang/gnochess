@@ -25,6 +25,7 @@ var balances = []string{
 	"g1elguymy8sjjy246u09qddtx587934k6uzf8mc4=100000000000000000ugnot",
 	"g1sl70rzvu49mp0lstxaptmvle8h2a8rx8pu56uk=100000000000000000ugnot",
 	"g18dgugclk93v65qtxxus82eg30af59fgk246nqy=100000000000000000ugnot",
+	// test2 and test3, should be added from github.com/gnolang/gno/gno.land/pkg/integration
 	"g1m5exxkaqrsxd8ne93psljuakxzhkzcm42yg7ye=100000000000000000ugnot",
 	"g13hlh3a3kygwq9g3vgjzz5zu4fy7gpkk523ex6l=100000000000000000ugnot",
 }
