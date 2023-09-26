@@ -61,10 +61,14 @@ func TestIntegration(t *testing.T) {
 	require.NoError(t, err)
 
 	oldsetup := ts.Setup
+	idx := 0
 	ts.Setup = func(e *testscript.Env) error {
 		oldsetup(e)
 		e.Setenv("ROOTDIR", filepath.Dir(string(goModPath)))
 		e.Setenv("NL", "\n")
+
+		e.Setenv("GNOHOME", fmt.Sprintf("%s/%d", e.Getenv("GNOHOME"), idx))
+		idx++
 
 		rootdir := e.Getenv("GNOROOT")
 		tmpdir := e.Getenv("TMPDIR")
