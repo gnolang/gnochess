@@ -17,8 +17,13 @@ We'll be using two commands in this tutorial, `gno` and `gnokey`.
 
 Try the next few commands out!
 
+```bash
+# first, let's ask the CLI to provide a list of available subcommands
+gno --help
+```
+
+Output:
 ```console
-$ gno --help
 USAGE
   <subcommand> [flags] [<arg>...]
 
@@ -36,14 +41,54 @@ SUBCOMMANDS
   doc         get documentation for the specified package or symbol (type, function, method, or variable/constant
 
 error parsing commandline arguments: flag: help requested
-$ cd tutorial/01_getting_started/
-$ gno doc greeter
-package greeter // import "gno.land/r/demo/001_getting_started/greeter"
+```
 
-You did it! You're looking at the documentation for greeter.
+Great, we see some helpful subcommands available to us.
 
-func Hello(s string) string
-$ gno test .
+```bash
+# before proceeding, let's make sure we are in the correct directory
+cd tutorial/01_getting_started/
+
+# next, let's test out the gno doc subcommand and provide the greeter package as a target
+gno doc greeter
+```
+
+Output:
+```console
+// You did it! You're looking at the documentation for greeter.
+package greeter
+
+import (
+	"time"
+)
+
+// Hello greets s, returning different greetings throughout the day.
+func Hello(s string) string {
+	n := time.Now()
+	v := "The time is " + time.Now().Format("Mon Jan _2 15:04:05.00000 MST 2006") + ".\n\n"
+	hour := n.Hour()
+	switch {
+	default:
+		v += "Good night, "
+	case hour >= 5 && hour < 12:
+		v += "Good morning, "
+	case hour >= 12 && hour < 17:
+		v += "Good afternoon, "
+	case hour >= 17 && hour < 22:
+		v += "Good evening, "
+	}
+	return v + s
+}
+```
+
+Great, now let's make sure our tests pass.
+```bash
+# invoke all tests within the current directory
+gno test .
+```
+
+Output:
+```console
 ?       ./greeter       [no test files]
 --- FAIL: TestRender (0.00s)
 output: "hello, mars!" does not contain hello world
@@ -54,8 +99,8 @@ FAIL
 FAIL
 FAIL: 0 build errors, 1 test errors
 ```
+Oh no! Our tests are failing; it looks like we are greeting the wrong planet..
 
-Oh no! Our tests are failing; it looks like we are greeting the wrong planet.
 Let's try to fix that!
 
 ## Fixing the test
