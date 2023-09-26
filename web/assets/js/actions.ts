@@ -17,9 +17,11 @@ import { generateMnemonic } from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
 import { constructFaucetError } from './utils/errors.ts';
+
 import { AlreadyInLobbyError, ErrorTransform, NotInLobbyError } from './errors.ts';
 import { prepareCategory, preparePromotion } from './utils/moves.ts';
 import { UserFundedError } from './types/errors';
+
 
 // ENV values //
 const wsURL: string = Config.GNO_WS_URL;
@@ -156,6 +158,16 @@ class Actions {
     return this.wallet?.getAddress();
   }
 
+  public hasWallet() {
+    return !!this.wallet;
+  }
+
+  /**
+   * Return user Balance
+   */
+  public async getBalance() {
+    return await this.wallet?.getBalance('ugnot');
+  }
   /**
    * Performs a transaction, handling common error cases and transforming them
    * into known error types.
