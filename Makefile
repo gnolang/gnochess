@@ -106,7 +106,7 @@ z_use_remote_gno: ## Use the remote 'github.com/gnolang/gno' module and remove a
 	@go mod edit -dropreplace github.com/gnolang/gno
 
 z_test_realms: ## Test the realms.
-	go run github.com/gnolang/gno/gnovm/cmd/gno test --verbose ./realm
+	go run github.com/gnolang/gno/gnovm/cmd/gno test --verbose ./r
 
 z_test_integration: ## Test the realm.
 	go test -v -run='TestIntegration/.*'  .
