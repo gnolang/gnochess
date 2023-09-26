@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"gno.land/p/demo/avl"
-	"gno.land/p/demo/ufmt"
 )
 
 // realm state
@@ -20,6 +19,10 @@ var (
 
 	// Value must be sorted by game ID, descending
 	user2Games avl.Tree // std.Address -> []*Game
+
+	owner      std.Address // admin of realm, can initiate migration
+	migrated   bool        // true if migrated, all exported realm functions panic
+	migratedTo string      // new realm deployment path in case of migration
 )
 
 // Game represents a chess game.
@@ -40,6 +43,10 @@ type Game struct {
 	Time *TimeControl `json:"time"`
 }
 
+func init() {
+	owner = std.GetOrigCaller()
+}
+
 func (g Game) json() string {
 	s, err := g.MarshalJSON()
 	checkErr(err)
@@ -47,6 +54,8 @@ func (g Game) json() string {
 }
 
 func (g Game) MarshalJSON() (_ []byte, err error) {
+	checkMigrated()
+
 	var b bytes.Buffer
 	b.WriteByte('{')
 
@@ -98,6 +107,8 @@ func (g Game) MarshalJSON() (_ []byte, err error) {
 }
 
 func (p Position) MarshalJSON() ([]byte, error) {
+	checkMigrated()
+
 	var b bytes.Buffer
 	b.WriteByte('{')
 
@@ -137,6 +148,8 @@ var winnerString = [...]string{
 }
 
 func (w Winner) MarshalJSON() ([]byte, error) {
+	checkMigrated()
+
 	if n := int(w); n < len(winnerString) {
 		return []byte(`"` + winnerString[n] + `"`), nil
 	}
@@ -189,6 +202,8 @@ var gameStatesSnake = [...]string{
 }
 
 func (g GameState) MarshalJSON() ([]byte, error) {
+	checkMigrated()
+
 	if int(g) >= len(gameStatesSnake) {
 		return nil, errors.New("invalid game state")
 	}
@@ -197,6 +212,8 @@ func (g GameState) MarshalJSON() ([]byte, error) {
 
 // IsFinished returns whether the game is in a finished state.
 func (g GameState) IsFinished() bool {
+	checkMigrated()
+
 	return g != GameStateOpen
 }
 
@@ -213,6 +230,8 @@ func (g GameState) IsFinished() bool {
 // parallel games OR by introducing a "request" system, so that a game is not
 // immediately considered "open" when calling NewGame.
 func xNewGame(opponentRaw string, seconds, increment int) string {
+	checkMigrated()
+
 	std.AssertOriginCall()
 
 	if seconds >= 0 && increment < 0 {
@@ -331,6 +350,8 @@ func determineColor(games []*Game, caller, opponent std.Address) (isBlack bool) 
 
 // GetGame returns a game, knowing its ID.
 func GetGame(id string) string {
+	checkMigrated()
+
 	return getGame(id, false).json()
 }
 
@@ -352,6 +373,8 @@ func getGame(id string, wantOpen bool) *Game {
 // must be specified.
 // Castling is specified by indicating the king's movement.
 func MakeMove(gameID, from, to string, promote Piece) string {
+	checkMigrated()
+
 	std.AssertOriginCall()
 
 	g := getGame(gameID, true)
@@ -480,6 +503,8 @@ func (g *Game) claimTimeout() error {
 // ClaimTimeout should be called when the caller believes the game has resulted
 // in a timeout.
 func ClaimTimeout(gameID string) string {
+	checkMigrated()
+
 	g := getGame(gameID, true)
 
 	err := g.claimTimeout()
@@ -489,6 +514,8 @@ func ClaimTimeout(gameID string) string {
 }
 
 func Abort(gameID string) string {
+	checkMigrated()
+
 	std.AssertOriginCall()
 
 	g := getGame(gameID, true)
@@ -510,6 +537,8 @@ func Abort(gameID string) string {
 }
 
 func Resign(gameID string) string {
+	checkMigrated()
+
 	std.AssertOriginCall()
 
 	g := getGame(gameID, true)
@@ -541,6 +570,8 @@ func resign(g *Game) error {
 // DrawOffer creates a draw offer in the current game, if one doesn't already
 // exist.
 func DrawOffer(gameID string) string {
+	checkMigrated()
+
 	std.AssertOriginCall()
 
 	g := getGame(gameID, true)
@@ -559,6 +590,8 @@ func DrawOffer(gameID string) string {
 
 // DrawRefuse refuse a draw offer in the given game.
 func DrawRefuse(gameID string) string {
+	checkMigrated()
+
 	std.AssertOriginCall()
 
 	g := getGame(gameID, true)
@@ -583,6 +616,8 @@ func DrawRefuse(gameID string) string {
 // - Insufficient material (§9.4)
 // Note: stalemate happens as a consequence of a Move, and thus is handled in that function.
 func Draw(gameID string) string {
+	checkMigrated()
+
 	std.AssertOriginCall()
 
 	g := getGame(gameID, true)
