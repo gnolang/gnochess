@@ -270,7 +270,7 @@ const Gameboard = class extends Component {
     const actions: Actions = await Actions.getInstance();
     this.gameState = await actions.getGame(this.gameId);
 
-    const ongoing = this.gameState === GameState.OPEN;
+    const ongoing = this.gameState.state == GameState.OPEN;
 
     if (!ongoing) {
       console.log('game stopped');
