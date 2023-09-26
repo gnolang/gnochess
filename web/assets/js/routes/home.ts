@@ -35,12 +35,24 @@ const onEnter = function (next?: any) {
       classPrefix: 'char char'
     });
   });
-  gsap.to('#js-background', {
-    x: '50%',
-    scaleY: 1,
-    autoAlpha: 1,
-    scaleX: 1.1,
-    duration: 1
+  let mm = gsap.matchMedia();
+  mm.add('(max-width: 779px)', () => {
+    gsap.to('#js-background', {
+      x: '0%',
+      scaleY: 1,
+      autoAlpha: 1,
+      scaleX: 1.1,
+      duration: 1
+    });
+  });
+  mm.add('(min-width: 780px)', () => {
+    gsap.to('#js-background', {
+      x: '50%',
+      scaleY: 1,
+      autoAlpha: 1,
+      scaleX: 1.1,
+      duration: 1
+    });
   });
   gsap.to(container.querySelectorAll('.js-title .char > span'), {
     y: '-10%',
