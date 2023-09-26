@@ -34,19 +34,23 @@ tasks:
 
   - name: Gno CLI
     init: |
-        cat >> ~/.profile << EOF
-          url () { echo $GITPOD_WORKSPACE_URL | sed 's#://#://8888-#'; }
+        cat >> ~/.bashrc << EOF
+        _xurl () { echo $GITPOD_WORKSPACE_URL | sed 's#://#://8888-#'; }
+        intro () {
           echo "Get started with the tutorial"
           echo "  > https://github.com/gnolang/gnochess/blob/main/tutorial/01_getting_started/README.md"
           echo "Open up gnoweb"
-          echo "  > $(url)"
+          echo "  > $(echo $GITPOD_WORKSPACE_URL | sed 's#://#://8888-#' )"
           echo "  > Pull it back up with command 'url'"
+        }
+        alias url=_xurl
         EOF
         go mod download
         go install \
           github.com/gnolang/gno/gno.land/cmd/gnokey \
           github.com/gnolang/gno/gnovm/cmd/gno
         source ~/.profile
+    command: intro
 
 ports:
   - name: gnoweb
