@@ -56,6 +56,7 @@ const Gameboard = class extends Component {
         cb: this.selectCell.bind(this)
       });
     });
+    this.setGameState();
   }
 
   showScoreBoard(winner: Colors) {
@@ -87,7 +88,7 @@ const Gameboard = class extends Component {
   }
   async engine(init = false, gameover?: GameState) {
     console.log('engine called');
-    await this.setGameState();
+    await this.setGameState(true); // get the latest state once off outside the interval
 
     console.log(this.gameState.state);
 
@@ -264,7 +265,8 @@ const Gameboard = class extends Component {
     }
   }
 
-  async setGameState() {
+  async setGameState(once = false) {
+    console.log("Fetching game state");
     const actions: Actions = await Actions.getInstance();
     this.gameState = await actions.getGame(this.gameId);
 
@@ -278,7 +280,7 @@ const Gameboard = class extends Component {
           : this.gameState.state;
       this.engine(false, state);
     } else {
-      setTimeout(this.setGameState, 500);
+      if (!once) setTimeout(this.setGameState, 500);
     }
   }
   async rivalMove() {
@@ -454,7 +456,7 @@ const Gameboard = class extends Component {
   appear() {
     gsap.to(this.DOM.el, { autoAlpha: 1, display: 'flex' });
     gsap.from('.piece-417db', { y: '-65%', ease: 'bounce.out', stagger: 0.03 });
-    gsap.from('.piece-417db', { autoAlpha: 0, stagger: 0.03 }).then(() => {
+    gsap.from('.piece-417db', { autoAlpha: 0, stagger: 0.03 }).then(() => {      
       this.engine(true);
     });
   }
