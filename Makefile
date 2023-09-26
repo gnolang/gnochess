@@ -1,7 +1,7 @@
 default: help
 
 GNOKEY ?= go run github.com/gnolang/gno/gno.land/cmd/gnokey
-GOLAND ?= go run github.com/gnolang/gno/gno.land/cmd/gnoland
+GNOLAND ?= go run github.com/gnolang/gno/gno.land/cmd/gnoland
 
 help: ## Display this help message.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[0-9a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
