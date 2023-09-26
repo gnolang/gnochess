@@ -233,6 +233,8 @@ var commandTests = [...]string{
 		sleep 61
 		timeout black
 		# contains "state":"timeout" "winner":"black"
+		stats white # contains moves:1 started:1 won:0 lost:1 timedout:1 resigned:0 drawn:0 serious:0
+		stats black # contains moves:1 started:1 won:1 lost:0 timedout:1 resigned:0 drawn:0 serious:0
 	`,
 }
 

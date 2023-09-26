@@ -87,6 +87,40 @@ func (g Game) getStats(caller std.Address) gameStats {
 	return stats
 }
 
-func (g Game) isSerious() bool {
-	return len(g.Position.Moves) >= 40
+func (g Game) updateEndgameStats() {
+	stats := g.getStats("")
+
+	// serious games
+	isSerious := false
+	switch {
+	case g.State == GameStateCheckmated: // checkmates
+		isSerious = true
+	case len(g.Position.Moves) >= 40: // long games
+		isSerious = true
+	}
+	if isSerious {
+		stats.black.SeriousGames++
+		stats.white.SeriousGames++
+	}
+
+	// timeouts, aborted, etc
+	if g.State == GameStateTimeout || g.State == GameStateAborted {
+		stats.black.TimedoutGames++
+		stats.white.TimedoutGames++
+	}
+
+	// winners, losers, draws
+	switch g.Winner {
+	case WinnerWhite:
+		stats.white.WonGames++
+		stats.black.LostGames++
+	case WinnerBlack:
+		stats.black.WonGames++
+		stats.white.LostGames++
+	case WinnerDraw:
+		stats.black.DrawnGames++
+		stats.white.DrawnGames++
+	}
+
+	// XXX: resigned
 }
