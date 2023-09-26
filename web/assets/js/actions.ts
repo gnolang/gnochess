@@ -1,24 +1,25 @@
-import {saveToLocalStorage} from './utils/localstorage';
+import { saveToLocalStorage } from './utils/localstorage';
 import {
-    Category,
-    defaultFaucetTokenKey,
-    defaultMnemonicKey,
-    drawRequestTimer,
-    Game,
-    type GameSettings,
-    GameState,
-    GameTime,
-    Player,
-    Promotion
+  Category,
+  defaultFaucetTokenKey,
+  defaultMnemonicKey,
+  drawRequestTimer,
+  Game,
+  type GameSettings,
+  GameState,
+  GameTime,
+  Player,
+  Promotion
 } from './types/types';
-import {defaultTxFee, GnoWallet, GnoWSProvider} from '@gnolang/gno-js-client';
-import {BroadcastTxCommitResult, TM2Error, TransactionEndpoint} from '@gnolang/tm2-js-client';
-import {generateMnemonic} from './utils/crypto.ts';
+import { defaultTxFee, GnoWallet, GnoWSProvider } from '@gnolang/gno-js-client';
+import { BroadcastTxCommitResult, TM2Error, TransactionEndpoint } from '@gnolang/tm2-js-client';
+import { generateMnemonic } from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
-import {constructFaucetError} from './utils/errors.ts';
-import {AlreadyInLobbyError, ErrorTransform, NotInLobbyError} from './errors.ts';
-import {prepareCategory, preparePromotion} from './utils/moves.ts';
+import { constructFaucetError } from './utils/errors.ts';
+import { AlreadyInLobbyError, ErrorTransform, NotInLobbyError } from './errors.ts';
+import { prepareCategory, preparePromotion } from './utils/moves.ts';
+import { UserFundedError } from './types/errors';
 
 // ENV values //
 const wsURL: string = Config.GNO_WS_URL;
@@ -50,12 +51,13 @@ const parsedJSONOrRaw = (data: string, nob64 = false) => {
 class Actions {
   private static instance: Actions;
 
+  private static initPromise: Actions | PromiseLike<Actions>;
   private wallet: GnoWallet | null = null;
   private provider: GnoWSProvider | null = null;
   private faucetToken: string | null = null;
   private isInTheLobby = false;
 
-  private constructor() {}
+  private constructor() { }
 
   /**
    * Fetches the Actions instance. If no instance is
@@ -64,11 +66,13 @@ class Actions {
   public static async getInstance(): Promise<Actions> {
     if (!Actions.instance) {
       Actions.instance = new Actions();
-
-      await Actions.instance.initialize();
-      return Actions.instance;
+      Actions.initPromise = new Promise(async (resolve) => {
+        await Actions.instance.initialize();
+        resolve(Actions.instance);
+      });      
+      return Actions.initPromise;
     } else {
-      return Actions.instance;
+      return Actions.initPromise;
     }
   }
 
@@ -88,15 +92,18 @@ class Actions {
       // Save the mnemonic to local storage
       saveToLocalStorage(defaultMnemonicKey, mnemonic);
     }
+    try {
+      // Initialize the wallet using the saved mnemonic
+      this.wallet = await GnoWallet.fromMnemonic(mnemonic);
+      // Initialize the provider
+      this.provider = new GnoWSProvider(wsURL);
 
-    // Initialize the wallet using the saved mnemonic
-    this.wallet = await GnoWallet.fromMnemonic(mnemonic);
-
-    // Initialize the provider
-    this.provider = new GnoWSProvider(wsURL);
-
-    // Connect the wallet to the provider
-    this.wallet.connect(this.provider);
+      // Connect the wallet to the provider    
+      this.wallet.connect(this.provider);
+    } catch (e) {
+      //Should not happen
+      console.error("Could not create wallet from mnemonic")
+    }
 
     // Faucet token initialization //
     let faucetToken: string | null = localStorage.getItem(
@@ -105,9 +112,16 @@ class Actions {
     if (faucetToken && faucetToken !== '') {
       // Faucet token initialized
       this.faucetToken = faucetToken;
-
-      // Attempt to fund the account
-      await this.fundAccount(this.faucetToken);
+      try {
+        // Attempt to fund the account
+        await this.fundAccount(this.faucetToken);
+      } catch (e) {
+        if (e instanceof UserFundedError) {
+          console.log("User already funded.");
+        } else {
+          console.error("Could not fund user.");
+        }
+      }
     }
   }
 
@@ -157,8 +171,8 @@ class Actions {
         const gkArgs = args?.map((arg) => '-args ' + arg).join(' ') ?? '';
         console.info(
           `$ gnokey maketx call -broadcast ` +
-            `-pkgpath ${chessRealm} -gas-wanted ${gasWanted} -gas-fee ${defaultTxFee} ` +
-            `-func ${method} ${gkArgs} test1`
+          `-pkgpath ${chessRealm} -gas-wanted ${gasWanted} -gas-fee ${defaultTxFee} ` +
+          `-func ${method} ${gkArgs} test1`
         );
       }
       const resp = (await this.wallet?.callMethod(
