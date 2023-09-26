@@ -45,6 +45,8 @@ type Game struct {
 
 func init() {
 	owner = std.GetOrigCaller()
+	migrated = false
+	migratedTo = ""
 }
 
 func (g Game) json() string {
@@ -656,4 +658,5 @@ func Draw(gameID string) string {
 	g.saveResult()
 
 	return g.json()
+
 }

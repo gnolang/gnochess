@@ -2,10 +2,17 @@ package chess
 
 import "std"
 
+// TransferOwnership
+// Warning: Use carefully - if owner is misconfigured, realm will be bricked
 func TransferOwnership(newOwner std.Address) string {
+	if newOwner == "" {
+		panic("new owner cannot be empty")
+	}
+
 	if !isOwner() {
 		panic("not owner")
 	}
+
 	owner = newOwner
 	return "new owner is " + string(owner)
 }
