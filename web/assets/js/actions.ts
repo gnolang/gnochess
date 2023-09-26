@@ -163,7 +163,7 @@ class Actions {
    * Return user Balance
    */
   public async getBalance() {
-    return await this.wallet?.getBalance('ugnoot');
+    return await this.wallet?.getBalance('ugnot');
   }
   /**
    * Performs a transaction, handling common error cases and transforming them
