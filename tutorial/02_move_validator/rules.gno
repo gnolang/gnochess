@@ -170,6 +170,7 @@ func (oldp Position) ValidateMove(m Move) (newP Position, valid bool) {
 	return p.validateMove(m)
 }
 
+// TODO: Finish the implementation of this function!
 func (p Position) validateMove(m Move) (newP Position, valid bool) {
 	piece := p.B[m.From]
 
