@@ -231,14 +231,17 @@ func (lb leaderboardType) find(score float64, addr std.Address) (int, bool) {
 	i := sort.Search(len(lb), func(i int) bool {
 		return lb[i].score <= score
 	})
+
 	if addr == "" || i == len(lb) {
 		return i, false
 	}
-	for j := 0; lb[i+j].score == score; j++ {
+
+	for j := 0; i+j < len(lb) && lb[i+j].score == score; j++ {
 		if lb[i+j].addr == addr {
 			return i + j, true
 		}
 	}
+
 	return i, false
 }
 
