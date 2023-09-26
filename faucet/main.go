@@ -234,17 +234,6 @@ func execMain(cfg *rootCfg) error {
 		}
 		redisClient := redis.NewClient(redisOpts)
 
-		// Add /?addr={gnoAddr} endpoint as a middleware in first position.
-		// If the request contains an `addr` field in the query string, it will fetch
-		// the email from redis and returns it, without calling the other handlers
-		// or middlewares behind it.
-		//
-		// Why not a faucet.Handler option instead of a middleware ?
-		// This is not achievable with a real handler passed in the faucet options
-		// because it inherits the other middlewares which requires a
-		// faucet.Request or else fails with Bad Request.
-		middlewares = append(middlewares, getEmail(redisClient))
-
 		middlewares = append(middlewares, prepareTokenMiddleware(redisClient))
 	}
 	// Call prepareFundMiddleware last to avoid funding users with invalid tokens
@@ -519,30 +508,6 @@ func prepareTokenMiddleware(redisClient *redis.Client) faucet.Middleware {
 			}
 
 			// Continue with serving the faucet request
-			next.ServeHTTP(w, r)
-		})
-	}
-}
-
-// getEmail detects the presence of `addr` form value, if present returns the
-// corresponding hashset from redis and stops the request.
-func getEmail(redisClient *redis.Client) faucet.Middleware {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			addr := r.FormValue("addr")
-			if addr != "" {
-				res := redisClient.HGetAll(r.Context(), "GNO:"+addr)
-				if res.Err() != nil {
-					http.Error(w, "Unable to get gno address", http.StatusInternalServerError)
-					return
-				}
-				err := json.NewEncoder(w).Encode(res.Val())
-				if err != nil {
-					http.Error(w, "Unable to encode gno address values", http.StatusInternalServerError)
-					return
-				}
-				return
-			}
 			next.ServeHTTP(w, r)
 		})
 	}
