@@ -361,8 +361,8 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 
 	caller := std.GetOrigCaller()
 
-	// stats := getPlayerStats(caller)
-	// stats.Moves++
+	stats := getPlayerStats(caller)
+	stats.Moves++
 
 	if (isBlack && g.Black != caller) ||
 		(!isBlack && g.White != caller) {
