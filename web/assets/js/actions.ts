@@ -171,9 +171,7 @@ class Actions {
     gasWanted: Long = defaultGasWanted
   ): Promise<BroadcastTxCommitResult> {
     // https://is.gd/0GRcsX (sorry for the shortener, link is to TS playground!)
-    console.log('received the call');
     this.pending = this.pending.finally(async () => {
-      console.log('doing the call');
       return await this.doCallMethod(method, args, gasWanted);
     });
     return this.pending;
