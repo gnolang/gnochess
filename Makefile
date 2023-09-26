@@ -1,12 +1,14 @@
 default: help
 
+GNOKEY ?= go run github.com/gnolang/gno/gno.land/cmd/gnokey
+GOLAND ?= go run github.com/gnolang/gno/gno.land/cmd/gnoland
+
 help: ## Display this help message.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[0-9a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
-
 0_setup_gnokey: ## Add an account that will be used for Realm deployment (to gnokey).
-	printf '\n\n%s\n\n' "source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast" | gnokey add --recover --insecure-password-stdin DeployKey || true
-	gnokey list | grep DeployKey
+	printf '\n\n%s\n\n' "source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast" | $(GNOKEY) add --recover --insecure-password-stdin DeployKey || true
+	$(GNOKEY) list | grep DeployKey
 
 1_run_gnoland: ## Run the gnoland node.
 	go mod download -x
@@ -30,7 +32,7 @@ help: ## Display this help message.
 	ln -s `go list -m -mod=mod -f '{{.Dir}}' github.com/gnolang/gno`/gnovm .tmp/gnoland/gnovm
 	#mkdir -p .tmp/gnoland/gno.land/testdir/config
 	#cp ./util/devnet/config.toml .tmp/gnoland/gno.land/testdir/config/config.toml
-	cd .tmp/gnoland/gno.land; go run github.com/gnolang/gno/gno.land/cmd/gnoland start \
+	cd .tmp/gnoland/gno.land; $(GNOLAND) start \
 	  -genesis-max-vm-cycles 100000000
 
 2_run_faucet: ## Run the GnoChess faucet.
@@ -77,7 +79,7 @@ help: ## Display this help message.
 	cd web; npm run dev
 
 4_deploy_realm: ## Deploy GnoChess realm on local node.
-	echo | gnokey maketx addpkg \
+	echo | $(GNOKEY) maketx addpkg \
 	  --insecure-password-stdin \
 	  --gas-wanted 20000000 \
 	  --gas-fee 1ugnot \
