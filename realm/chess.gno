@@ -360,6 +360,10 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 	isBlack := len(g.Position.Moves)%2 == 1
 
 	caller := std.GetOrigCaller()
+
+	stats := getPlayerStats(caller)
+	stats.Moves++
+
 	if (isBlack && g.Black != caller) ||
 		(!isBlack && g.White != caller) {
 		// either not a player involved; or not the caller's turn.
