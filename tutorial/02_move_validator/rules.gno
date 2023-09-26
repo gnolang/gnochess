@@ -154,7 +154,15 @@ func (p Position) EncodeFEN() string {
 // ValidateMove checks whether the given move is legal in Chess.
 //
 // Caller must guarantee m.To and m.From to be valid (<64).
-func (p Position) ValidateMove(m Move) (newP Position, valid bool) {
+func (oldp Position) ValidateMove(m Move) (newP Position, valid bool) {
+	// XXX: This below is a Gno bug! In Go we don't need to do this (Position is
+	// a value, not a pointer), but in Gno there is a bug whereby the underlying
+	// p still holds (some) references.
+	// Just a small reminder that the software is not _beta_ quality, it's
+	// very, very alpha, and it's a shame the Greek alphabet doesn't allow me
+	// to go backwards to express how many ugly bugs you can still expect to find.
+	p := oldp.clone()
+
 	if p.B[m.To].StripColor() == PieceKing {
 		return
 	}
@@ -162,11 +170,7 @@ func (p Position) ValidateMove(m Move) (newP Position, valid bool) {
 	return p.validateMove(m)
 }
 
-// validateMove allows for m to be a "king-capture" move, which is illegal in
-// chess, but it is useful for InCheck.
-func (oldp Position) validateMove(m Move) (_ Position, ok bool) {
-	p := oldp.clone()
-
+func (p Position) validateMove(m Move) (newP Position, valid bool) {
 	piece := p.B[m.From]
 
 	// piece moved must be of player's color
@@ -187,191 +191,27 @@ func (oldp Position) validateMove(m Move) (_ Position, ok bool) {
 
 	// Keep old castling rights; remove en passant info.
 	newFlags := p.Flags &^ (MaskEnPassant | EnPassant)
-	// Marked as true for succesful promotions.
-	var promoted bool
-
-	isDiag := func() bool {
-		// move diagonally (|dr| == |dc|)
-		if abs(dr) != abs(dc) {
-			return false
-		}
-		signr, signc := sign(dr), sign(dc)
-		// squares crossed must be empty
-		for i := int8(1); i < abs(dr); i++ {
-			if p.B[m.From.Move(i*signr, i*signc)] != PieceEmpty {
-				return false
-			}
-		}
-		return true
-	}
-	isHorizVert := func() bool {
-		// only one of dr, dc must be 0 (horiz/vert movement)
-		if dr != 0 && dc != 0 {
-			return false
-		}
-		// squares crossed must be empty
-		for i := int8(1); i < abs(dr); i++ {
-			if p.B[m.From.Move(i*sign(dr), 0)] != PieceEmpty {
-				return false
-			}
-		}
-		for i := int8(1); i < abs(dc); i++ {
-			if p.B[m.From.Move(0, i*sign(dc))] != PieceEmpty {
-				return false
-			}
-		}
-		return true
-	}
 
 	switch piece.StripColor() {
 	case PieceRook:
-		if !isHorizVert() {
-			return
-		}
-		// if rook has moved from a starting position, this disables castling
-		// on the side of the rook. flag accordingly in the move.
-		var fg Square
-		if color == Black {
-			fg = 7 << 3
-		}
-		switch m.From {
-		case fg: // a-col rook (either side)
-			if color == White {
-				newFlags |= NoCastleWQ
-			} else {
-				newFlags |= NoCastleBQ
-			}
-		case fg | 7: // h-col rook (either side)
-			if color == White {
-				newFlags |= NoCastleWK
-			} else {
-				newFlags |= NoCastleBK
-			}
-		}
-
+		// TODO
+		// move horizontally/vertically
+		// remove castling right if moving from original position!
 	case PieceKnight:
+		// TODO
 		// move L-shaped
-		// rationale: if you only have positive integers, the only way you can
-		// obtain x * y == 2 is if x,y are either 1,2 or 2,1.
-		if abs(dc*dr) != 2 {
-			return
-		}
-
 	case PieceBishop:
-		if !isDiag() {
-			return
-		}
-
+		// TODO
+		// move diagonally
 	case PieceQueen:
-		if !isHorizVert() && !isDiag() {
-			return
-		}
-
+		// TODO
+		// move diagonally/horiz/vertically
 	case PieceKing:
-		// castling
-		if abs(dc) == 2 && dr == 0 {
-			// determine if castle is a valid form of castling for the given color
-			ctype := m.isCastle(color)
-			if ctype == 0 {
-				return
-			}
-
-			if false ||
-				// check that there are no previous moves which disable castling
-				p.castlingDisabled(color, ctype) ||
-				// check that we have the exact board set ups we need
-				// + make sure that the original and crossed squares are not in check
-				!p.checkCastlingSetup(ctype) {
-				return
-			}
-
-			// perform rook move here
-			p.B = p.B.castleRookMove(color, ctype)
-			// add NoCastle flags to prevent any further castling
-			if color == White {
-				newFlags |= NoCastleWQ | NoCastleWK
-			} else {
-				newFlags |= NoCastleBQ | NoCastleBK
-			}
-			break
-		}
+		// TODO
 		// move 1sq in all directions
-		if dc < -1 || dc > 1 || dr < -1 || dr > 1 {
-			return
-		}
-		// king has moved: disable castling.
-		if color == White {
-			newFlags |= NoCastleWQ | NoCastleWK
-		} else {
-			newFlags |= NoCastleBQ | NoCastleBK
-		}
-
 	case PiecePawn:
-		// determine direction depending on color
-		dir := int8(1)
-		if color == Black {
-			dir = -1
-		}
-
-		switch {
-		case dc == 0 && dr == dir: // 1sq up
-			// destination must be empty (no captures allowed)
-			if p.B[m.To] != PieceEmpty {
-				return
-			}
-		case dc == 0 && dr == dir*2: // 2sq up (only from starting row)
-			wantRow := Square(1)
-			if color == Black {
-				wantRow = 6
-			}
-			// check starting row, and that two squares are empty
-			if (m.From>>3) != wantRow ||
-				p.B[m.From.Move(int8(dir), 0)] != PieceEmpty ||
-				p.B[m.To] != PieceEmpty {
-				return
-			}
-			_, col := m.To.Split()
-			newFlags |= EnPassant | PositionFlags(col)
-		case abs(dc) == 1 && dr == dir: // capture on diag
-			// must be a capture
-			if p.B[m.To] == PieceEmpty {
-				if sq := p.checkEnPassant(color, m.To); sq != SquareInvalid {
-					// remove other pawn
-					p.B[sq] = PieceEmpty
-					break
-				}
-				return
-			}
-			// p.B[m.To] is necessarily an opponent piece; we check & return
-			// p.B[m.To].Color == color at the beginning of the fn.
-		default: // not a recognized move
-			return
-		}
-
-		row := m.To >> 3
-		if (color == White && row == 7) ||
-			(color == Black && row == 0) {
-			switch m.Promotion {
-			case 0:
-				// m.To is a king? then this is a pseudo-move check.
-				// assume queen in that case.
-				if p.B[m.To].StripColor() != PieceKing {
-					// no promotion given, invalid
-					return
-				}
-				m.Promotion = PieceQueen
-			case PieceQueen, PieceBishop, PieceKnight, PieceRook:
-			default:
-				return
-			}
-			promoted = true
-			p.B[m.From] = m.Promotion | color.Piece()
-		}
-	}
-
-	// reject moves with promotion if there's nothing to promote
-	if m.Promotion != 0 && !promoted {
-		return
+		// TODO
+		// move 1sq in the direction of the opponent
 	}
 
 	if p.B[m.To].StripColor() == PieceKing {
