@@ -1,24 +1,28 @@
-import {saveToLocalStorage} from './utils/localstorage';
+import { saveToLocalStorage } from './utils/localstorage';
 import {
-    Category,
-    defaultFaucetTokenKey,
-    defaultMnemonicKey,
-    drawRequestTimer,
-    Game,
-    type GameSettings,
-    GameState,
-    GameTime,
-    Player,
-    Promotion
+  Category,
+  defaultFaucetTokenKey,
+  defaultMnemonicKey,
+  drawRequestTimer,
+  Game,
+  type GameSettings,
+  GameState,
+  GameTime,
+  Player,
+  Promotion
 } from './types/types';
 import {defaultTxFee, GnoWallet, GnoWSProvider} from '@gnolang/gno-js-client';
 import {BroadcastTxCommitResult, TM2Error, TransactionEndpoint} from '@gnolang/tm2-js-client';
 import {generateMnemonic} from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
-import {constructFaucetError} from './utils/errors.ts';
-import {AlreadyInLobbyError, ErrorTransform, NotInLobbyError} from './errors.ts';
-import {prepareCategory, preparePromotion} from './utils/moves.ts';
+import { constructFaucetError } from './utils/errors.ts';
+import {
+  AlreadyInLobbyError,
+  ErrorTransform,
+  NotInLobbyError
+} from './errors.ts';
+import { prepareCategory, preparePromotion } from './utils/moves.ts';
 
 // ENV values //
 const wsURL: string = Config.GNO_WS_URL;
@@ -142,14 +146,32 @@ class Actions {
     return this.wallet?.getAddress();
   }
 
+  private pending: Promise<BroadcastTxCommitResult> = new Promise(
+    (resolve, _) => {
+      resolve({} as BroadcastTxCommitResult);
+    }
+  );
+
   /**
    * Performs a transaction, handling common error cases and transforming them
    * into known error types.
    */
-  public async callMethod(
+  public callMethod(
     method: string,
     args: string[] | null,
     gasWanted: Long = defaultGasWanted
+  ): Promise<BroadcastTxCommitResult> {
+    // https://is.gd/0GRcsX (sorry for the shortener, link is to TS playground!)
+    this.pending = this.pending.finally(async () => {
+      return await this.doCallMethod(method, args, gasWanted);
+    });
+    return this.pending;
+  }
+
+  private async doCallMethod(
+    method: string,
+    args: string[] | null,
+    gasWanted: Long
   ): Promise<BroadcastTxCommitResult> {
     const gkLog = this.gkLog();
     try {
