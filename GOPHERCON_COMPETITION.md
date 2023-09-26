@@ -50,6 +50,12 @@ Join us on this adventure! We eagerly await the discussions, feedback, and innov
 
 ## 🎉 The Grand Raffle:
 
-Once the competition concludes, we'll hold the grand raffle.
+Once the competition concludes, we'll conduct the grand raffle.
+
+Here's what you should know:
+- **Transparent Process**: We'll publish a realm that retrieves players from the chess server realm.  
+- **Pseudorandom Selection**: Winners will be chosen in a pseudorandom manner, ensuring fairness.
+- **Blockchain-Verifiable**: The entire raffle process will be verifiable on the blockchain, providing an additional layer of trust and transparency.
+
 Your accumulated points determine your chances of winning.
 The more points you have, the higher your chances!
