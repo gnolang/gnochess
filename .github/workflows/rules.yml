@@ -3,7 +3,7 @@ name: rules
 on:
   pull_request:
     paths:
-      - "realm/rules.gno"
+      - "realm/chess/rules.gno"
   push:
     branches:
       - master
@@ -19,4 +19,4 @@ jobs:
         with:
           go-version: 'stable'
       - run: go mod download -x
-      - run: go run github.com/gnolang/gno/gnovm/cmd/gno test -verbose -run 'TestPerft' ./realm
+      - run: go run github.com/gnolang/gno/gnovm/cmd/gno test -verbose -run 'TestPerft' ./realm/chess
