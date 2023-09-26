@@ -363,18 +363,9 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 
 	caller := std.GetOrigCaller()
 
-	// FIXME: create better helpers to avoid if/else conditions.
-	whiteStats := getPlayerStats(g.White)
-	blackStats := getPlayerStats(g.Black)
-	var callerStats, opponentStats *playerStats
-	if caller == g.White {
-		callerStats = whiteStats
-		opponentStats = blackStats
-	} else {
-		callerStats = blackStats
-		opponentStats = whiteStats
-	}
-	callerStats.Moves++
+	// see stats.gno
+	stats := g.getStats(caller)
+	stats.caller.Moves++
 
 	if (isBlack && g.Black != caller) ||
 		(!isBlack && g.White != caller) {
@@ -384,9 +375,6 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 
 	// game is time controlled? add move to time control
 	if g.Time != nil {
-		whiteStats.TimedoutGames++
-		blackStats.TimedoutGames++
-
 		valid := g.Time.AddMove()
 		if !valid && len(g.Position.Moves) < 2 {
 			g.State = GameStateAborted
@@ -439,17 +427,17 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 	case o == Checkmate && isBlack:
 		g.State = GameStateCheckmated
 		g.Winner = WinnerBlack
-		blackStats.WonGames++
-		whiteStats.LostGames++
-		blackStats.SeriousGames++
-		whiteStats.SeriousGames++
+		stats.black.WonGames++
+		stats.white.LostGames++
+		stats.black.SeriousGames++
+		stats.white.SeriousGames++
 	case o == Checkmate && !isBlack:
 		g.State = GameStateCheckmated
 		g.Winner = WinnerWhite
-		whiteStats.WonGames++
-		blackStats.LostGames++
-		blackStats.SeriousGames++
-		whiteStats.SeriousGames++
+		stats.white.WonGames++
+		stats.black.LostGames++
+		stats.black.SeriousGames++
+		stats.white.SeriousGames++
 	case o == Stalemate:
 		g.State = GameStateStalemate
 		g.Winner = WinnerDraw
@@ -460,6 +448,16 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 		g.State = GameStateDrawn5Fold
 		g.Winner = WinnerDraw
 	}
+
+	if g.Winner == WinnerDraw {
+		stats.white.DrawnGames++
+		stats.black.DrawnGames++
+		if g.isSerious() {
+			stats.white.SeriousGames++
+			stats.black.SeriousGames++
+		}
+	}
+
 	g.DrawOfferer = nil
 	g.saveResult()
 
@@ -467,6 +465,10 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 }
 
 func (g *Game) claimTimeout() error {
+	if g.State == GameStateAborted { // already claimed
+		return nil
+	}
+
 	// no assert origin call or caller check: anyone can claim a game to have
 	// finished in timeout.
 
@@ -478,6 +480,17 @@ func (g *Game) claimTimeout() error {
 	to := g.Time.TimedOut()
 	if !to {
 		return errors.New("game is not timed out")
+	}
+
+	// update stats if games wasn't already computed.
+	stats := g.getStats("")
+	if g.State != GameStateTimeout {
+		stats.white.TimedoutGames++
+		stats.black.TimedoutGames++
+		if g.isSerious() {
+			stats.white.SeriousGames++
+			stats.black.SeriousGames++
+		}
 	}
 
 	if nmov := len(g.Position.Moves); nmov < 2 {
@@ -494,8 +507,12 @@ func (g *Game) claimTimeout() error {
 	g.State = GameStateTimeout
 	if len(g.Position.Moves)&1 == 0 {
 		g.Winner = WinnerBlack
+		stats.black.WonGames++
+		stats.white.LostGames++
 	} else {
 		g.Winner = WinnerWhite
+		stats.black.LostGames++
+		stats.white.WonGames++
 	}
 	g.DrawOfferer = nil
 	g.saveResult()
@@ -628,14 +645,25 @@ func Draw(gameID string) string {
 		panic("you are not involved in this game")
 	}
 
+	// see stats.gno
+	stats := g.getStats(caller)
+
+	updateStats := func() {
+		stats.white.DrawnGames++
+		stats.black.DrawnGames++
+		if g.isSerious() {
+			stats.white.SeriousGames++
+			stats.black.SeriousGames++
+		}
+	}
+
 	// accepted draw offer (do early to avoid gas for g.Position.IsFinished())
 	if g.DrawOfferer != nil && *g.DrawOfferer != caller {
 		g.State = GameStateDrawnByAgreement
 		g.Winner = WinnerDraw
 		g.Concluder = &caller
-
 		g.saveResult()
-
+		updateStats()
 		return g.json()
 	}
 
@@ -653,8 +681,7 @@ func Draw(gameID string) string {
 	g.Concluder = &caller
 	g.Winner = WinnerDraw
 	g.DrawOfferer = nil
-
 	g.saveResult()
-
+	updateStats()
 	return g.json()
 }

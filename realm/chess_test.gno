@@ -142,12 +142,9 @@ var commandTests = [...]string{
 		# contains "address":"g1white" "position":0 "wins":1 "losses":0 "draws":0
 		player black
 		# contains "address":"g1black" "position":1 "wins":0 "losses":1 "draws":0
-		stats white
-		# contains addr:g1white moves:4 started:1 won:1 lost:0 timedout:0 resigned:0 drawn:0 serious:1
-		stats black
-		# contains addr:g1black moves:3 started:1 won:0 lost:1 timedout:0 resigned:0 drawn:0 serious:1
+		stats white # contains moves:4 started:1 won:1 lost:0 timedout:0 resigned:0 drawn:0 serious:1
+		stats black # contains moves:3 started:1 won:0 lost:1 timedout:0 resigned:0 drawn:0 serious:1
 	`,
-	/* XXX: TEMPORARILY DISABLED
 	`	name DrawByAgreement
 		newgame
 		move white e2e4
@@ -161,13 +158,15 @@ var commandTests = [...]string{
 		# contains "open" "concluder":null "draw_offerer":"g1white"
 		draw black
 		# contains "drawn_by_agreement" "concluder":"g1black" "draw_offerer":"g1white"
+		stats white # contains moves:2 started:1 won:0 lost:0 timedout:0 resigned:0 drawn:1 serious:0
+		stats black # contains moves:2 started:1 won:0 lost:0 timedout:0 resigned:0 drawn:1 serious:0
 	`,
-	*/
 	`	name AbortFirstMove
 		newgame
 		abort white # contains "winner":"none" "concluder":"g1white"
+		stats white # contains moves:0 started:1 won:0 lost:0 timedout:0 resigned:0 drawn:0 serious:0
+		stats black # contains moves:0 started:1 won:0 lost:0 timedout:0 resigned:0 drawn:0 serious:0
 	`,
-	/* XXX: TEMPORARILY DISABLED
 	`	name ThreefoldRepetition
 		newgame
 
@@ -183,9 +182,9 @@ var commandTests = [...]string{
 
 		draw black # contains "winner":"draw" "concluder":"g1black"
 		# contains "state":"drawn_3_fold"
+		stats white # contains moves:4 started:1 won:0 lost:0 timedout:0 resigned:0 drawn:1 serious:0
+		stats black # contains moves:4 started:1 won:0 lost:0 timedout:0 resigned:0 drawn:1 serious:0
 	`,
-	*/
-	/* XXX: TEMPORARILY DISABLED
 	`	name FivefoldRepetition
 		newgame
 
@@ -212,8 +211,9 @@ var commandTests = [...]string{
 		# contains "winner":"draw" "concluder":null "state":"drawn_5_fold"
 
 		move white g1f3 #panic contains game is already finished
+		stats white # contains moves:8 started:1 won:0 lost:0 timedout:0 resigned:0 drawn:1 serious:0
+		stats black # contains moves:8 started:1 won:0 lost:0 timedout:0 resigned:0 drawn:1 serious:0
 	`,
-	*/
 	`	name TimeoutAborted
 		newgame white black 3
 		move white e2e4 #! contains "state":"open"
@@ -223,6 +223,8 @@ var commandTests = [...]string{
 		# contains e2e4
 		# contains "aborted"
 		# contains "concluder":"g1black"
+		stats white # contains moves:1 started:1 won:0 lost:0 timedout:1 resigned:0 drawn:0 serious:0
+		stats black # contains moves:1 started:1 won:0 lost:0 timedout:1 resigned:0 drawn:0 serious:0
 	`,
 	`	name TimeoutAbandoned
 		newgame white black 1

@@ -63,3 +63,30 @@ func AllPlayerStats() []playerStats {
 
 	return ret
 }
+
+type gameStats struct {
+	caller, opponent, white, black *playerStats
+}
+
+func (g Game) getStats(caller std.Address) gameStats {
+	stats := gameStats{
+		white: getPlayerStats(g.White),
+		black: getPlayerStats(g.Black),
+	}
+
+	if caller != "" { // if caller is empty, we just fill "black" and "white".
+		if caller == g.White {
+			stats.caller = stats.white
+			stats.opponent = stats.black
+		} else {
+			stats.caller = stats.black
+			stats.opponent = stats.white
+		}
+	}
+
+	return stats
+}
+
+func (g Game) isSerious() bool {
+	return len(g.Position.Moves) >= 40
+}
