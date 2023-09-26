@@ -55,6 +55,8 @@ gno doc greeter
 
 Output:
 ```console
+package greeter // import "gno.land/r/demo/001_getting_started/greeter"
+
 // You did it! You're looking at the documentation for greeter.
 package greeter
 
