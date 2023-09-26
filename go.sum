@@ -48,6 +48,10 @@ github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/gnolang/gno v0.0.0-20230925211159-9c7c0a577eb6 h1:6r5rPQtx5yV3X3+zJzqVBdN3HAcUO9MwCI0TJ3lgCmU=
 github.com/gnolang/gno v0.0.0-20230925211159-9c7c0a577eb6/go.mod h1:dtwSoPiPCcGxACg4y2iJVWZ/vuU133n4kwF28mx6Krg=
+github.com/gnolang/gno v0.0.0-20230926003128-2a9e425470d1 h1:MqpejgKbMfC26A9w+JVCu81ilnlVdg8C6SXlIM6GiJE=
+github.com/gnolang/gno v0.0.0-20230926003128-2a9e425470d1/go.mod h1:dtwSoPiPCcGxACg4y2iJVWZ/vuU133n4kwF28mx6Krg=
+github.com/gnolang/gno v0.0.0-20230926053156-5c40bc5a7984 h1:VCnWFnSz5yL5vOBdLdJza/o4D95sO8RnFcb3qIZgWdY=
+github.com/gnolang/gno v0.0.0-20230926053156-5c40bc5a7984/go.mod h1:dtwSoPiPCcGxACg4y2iJVWZ/vuU133n4kwF28mx6Krg=
 github.com/gnolang/goleveldb v0.0.9 h1:Q7rGko9oXMKtQA+Apeeed5a3sjba/mcDhzJGoTVLCKE=
 github.com/gnolang/goleveldb v0.0.9/go.mod h1:Dz6p9bmpy/FBESTgduiThZt5mToVDipcHGzj/zUOo8E=
 github.com/gnolang/overflow v0.0.0-20170615021017-4d914c927216 h1:GKvsK3oLWG9B1GL7WP/VqwM6C92j5tIvB844oggL9Lk=
@@ -133,6 +137,7 @@ github.com/spf13/jwalterweatherman v1.0.0/go.mod h1:cQK4TGJAtQXfYWX+Ddv3mKDzgVb6
 github.com/spf13/pflag v1.0.3/go.mod h1:DYY7MBk1bdzusC3SYhjObp+wFpr4gzcvqqNjLnInEg4=
 github.com/spf13/viper v1.3.2/go.mod h1:ZiWeW+zYFKm7srdB9IoDzzZXaJaI5eL9QjNiN/DMA2s=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
+github.com/stretchr/objx v0.5.0/go.mod h1:Yh+to48EsGEfYuaHDzXPcE3xhTkx73EhmCGUpEOglKo=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
