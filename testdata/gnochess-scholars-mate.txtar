@@ -1,0 +1,42 @@
+gnoland start -genesis-balances-file=${TMPDIR}/genesis_balances.txt -genesis-max-vm-cycles 100000000
+
+sleep 500ms
+
+gnokey maketx addpkg -broadcast -pkgdir ${ROOTDIR}/realm -pkgpath gno.land/r/demo/chess -chainid tendermint_test -gas-wanted 20000000 -gas-fee 1ugnot test1
+
+# test1 joins
+gnokey maketx call -broadcast -pkgpath gno.land/r/demo/chess -chainid tendermint_test -gas-wanted 10000000 -gas-fee 1ugnot -func LobbyJoin -args 600 -args 5 test1
+gnokey maketx call -broadcast -pkgpath gno.land/r/demo/chess -chainid tendermint_test -gas-wanted 10000000 -gas-fee 1ugnot -func LobbyGameFound test1
+stdout '("null" string)'
+gnokey maketx call -broadcast -pkgpath gno.land/r/demo/chess -chainid tendermint_test -gas-wanted 10000000 -gas-fee 1ugnot -func LobbyGameFound test1
+stdout '("null" string)'
+
+# test2 joins
+gnokey maketx call -broadcast -pkgpath gno.land/r/demo/chess -chainid tendermint_test -gas-wanted 10000000 -gas-fee 1ugnot -func LobbyJoin -args 600 -args 5 test2
+gnokey maketx call -broadcast -pkgpath gno.land/r/demo/chess -chainid tendermint_test -gas-wanted 10000000 -gas-fee 1ugnot -func LobbyGameFound test2
+stdout '({.*"id.":."000000001.".*})'
+gnokey maketx call -broadcast -pkgpath gno.land/r/demo/chess -chainid tendermint_test -gas-wanted 10000000 -gas-fee 1ugnot -func LobbyGameFound test1
+stdout '({.*"id.":."000000001.".*})'
+gnokey query vm/qeval -data gno.land/r/demo/chess${NL}GetGame("000000001")
+
+#
+# now, we assume that test2 is white and test1 is black.
+#
+
+# scholar mate
+gnokey maketx call -broadcast -pkgpath gno.land/r/demo/chess -chainid tendermint_test -gas-wanted 10000000 -gas-fee 1ugnot -func MakeMove -args 000000001 -args e2 -args e4 -args 0 test2
+stdout 'OK!'
+gnokey maketx call -broadcast -pkgpath gno.land/r/demo/chess -chainid tendermint_test -gas-wanted 10000000 -gas-fee 1ugnot -func MakeMove -args 000000001 -args e7 -args e5 -args 0 test1
+stdout 'OK!'
+gnokey maketx call -broadcast -pkgpath gno.land/r/demo/chess -chainid tendermint_test -gas-wanted 10000000 -gas-fee 1ugnot -func MakeMove -args 000000001 -args f1 -args c4 -args 0 test2
+stdout 'OK!'
+gnokey maketx call -broadcast -pkgpath gno.land/r/demo/chess -chainid tendermint_test -gas-wanted 10000000 -gas-fee 1ugnot -func MakeMove -args 000000001 -args b8 -args c6 -args 0 test1
+stdout 'OK!'
+gnokey maketx call -broadcast -pkgpath gno.land/r/demo/chess -chainid tendermint_test -gas-wanted 10000000 -gas-fee 1ugnot -func MakeMove -args 000000001 -args d1 -args f3 -args 0 test2
+stdout 'OK!'
+gnokey maketx call -broadcast -pkgpath gno.land/r/demo/chess -chainid tendermint_test -gas-wanted 10000000 -gas-fee 1ugnot -func MakeMove -args 000000001 -args d7 -args d6 -args 0 test1
+stdout 'OK!'
+gnokey maketx call -broadcast -pkgpath gno.land/r/demo/chess -chainid tendermint_test -gas-wanted 10000000 -gas-fee 1ugnot -func MakeMove -args 000000001 -args f3 -args f7 -args 0 test2
+stdout 'winner.":."white."'
+gnokey query vm/qeval -data gno.land/r/demo/chess${NL}GetGame("000000001")
+stdout 'winner.":."white."'
