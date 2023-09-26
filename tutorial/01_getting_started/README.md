@@ -18,7 +18,7 @@ We'll be using two commands in this tutorial, `gno` and `gnokey`.
 Try the next few commands out!
 
 ```console
-$ gno --help
+$ gno help # or just `gno`
 USAGE
   <subcommand> [flags] [<arg>...]
 
