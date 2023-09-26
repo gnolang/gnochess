@@ -280,7 +280,7 @@ const Gameboard = class extends Component {
           : this.gameState.state;
       this.engine(false, state);
     } else {
-      if (!once) setTimeout(this.setGameState, 500);
+      if (!once) setTimeout(() => { this.setGameState(); }, 500);
     }
   }
   async rivalMove() {
