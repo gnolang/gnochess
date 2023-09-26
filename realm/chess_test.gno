@@ -145,7 +145,7 @@ var commandTests = [...]string{
 		stats white
 		# contains addr:g1white moves:4 started:1 won:1 lost:0 timedout:0 resigned:0 drawn:0 serious:1
 		stats black
-		# contains addr:g1white moves:3 started:1 won:0 lost:1 timedout:0 resigned:0 drawn:0 serious:1
+		# contains addr:g1black moves:3 started:1 won:0 lost:1 timedout:0 resigned:0 drawn:0 serious:1
 	`,
 	/* XXX: TEMPORARILY DISABLED
 	`	name DrawByAgreement

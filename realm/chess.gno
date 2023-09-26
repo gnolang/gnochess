@@ -221,6 +221,8 @@ func xNewGame(opponentRaw string, seconds, increment int) string {
 
 	opponent := parsePlayer(opponentRaw)
 	caller := std.GetOrigCaller()
+	getPlayerStats(opponent).StartedGames++
+	getPlayerStats(caller).StartedGames++
 	assertUserNotInLobby(caller)
 
 	return newGame(caller, opponent, seconds, increment).json()
@@ -361,8 +363,18 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 
 	caller := std.GetOrigCaller()
 
-	stats := getPlayerStats(caller)
-	stats.Moves++
+	// FIXME: create better helpers to avoid if/else conditions.
+	whiteStats := getPlayerStats(g.White)
+	blackStats := getPlayerStats(g.Black)
+	var callerStats, opponentStats *playerStats
+	if caller == g.White {
+		callerStats = whiteStats
+		opponentStats = blackStats
+	} else {
+		callerStats = blackStats
+		opponentStats = whiteStats
+	}
+	callerStats.Moves++
 
 	if (isBlack && g.Black != caller) ||
 		(!isBlack && g.White != caller) {
@@ -372,6 +384,9 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 
 	// game is time controlled? add move to time control
 	if g.Time != nil {
+		whiteStats.TimedoutGames++
+		blackStats.TimedoutGames++
+
 		valid := g.Time.AddMove()
 		if !valid && len(g.Position.Moves) < 2 {
 			g.State = GameStateAborted
@@ -424,13 +439,20 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 	case o == Checkmate && isBlack:
 		g.State = GameStateCheckmated
 		g.Winner = WinnerBlack
+		blackStats.WonGames++
+		whiteStats.LostGames++
+		blackStats.SeriousGames++
+		whiteStats.SeriousGames++
 	case o == Checkmate && !isBlack:
 		g.State = GameStateCheckmated
 		g.Winner = WinnerWhite
+		whiteStats.WonGames++
+		blackStats.LostGames++
+		blackStats.SeriousGames++
+		whiteStats.SeriousGames++
 	case o == Stalemate:
 		g.State = GameStateStalemate
 		g.Winner = WinnerDraw
-
 	case o == Drawn75Move:
 		g.State = GameStateDrawn75Move
 		g.Winner = WinnerDraw
