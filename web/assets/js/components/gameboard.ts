@@ -272,7 +272,7 @@ const Gameboard = class extends Component {
 
     const ongoing = this.gameState.state == GameState.OPEN;
 
-    if (!ongoing) {
+    if (!ongoing && !once) {
       console.log('game stopped');
       const state: GameState =
         this.rivalFirstMove || this.firstMove
