@@ -56,7 +56,7 @@ const Gameboard = class extends Component {
         cb: this.selectCell.bind(this)
       });
     });
-    this.intervalCheckForOngoingGame();
+    this.setGameState();
   }
 
   showScoreBoard(winner: Colors) {
@@ -72,15 +72,31 @@ const Gameboard = class extends Component {
   getMoveNumber() {
     return this.chess.moveNumber();
   }
-
+  async exitforFirstMove() {
+    console.log('exitforTimeout called -> Ive not player under 30s');
+    try {
+      // Claim timeout. If no error, timeout succeeded
+      const actions: Actions = await Actions.getInstance();
+      await actions.claimTimeout(this.gameId);
+      this.engine(false, GameState.ABORTED);
+    } catch (e) {
+      this.call('appear', ['Invalid claim timeout request', 'error'], 'toast');
+      this.engine(false, GameState.ABORTED); //TODO: create a fail "exit" gameover in the engine
+      // Timeout request is invalid
+      // for the user (I assume fire event to end game)
+    }
+  }
   async engine(init = false, gameover?: GameState) {
     console.log('engine called');
-    const actions: Actions = await Actions.getInstance();
+    await this.setGameState(true); // get the latest state once off outside the interval
 
-    const gameState = await actions.getGame(this.gameId);
-    console.log(gameState.state);
+    console.log(this.gameState.state);
 
-    if (gameState.state !== 'open' || this.chess.isGameOver() || gameover) {
+    if (
+      this.gameState.state !== 'open' ||
+      this.chess.isGameOver() ||
+      gameover
+    ) {
       console.log('GAME OVER!');
 
       const setFinalState = () => {
@@ -91,11 +107,11 @@ const Gameboard = class extends Component {
         this.call('disappear', '', 'gamecontrols');
       };
 
-      if (gameState.state === 'invalid') {
+      if (this.gameState.state === 'invalid') {
         throw new Error('invalid move');
       }
 
-      console.log('gameState.state: ' + gameState.state);
+      console.log('gameState.state: ' + this.gameState.state);
       console.log('gameover: ' + gameover);
       clearTimeout(this.initMoveTimer);
 
@@ -103,7 +119,7 @@ const Gameboard = class extends Component {
 
       if (
         gameover === GameState.ABORTED &&
-        gameState.state === GameState.ABORTED
+        this.gameState.state === GameState.ABORTED
       ) {
         console.log('gameover for aborted');
         this.call('finishGame', ['Aborted', 'Aborted'], 'gameplayers', 'me');
@@ -112,23 +128,19 @@ const Gameboard = class extends Component {
 
       if (
         gameover === GameState.TIMEOUT ||
-        gameState.state === GameState.TIMEOUT
+        this.gameState.state === GameState.TIMEOUT
       ) {
         console.log('gameover for timeout');
         clearTimeout(this.checkOngoingTimer);
-        const game = await actions.getGame(this.gameId);
-        console.log(game);
-        if (game.winner == 'none') {
+        if (this.gameState.winner == 'none') {
           console.log('no winner -> abandon');
           this.call('finishGame', ['abandon', status], 'gameplayers', 'rival');
           setFinalState();
         } else {
-          const valid = await actions.isGameOver(
-            this.gameId,
-            GameState.TIMEOUT
-          );
+          const valid = this.gameState.state == GameState.TIMEOUT;
           console.log('timeout with rival');
-          const winnerColor = gameState.winner === Winner.BLACK ? 'b' : 'w';
+          const winnerColor =
+            this.gameState.winner === Winner.BLACK ? 'b' : 'w';
           const amIwinner = winnerColor === this.color ? 'me' : 'rival';
 
           if (valid) {
@@ -145,16 +157,13 @@ const Gameboard = class extends Component {
 
       if (
         this.chess.isCheckmate() ||
-        gameState.state === GameState.CHECKMATED
+        this.gameState.state === GameState.CHECKMATED
       ) {
         console.log('gameover for checkmate');
 
-        const valid = await actions.isGameOver(
-          this.gameId,
-          GameState.CHECKMATED
-        );
+        const valid = this.gameState.state == GameState.CHECKMATED;
 
-        const winnerColor = gameState.winner === Winner.BLACK ? 'b' : 'w';
+        const winnerColor = this.gameState.winner === Winner.BLACK ? 'b' : 'w';
         const amIwinner = winnerColor === this.color ? 'me' : 'rival';
 
         console.log('winnerColor :' + winnerColor);
@@ -162,7 +171,7 @@ const Gameboard = class extends Component {
         if (valid) {
           this.call(
             'finishGame',
-            ['winner', gameState.state],
+            ['winner', this.gameState.state],
             'gameplayers',
             amIwinner
           );
@@ -171,34 +180,31 @@ const Gameboard = class extends Component {
       }
 
       const isEngineDrawn =
-        gameState.state === GameState.STALEMATE ||
-        gameState.state === GameState.DRAWN_75_MOVE ||
-        gameState.state === GameState.DRAWN_5_FOLD ||
-        gameState.state === GameState.DRAWN_50_MOVE ||
-        gameState.state === GameState.DRAWN_3_FOLD ||
-        gameState.state === GameState.DRAWN_INSUFFICIENT ||
-        gameState.state === GameState.DRAWN_BY_AGREEMENT;
+        this.gameState.state === GameState.STALEMATE ||
+        this.gameState.state === GameState.DRAWN_75_MOVE ||
+        this.gameState.state === GameState.DRAWN_5_FOLD ||
+        this.gameState.state === GameState.DRAWN_50_MOVE ||
+        this.gameState.state === GameState.DRAWN_3_FOLD ||
+        this.gameState.state === GameState.DRAWN_INSUFFICIENT ||
+        this.gameState.state === GameState.DRAWN_BY_AGREEMENT;
 
       if (isEngineDrawn || this.chess.isDraw()) {
-        const valid = await actions.isGameOver(this.gameId, gameState.state);
-        if (valid) {
-          console.log('gameover for draw');
-          setFinalState();
-          this.call(
-            'finishGame',
-            ['draw', gameState.state],
-            'gameplayers',
-            'me'
-          );
-        }
+        console.log('gameover for draw');
+        setFinalState();
+        this.call(
+          'finishGame',
+          ['draw', this.gameState.state],
+          'gameplayers',
+          'me'
+        );
       }
 
-      if (gameState.state === GameState.RESIGNED) {
+      if (this.gameState.state === GameState.RESIGNED) {
         console.log('gameover for resigned');
         setFinalState();
         this.call(
           'finishGame',
-          ['winner', gameState.state],
+          ['winner', this.gameState.state],
           'gameplayers',
           'me'
         );
@@ -218,7 +224,7 @@ const Gameboard = class extends Component {
       if (this.firstMove) {
         console.log('first move');
         this.firstMove = false;
-        const dateStartGame = gameState.time?.started_at;
+        const dateStartGame = this.gameState.time?.started_at;
 
         if (!dateStartGame) {
           throw new Error('No started_at game time');
@@ -233,36 +239,12 @@ const Gameboard = class extends Component {
         // const currentDate = new Date();
         // const diffDate = startDate.getTime() - currentDate.getTime();
 
-        const exitforFirstMove = async () => {
-          console.log('exitforTimeout called -> Ive not player under 30s');
-          try {
-            // Claim timeout. If no error, timeout succeeded
-            await actions.claimTimeout(this.gameId);
-            this.engine(false, GameState.ABORTED);
-          } catch (e) {
-            this.call(
-              'appear',
-              ['Invalid claim timeout request', 'error'],
-              'toast'
-            );
-            this.engine(false, GameState.ABORTED); //TODO: create a fail "exit" gameover in the engine
-            // Timeout request is invalid
-            // for the user (I assume fire event to end game)
-          }
-        };
-
         // TODO: trying with 30s from browser perspective
-        // const timer = 30 * 1000 - diffDate;
+        
         const timer = 30 * 1000;
 
-        if (timer <= 0) {
-          // if date too old (> 30sec )
-          await exitforFirstMove();
-          throw new Error('Game party started too long time ago');
-        }
-
         this.initMoveTimer = setTimeout(async () => {
-          await exitforFirstMove();
+          await this.exitforFirstMove();
         }, timer); //30sec first move
       } else {
         this.call('startTimer', [this.gameId], 'gameplayers', 'me');
@@ -283,35 +265,24 @@ const Gameboard = class extends Component {
     }
   }
 
-  private async intervalCheckForOngoingGame() {
+  async setGameState(once = false) {
+    console.log("Fetching game state");
     const actions: Actions = await Actions.getInstance();
-    this.checkOngoingTimer = setInterval(async () => {
-      console.log('isGameOngoing is asked');
-      try {
-        const ongoing = await actions.isGameOngoing(this.gameId);
-        console.log('isGameOngoing is resolved');
-        console.log(ongoing);
+    this.gameState = await actions.getGame(this.gameId);
 
-        if (!ongoing) {
-          console.log('game stopped');
-          clearInterval(this.checkOngoingTimer);
+    const ongoing = this.gameState.state == GameState.OPEN;
 
-          // TODO @Alexis this doesn't necessarily need to be a timeout type
-
-          //TODO: noMove gameover: the other should be check by game.state in engine
-          const gameState = await actions.getGame(this.gameId);
-          const state: GameState =
-            this.rivalFirstMove || this.firstMove
-              ? GameState.ABORTED
-              : gameState.state;
-          this.engine(false, state);
-        }
-      } catch (e) {
-        console.error('isGameOngoing doesnt work : ' + e);
-      }
-    }, 3000);
+    if (!ongoing && !once) {
+      console.log('game stopped');
+      const state: GameState =
+        this.rivalFirstMove || this.firstMove
+          ? GameState.ABORTED
+          : this.gameState.state;
+      this.engine(false, state);
+    } else {
+      if (!once) setTimeout(() => { this.setGameState(); }, 500);
+    }
   }
-
   async rivalMove() {
     console.log('get rival move');
     const actions: Actions = await Actions.getInstance();
@@ -485,7 +456,7 @@ const Gameboard = class extends Component {
   appear() {
     gsap.to(this.DOM.el, { autoAlpha: 1, display: 'flex' });
     gsap.from('.piece-417db', { y: '-65%', ease: 'bounce.out', stagger: 0.03 });
-    gsap.from('.piece-417db', { autoAlpha: 0, stagger: 0.03 }).then(() => {
+    gsap.from('.piece-417db', { autoAlpha: 0, stagger: 0.03 }).then(() => {      
       this.engine(true);
     });
   }
