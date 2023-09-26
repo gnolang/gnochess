@@ -72,8 +72,8 @@ func (p Position) clone() Position {
 	// ideally, since we're always using Position as a value, not a reference,
 	// we don't need this.
 
-	b, m, f, h := p.B, p.Moves, p.Flags, p.Hashes
-	return Position{b, m, f, hmc, h}
+	b, m, f := p.B, p.Moves, p.Flags
+	return Position{b, m, f}
 }
 
 // Color of the "next" move after p.Moves. (White for even len(p.Moves),
@@ -132,8 +132,8 @@ func (p Position) EncodeFEN() string {
 		p.Flags.CastlingRights(), // 2: castling ability
 		"-",                      // 3: e.p. target square
 
-		strconv.Itoa(0), // 4: halfmove clock
-		strconv.Itoa(len(p.Moves)/2 + 1),   // 5: fullmove counter
+		strconv.Itoa(0),                  // 4: halfmove clock
+		strconv.Itoa(len(p.Moves)/2 + 1), // 5: fullmove counter
 	}
 
 	var epFile byte
@@ -156,7 +156,7 @@ func (p Position) EncodeFEN() string {
 // ValidateMove checks whether the given move is legal in Chess.
 //
 // Caller must guarantee m.To and m.From to be valid (<64).
-func (p Position) ValidateMove(m Move) (newP Position, valid bool) {
+func (oldp Position) ValidateMove(m Move) (newP Position, valid bool) {
 	// XXX: This below is a Gno bug! In Go we don't need to do this (Position is
 	// a value, not a pointer), but in Gno there is a bug whereby the underlying
 	// p still holds (some) references.
@@ -172,7 +172,7 @@ func (p Position) ValidateMove(m Move) (newP Position, valid bool) {
 	return p.validateMove(m)
 }
 
-func (p Position) ValidateMove(m Move) (newP Position, valid bool) {
+func (p Position) validateMove(m Move) (newP Position, valid bool) {
 	piece := p.B[m.From]
 
 	// piece moved must be of player's color
@@ -193,8 +193,6 @@ func (p Position) ValidateMove(m Move) (newP Position, valid bool) {
 
 	// Keep old castling rights; remove en passant info.
 	newFlags := p.Flags &^ (MaskEnPassant | EnPassant)
-	// Marked as true for succesful promotions.
-	var promoted bool
 
 	switch piece.StripColor() {
 	case PieceRook:
@@ -295,28 +293,28 @@ type Board [64]Piece
 
 // NewBoard returns a Board normally set up at the initial position for standard
 // chess.
-func NewBoard() Board { return defaultBoard }
+func NewBoard() Board {
+	return Board{
+		// row 1
+		p['R'], p['N'], p['B'], p['Q'],
+		p['K'], p['B'], p['N'], p['R'],
+		// row 2
+		p['P'], p['P'], p['P'], p['P'],
+		p['P'], p['P'], p['P'], p['P'],
 
-var defaultBoard = Board{
-	// row 1
-	p['R'], p['N'], p['B'], p['Q'],
-	p['K'], p['B'], p['N'], p['R'],
-	// row 2
-	p['P'], p['P'], p['P'], p['P'],
-	p['P'], p['P'], p['P'], p['P'],
+		// rows 3, 4, 5, 6
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
 
-	// rows 3, 4, 5, 6
-	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0,
-
-	// row 7
-	p['p'], p['p'], p['p'], p['p'],
-	p['p'], p['p'], p['p'], p['p'],
-	// row 8
-	p['r'], p['n'], p['b'], p['q'],
-	p['k'], p['b'], p['n'], p['r'],
+		// row 7
+		p['p'], p['p'], p['p'], p['p'],
+		p['p'], p['p'], p['p'], p['p'],
+		// row 8
+		p['r'], p['n'], p['b'], p['q'],
+		p['k'], p['b'], p['n'], p['r'],
+	}
 }
 
 func (b Board) findPiece(pWant Piece) Square {
@@ -444,16 +442,16 @@ func (p Position) GenMoves(cb func(Position, Move) error) error {
 		from := Square(sq)
 		pstrip := piece.StripColor()
 
-		for to := Square(0); i <= 64; i++ {
+		for to := Square(0); to < 64; to++ {
 			if to == from || p.B[to].Color() == color {
 				continue
 			}
 			prom := pstrip == PiecePawn &&
 				((color == White && to>>3 == 7) ||
-					(color == Black && to>>3 == 0 )
+					(color == Black && to>>3 == 0))
 			m := Move{
 				From: from,
-				To: to,
+				To:   to,
 			}
 
 			// handle promotion case
@@ -466,7 +464,7 @@ func (p Position) GenMoves(cb func(Position, Move) error) error {
 			if !ok {
 				continue
 			}
-			if err = cb(newp, m); err != nil {
+			if err := cb(newp, m); err != nil {
 				return err
 			}
 
@@ -478,8 +476,8 @@ func (p Position) GenMoves(cb func(Position, Move) error) error {
 			for _, promPiece := range [...]Piece{PieceRook, PieceKnight, PieceBishop} {
 				newp.B[m.To] = promPiece | color.Piece()
 				m.Promotion = promPiece
-				if err = cb(newp, m); err != nil {
-					return deltaGenStop
+				if err := cb(newp, m); err != nil {
+					return err
 				}
 			}
 		}
