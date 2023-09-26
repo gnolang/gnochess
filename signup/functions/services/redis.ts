@@ -9,6 +9,11 @@ export class RedisClient {
     this.client = new Redis(redis_url);
   }
 
+  async getUserByAddress(address: string) {
+    const ret = await this.client.hgetall(`GNO:${address}`);
+    return ret;
+  }
+
   async storeUserToken(email: string, token: string) {
     await this.client
       .multi()
