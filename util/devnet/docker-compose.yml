@@ -18,7 +18,7 @@ services:
     networks:
       - gnonode
     volumes:
-      - "../../realm:/realm"
+      - "../../r:/r"
     restart: on-failure
     logging:
       driver: "json-file"

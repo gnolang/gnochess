@@ -78,13 +78,22 @@ help: ## Display this help message.
 	cd web; npm run build
 	cd web; npm run dev
 
-4_deploy_realm: ## Deploy GnoChess realm on local node.
+4_deploy_realms: ## Deploy realms on local node.
 	echo | $(GNOKEY) maketx addpkg \
 	  --insecure-password-stdin \
 	  --gas-wanted 20000000 \
 	  --gas-fee 1ugnot \
 	  --pkgpath gno.land/r/demo/chess \
-	  --pkgdir ./realm \
+	  --pkgdir ./r/chess \
+	  --broadcast \
+	  DeployKey
+	
+	echo | $(GNOKEY) maketx addpkg \
+	  --insecure-password-stdin \
+	  --gas-wanted 2000000 \
+	  --gas-fee 1ugnot \
+	  --pkgpath gno.land/r/demo/reward_entry \
+	  --pkgdir ./r/reward_entry \
 	  --broadcast \
 	  DeployKey
 
@@ -96,14 +105,14 @@ z_use_remote_gno: ## Use the remote 'github.com/gnolang/gno' module and remove a
 	@echo "Switching to remote gno module..."
 	@go mod edit -dropreplace github.com/gnolang/gno
 
-z_test_realm: ## Test the realm.
-	go run github.com/gnolang/gno/gnovm/cmd/gno test --verbose ./realm
+z_test_realms: ## Test the realms.
+	go run github.com/gnolang/gno/gnovm/cmd/gno test --verbose ./r
 
 z_test_integration: ## Test the realm.
 	go test -v -run='TestIntegration/.*'  .
 
-z_build_realm: ## Precompile and build the generated Go files. Assumes a working clone of gno in ../gno.
+z_build_chess_realm: ## Precompile and build the generated Go files. Assumes a working clone of gno in ../gno.
 	mkdir -p ../gno/examples/gno.land/r/gnochess
-	cp -rf realm/*.gno ../gno/examples/gno.land/r/gnochess
+	cp -rf r/chess/*.gno ../gno/examples/gno.land/r/gnochess
 	go run github.com/gnolang/gno/gnovm/cmd/gno precompile --verbose ../gno/examples/gno.land
 	go run github.com/gnolang/gno/gnovm/cmd/gno build --verbose ../gno/examples/gno.land/r/gnochess

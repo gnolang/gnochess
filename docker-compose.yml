@@ -29,7 +29,7 @@ services:
     depends_on:
       - gnoland
     volumes:
-      - "./realm:/realm"
+      - "./r:/r"
     logging:
       driver: "json-file"
       options:
