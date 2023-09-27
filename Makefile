@@ -107,3 +107,14 @@ z_build_realm: ## Precompile and build the generated Go files. Assumes a working
 	cp -rf realm/*.gno ../gno/examples/gno.land/r/gnochess
 	go run github.com/gnolang/gno/gnovm/cmd/gno precompile --verbose ../gno/examples/gno.land
 	go run github.com/gnolang/gno/gnovm/cmd/gno build --verbose ../gno/examples/gno.land/r/gnochess
+
+z_poormans_dashboard: 
+	@go run github.com/gnolang/gno/gno.land/cmd/gnokey \
+	  query 'vm/qeval' \
+	  -remote 'https://rpc.gnochess.com:443' \
+	  -data "`printf "gno.land/r/demo/chess\nLeaderboard(\\"rapid\\")"`" | \
+	    grep data: | \
+	    cut -d ' ' -f 2 | \
+	    sed s/^.// | \
+	    jq -r . | \
+	    jq -r '.[] | (.address + " " + ((.rapid.losses + .rapid.wins + .rapid.draws) | tostring) + " " + ((.blitz.losses + .blitz.wins + .blitz.draws) | tostring))'
