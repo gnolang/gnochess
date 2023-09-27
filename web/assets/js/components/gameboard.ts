@@ -44,6 +44,7 @@ const Gameboard = class extends Component {
   }
 
   startGame(gameId: string, color: Colors) {
+    this.gameState=null;
     this.gameId = gameId;
     this.color = color;
     if (this.color === 'b') this.board.flip();
@@ -107,7 +108,6 @@ const Gameboard = class extends Component {
         this.call('stopTimer', [true], 'gameplayers', 'me');
         this.call('stopTimer', [true], 'gameplayers', 'rival');
         this.call('disappear', '', 'gamecontrols');
-        this.gameState=null;
       };
 
       if (this.gameState.state === 'invalid') {
