@@ -140,8 +140,8 @@ const Dashboard = class extends Component {
                     )})"></div><img src="/img/mini-gopher.png" alt="avatar"/></div>
                     <div class="dashboard-avatar_info">${truncateString(
                       player.address,
-                      10,
-                      10
+                      4,
+                      3
                     )}</div>
               </li>`;
         });
