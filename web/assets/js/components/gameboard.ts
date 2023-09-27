@@ -89,7 +89,31 @@ const Gameboard = class extends Component {
   async engine(init = false, gameover?: GameState) {
     console.log('engine called');
     await this.setGameState(true); // get the latest state once off outside the interval
-
+    //Remaining times in ms
+    const whiteTimeRemaining = this.gameState.time.white_time;
+    const blackTimeRemaining = this.gameState.time.black_time;
+    if (this.color == 'w') {      
+        this.call('_createTimer', [whiteTimeRemaining/1000], 'gameplayers', 'me');      
+        this.call(
+          '_createTimer',
+          [blackTimeRemaining / 1000],
+          'gameplayers',
+          'rival'
+        );
+    } else {
+        this.call(
+          '_createTimer',
+          [blackTimeRemaining / 1000],
+          'gameplayers',
+          'me'
+        );
+        this.call(
+          '_createTimer',
+          [whiteTimeRemaining / 1000],
+          'gameplayers',
+          'rival'
+        );      
+    }
     console.log(this.gameState.state);
 
     if (
