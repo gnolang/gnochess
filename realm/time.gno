@@ -95,7 +95,7 @@ func (tc *TimeControl) timedOut() (time.Duration, bool) {
 
 	// Determine color. Determine time since last move. Try subtracting from
 	// color's time. If >= 0, good. If < 0, timeout.
-	delta := time.Since(mts[len(mts)-2])
+	delta := time.Since(mts[len(mts)-1])
 
 	if len(mts)&1 == 0 { // white
 		nt := tc.WhiteTime - delta
