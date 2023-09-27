@@ -72,7 +72,9 @@ const Gameplayers = class extends Component {
     const seconds = Math.floor(datetarget % 60);
     this.DOM.timer.innerHTML = `${pad(minutes)}:${pad(seconds)}`;
   }
-
+  setTimer(time: number) {
+    this.timer = time;
+  }
   async startTimer(gameId: string) {
     clearInterval(this.clock);
     const actions: Actions = await Actions.getInstance();
@@ -81,7 +83,7 @@ const Gameplayers = class extends Component {
 
     const clockAction = async () => {
       this.timer--;
-
+      console.log(this.timer);
       if (this.timer <= 0) {
         clearInterval(this.clock);
         this.DOM.timer.innerHTML = `00:00`;

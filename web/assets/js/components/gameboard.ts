@@ -93,27 +93,24 @@ const Gameboard = class extends Component {
     const whiteTimeRemaining = this.gameState.time.white_time;
     const blackTimeRemaining = this.gameState.time.black_time;
     if (this.color == 'w') {      
-        this.call('_createTimer', [whiteTimeRemaining/1000], 'gameplayers', 'me');      
+        this.call('setTimer', [whiteTimeRemaining/1000], 'gameplayers', 'me');      
         this.call(
-          '_createTimer',
+          'setTimer',
           [blackTimeRemaining / 1000],
           'gameplayers',
           'rival'
         );
     } else {
+        this.call('setTimer', [blackTimeRemaining / 1000], 'gameplayers', 'me');
         this.call(
-          '_createTimer',
-          [blackTimeRemaining / 1000],
-          'gameplayers',
-          'me'
-        );
-        this.call(
-          '_createTimer',
+          'setTimer',
           [whiteTimeRemaining / 1000],
           'gameplayers',
           'rival'
         );      
     }
+    console.log(whiteTimeRemaining);
+    console.log(blackTimeRemaining);
     console.log(this.gameState.state);
 
     if (
