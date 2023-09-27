@@ -21,13 +21,14 @@ import (
 	tm2Client "github.com/gnolang/faucet/client/http"
 	"github.com/gnolang/faucet/config"
 	"github.com/gnolang/faucet/estimate/static"
-	"github.com/gnolang/gno/tm2/pkg/crypto"
-	"github.com/gnolang/gno/tm2/pkg/std"
 	"github.com/peterbourgon/ff/v3"
 	"github.com/peterbourgon/ff/v3/fftoml"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/gnolang/gno/tm2/pkg/crypto"
+	"github.com/gnolang/gno/tm2/pkg/std"
 
 	"github.com/peterbourgon/ff/v3/ffcli"
 )
@@ -175,7 +176,7 @@ func registerFlags(fs *flag.FlagSet, c *rootCfg) {
 	fs.StringVar(
 		&c.redisURL,
 		"redis-url",
-		"redis://user:pass@127.0.0.1:6379",
+		"redis://127.0.0.1:6379",
 		"redis connection string",
 	)
 
@@ -221,12 +222,10 @@ func execMain(cfg *rootCfg) error {
 	cli := tm2Client.NewClient(cfg.remote)
 
 	// Prepare the middlewares
-	middlewares := []faucet.Middleware{
-		prepareFundMiddleware(cli, fundLimit),
-	}
+	var middlewares []faucet.Middleware
 
-	// TODO temporary
 	if len(cfg.allowedTokens) != 0 {
+		// TODO temporary for testing purpose without redis
 		middlewares = append(middlewares, prepareTokenListMiddleware(cfg.allowedTokens))
 	} else {
 		redisOpts, err := redis.ParseURL(cfg.redisURL)
@@ -237,6 +236,8 @@ func execMain(cfg *rootCfg) error {
 
 		middlewares = append(middlewares, prepareTokenMiddleware(redisClient))
 	}
+	// Call prepareFundMiddleware last to avoid funding users with invalid tokens
+	middlewares = append(middlewares, prepareFundMiddleware(cli, fundLimit))
 
 	// Create a new faucet with
 	// static gas estimation
@@ -464,14 +465,50 @@ func prepareTokenMiddleware(redisClient *redis.Client) faucet.Middleware {
 				return
 			}
 
-			// Continue with serving the faucet request
-			next.ServeHTTP(w, r)
-
 			_, err = redisClient.HSet(r.Context(), "TOKEN:"+token, "used", "true").Result()
 			if err != nil {
 				http.Error(w, "Unable to lock token", http.StatusInternalServerError)
 				return
 			}
+
+			// Parse the request to extract the address
+			// XXX copied from prepareFundMiddleware, don't have time to refactor without unit tests!
+			var request faucet.Request
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				http.Error(w, "Error reading request body", http.StatusInternalServerError)
+				return
+			}
+			// Close the original body
+			if err := r.Body.Close(); err != nil {
+				http.Error(w, "Error closing request body", http.StatusInternalServerError)
+				return
+			}
+			// Create a new ReadCloser from the read bytes
+			// so that future middleware will be able to read
+			r.Body = io.NopCloser(bytes.NewReader(body))
+			// Decode the original request
+			if err := json.NewDecoder(bytes.NewBuffer(body)).Decode(&request); err != nil {
+				http.Error(w, "Invalid request", http.StatusBadRequest)
+				return
+			}
+
+			// Read email
+			email, err := redisClient.HGet(r.Context(), "TOKEN:"+token, "email").Result()
+			if err != nil {
+				http.Error(w, "Unable to read token email", http.StatusInternalServerError)
+				return
+			}
+			// Store gno adress, email and token, so they are retrievable via the
+			// getEmail middleware.
+			err = redisClient.HSet(r.Context(), "GNO:"+request.To, "email", email, "token", token).Err()
+			if err != nil {
+				http.Error(w, "Unable to set gno address and email", http.StatusInternalServerError)
+				return
+			}
+
+			// Continue with serving the faucet request
+			next.ServeHTTP(w, r)
 		})
 	}
 }
