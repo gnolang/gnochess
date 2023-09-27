@@ -111,7 +111,7 @@ const Dashboard = class extends Component {
     //TODO: refactor to get interactive chart
 
     const calc = (i: number) => Math.round((i / rate.games) * 100);
-    const percents = [calc(rate.wins), calc(rate.losses), calc(rate.games)];
+    const percents = [calc(rate.wins), calc(rate.losses), calc(rate.draws)];
 
     const pieEl = this.DOM.el.querySelector('#dashboard-rank');
     pieEl.style.background = `conic-gradient(#777777 0% ${percents[0]}%, #b4b4b4 ${percents[0]}% ${percents[1]}%, #d9d9d9 ${percents[1]}% ${percents[2]}%)`;

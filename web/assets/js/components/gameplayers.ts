@@ -11,6 +11,8 @@ const Gameplayers = class extends Component {
   }
 
   init() {
+    console.log('ICICICICI');
+    console.log(this.player);
     // automatically called at start
     console.log('PlayPlay component init');
 
@@ -83,7 +85,7 @@ const Gameplayers = class extends Component {
 
     const clockAction = async () => {
       this.timer--;
-      
+
       if (this.timer <= 0) {
         clearInterval(this.clock);
         this.DOM.timer.innerHTML = `00:00`;
