@@ -83,7 +83,7 @@ const Gameplayers = class extends Component {
 
     const clockAction = async () => {
       this.timer--;
-      
+
       if (this.timer <= 0) {
         clearInterval(this.clock);
         this.DOM.timer.innerHTML = `00:00`;
