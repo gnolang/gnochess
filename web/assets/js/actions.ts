@@ -317,7 +317,7 @@ class Actions {
   private async waitForGame(timeout?: number): Promise<GameSettings> {
     this.isInTheLobby = true;
     let retryTimeout: NodeJS.Timeout;
-    const exitTimeout = timeout ? timeout : drawRequestTimer * 1000; // wait time is max 15s
+    const exitTimeout = timeout ? timeout : drawRequestTimer * 100000; // wait time is max 15s
     return new Promise((resolve, reject) => {
       let exit = setTimeout(() => {
         clearTimeout(retryTimeout);
