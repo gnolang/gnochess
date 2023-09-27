@@ -133,7 +133,6 @@ const Gameplayers = class extends Component {
     const playergamegameovertitle = this.DOM.el.querySelector(
       '.js-playergamegameovertitle'
     );
-    console.log('playergamegameovertitle ' + playergamegameovertitle);
     playergamegameovertitle.innerHTML = type;
     this.DOM.el.querySelector('.js-playergametype').innerHTML =
       this.category + ' - ' + status;
