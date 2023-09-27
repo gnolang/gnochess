@@ -109,8 +109,6 @@ const Gameboard = class extends Component {
           'rival'
         );      
     }
-    console.log(whiteTimeRemaining);
-    console.log(blackTimeRemaining);
     console.log(this.gameState.state);
 
     if (
