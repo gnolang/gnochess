@@ -3,7 +3,9 @@ import { gsap } from 'gsap';
 import { truncateString } from '../utils/truncate';
 import { type Colors, GameState, GameTime, GameType } from '../types/types';
 import Actions from '../actions.ts';
-
+function sleep(delay:number) {
+  return new Promise((resolve) => setTimeout(resolve, delay))
+}
 const Gameplayers = class extends Component {
   constructor(opts: any) {
     super(opts);
@@ -89,6 +91,7 @@ const Gameplayers = class extends Component {
         this.DOM.timer.innerHTML = `00:00`;
         try {
           // Claim timeout. If no error, timeout succeeded
+          await sleep(1000);
           const claimTimeout = await actions.claimTimeout(gameId);
           console.log(claimTimeout);
           this.call('engine', [false, GameState.TIMEOUT], 'gameboard'); // let engine know timer is finished
