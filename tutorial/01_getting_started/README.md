@@ -17,8 +17,13 @@ We'll be using two commands in this tutorial, `gno` and `gnokey`.
 
 Try the next few commands out!
 
+```bash
+# first, let's ask the CLI to provide a list of available subcommands
+gno --help
+```
+
+Output:
 ```console
-$ gno help # or just `gno`
 USAGE
   <subcommand> [flags] [<arg>...]
 
@@ -36,14 +41,35 @@ SUBCOMMANDS
   doc         get documentation for the specified package or symbol (type, function, method, or variable/constant
 
 error parsing commandline arguments: flag: help requested
-$ cd tutorial/01_getting_started/
-$ gno doc greeter
+```
+
+Great, we see some helpful subcommands available to us.
+
+```bash
+# before proceeding, let's make sure we are in the correct directory
+cd tutorial/01_getting_started/
+
+# next, let's test out the gno doc subcommand and provide the greeter package as a target
+gno doc greeter
+```
+
+Output:
+```console
 package greeter // import "gno.land/r/demo/001_getting_started/greeter"
 
 You did it! You're looking at the documentation for greeter.
 
 func Hello(s string) string
-$ gno test .
+```
+
+Great, now let's make sure our tests pass.
+```bash
+# invoke all tests within the current directory
+gno test .
+```
+
+Output:
+```console
 ?       ./greeter       [no test files]
 --- FAIL: TestRender (0.00s)
 output: "hello, mars!" does not contain hello world
@@ -54,8 +80,8 @@ FAIL
 FAIL
 FAIL: 0 build errors, 1 test errors
 ```
+Oh no! Our tests are failing; it looks like we are greeting the wrong planet..
 
-Oh no! Our tests are failing; it looks like we are greeting the wrong planet.
 Let's try to fix that!
 
 ## Fixing the test
@@ -154,17 +180,19 @@ performed by a user who is identified through their address. The address comes
 as a cryptographic derivative of the user's key.
 
 While you are in a development context like this one, you can jump straight to
-importing our predefined key, `test1` which is set up in the default "genesis
+importing our predefined key, `test1`, which is set up in the default "genesis
 block" to contain 10^13 ugnot.
 
->_ugnot_, where u stands in for µ, is a millionth of Gno.land's native token,
->the $GNOT. ugnot is to gnot what [satoshi](https://www.investopedia.com/terms/s/satoshi.asp)
->is to bitcoin; the smallest, indivisible denomination of the token.
+> _ugnot_, where "u" stands in for µ, is a millionth of Gno.land's native token,
+> the $GNOT.
+>
+> _ugnot_ is to $GNOT what [satoshi](https://www.investopedia.com/terms/s/satoshi.asp)
+> is to bitcoin; the smallest, indivisible denomination of the token.
 
 Execute the following command, and input the mnemonic below:
 
 ```console
-$ gnokey add test1 --recover
+gnokey add test1 --recover
 ```
 
 ```
@@ -174,32 +202,32 @@ source bonus chronic canvas draft south burst lottery vacant surface solve popul
 After this, you should have your key set up (with the same address as ours) in
 your local keychain.
 
+Now, let's list our keys to make sure we got everything correctly set up.
+
+```bash
+gnokey list
+```
+
+Output:
+
 ```console
-$ gnokey list
-
-$ gnokey add test1 --recover
-Enter a passphrase to encrypt your key to disk:
-Repeat the passphrase:
-Enter your bip39 mnemonic
-source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast
-
-* test1 (local) - addr: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 pub: gpub1pgfj7ard9eg82cjtv4u4xetrwqer2dntxyfzxz3pq0skzdkmzu0r9h6gny6eg8c9dc303xrrudee6z4he4y7cs5rnjwmyf40yaj, path: <nil>
-
-$ gnokey list
 0. test1 (local) - addr: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 pub: gpub1pgfj7ard9eg82cjtv4u4xetrwqer2dntxyfzxz3pq0skzdkmzu0r9h6gny6eg8c9dc303xrrudee6z4he4y7cs5rnjwmyf40yaj, path: <nil>
 ```
 
 Let's publish our realm; if you are not there already, navigate to this file's
 directory and execute the following command:
-
-```console
-$ gnokey maketx addpkg \
+```bash
+gnokey maketx addpkg \
 	--gas-wanted 1000000 \
 	--gas-fee 1ugnot \
 	--pkgpath gno.land/r/demo/getting_started \
 	--pkgdir . \
 	--broadcast \
 	test1
+```
+
+Output:
+```console
 Enter password.
 
 OK!
@@ -237,6 +265,7 @@ gnoweb, then append `/r/demo/getting_started` to the URL.
 
 You should see the output of the `Render()` function, including the value of our
 counter set to 0.
+
 Let's try increasing it!
 
 By clicking the `[help]` button in the top right corner, you can visit a page to
@@ -245,20 +274,26 @@ declaration can be called as a transaction through `gnokey`.
 
 By writing your key name in the `My address:` input, you
 can get an auto-generated command to execute the `Add()` transaction on the
-chain. Try it out!
+chain.
+
+Try it out!
 
 ![A screenshot of gnoweb on the realm help page.](gnoweb-screenshot.png)
 
 Let's try calling `Add()`:
 
-```console
-$ gnokey maketx call \
+```bash
+gnokey maketx call \
 	-pkgpath "gno.land/r/demo/getting_started" \
 	-func "Add" \
 	-gas-fee 1000000ugnot \
 	-gas-wanted 2000000 \
 	-send "" -broadcast -chainid "dev" \
 	-remote "127.0.0.1:26657" test1
+```
+
+Output:
+```console
 Enter password.
 
 OK!
@@ -306,22 +341,54 @@ On the production chain, you won't be interacting using the `test1` key (which
 exists only for convenience in development contexts), but you will instead use
 your own. To generate it, the process is similar to the one above, with the only
 difference that you should change the mnemonic for the key, and you may generate
-one using `gnokey generate`:
+one using `gnokey generate`.
 
+Let's run the generate subcommand to receive our mnemonic
+```bash
+gnokey generate
+```
+
+Output:
 ```console
-$ gnokey generate
 stone wrestle craft chuckle lonely response eternal steak sausage mesh snow steel recycle lounge pizza true trap reject trip spell october panther novel clown
-$ gnokey add mykey --recover # ...
+```
+
+Next, let's add our key to the keybase; we pass the `--recover` flag to be able to retrieve our key with the seed phrase we just generated in the previous step.
+
+```bash
+gnokey add mykey --recover
+# Enter a passphrase to encrypt your key to disk:
+# Repeat the passphrase:
+# Enter your bip39 mnemonic
 ```
 
 ## Extra: Deterministic time, and qeval
 
 As you may have noticed, there is an additional package within this tutorial's
-directory: `greeter`. Let's try to publish it.
+directory: `greeter`.
 
+Let's try to publish it.
+
+```bash
+01_getting_started
+├── gno.mod
+├── gnoweb-screenshot.png
+├── greeter                   # <-- this one!
+│   └── hello.gno
+├── README.md
+├── render.gno
+└── render_test.gno
+```
+
+Here, we'll use `gnokey` to make a transaction to add a package.
+
+```bash
+gnokey maketx addpkg --gas-wanted 1000000 --gas-fee 1ugnot \
+  --pkgpath gno.land/r/demo/greeter --pkgdir ./greeter --broadcast test1
+```
+
+Output:
 ```console
-$ gnokey maketx addpkg --gas-wanted 1000000 --gas-fee 1ugnot \
-	--pkgpath gno.land/r/demo/greeter --pkgdir ./greeter --broadcast test1
 Enter password.
 
 OK!
@@ -329,12 +396,14 @@ GAS WANTED: 1000000
 GAS USED:   371195
 ```
 
-This realm doesn't have a `Render()` function, so trying to visit on gnoweb
-won't work. We can still use it to get to the `[help]` page, but there's a free
-way to execute the realm's functions without performing a transaction:
+This realm doesn't have a `Render()` function, so trying to visit on `gnoweb` won't work. We can still use it to get to the `[help]` page, but there's a free
+way to execute the realm's functions without performing a transaction.
 
+```bash
+gnokey query vm/qeval --data 'gno.land/r/demo/greeter'$'\n''Hello("Morgan")'
 ```
-$ gnokey query vm/qeval --data 'gno.land/r/demo/greeter'$'\n''Hello("Morgan")'
+
+```console
 height: 0
 data: ("The time is Thu Sep 21 10:49:06.00000 UTC 2023.\n\nGood morning, Morgan" string)
 ```
