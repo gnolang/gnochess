@@ -3,7 +3,9 @@ import { gsap } from 'gsap';
 import { Chess } from 'chess.js';
 import { type Colors, GameState, Promotion, Winner } from '../types/types';
 import Actions from '../actions.ts';
-
+function sleep(delay:number) {
+  return new Promise((resolve) => setTimeout(resolve, delay))
+}
 const Gameboard = class extends Component {
   constructor(opts: any) {
     super(opts);
@@ -19,7 +21,6 @@ const Gameboard = class extends Component {
     this.allowedToMove = false;
     this.pomotionEvents = [];
     this.initMoveTimer = null;
-    this.checkOngoingTimer = null;
     this.firstMove = true;
     this.rivalFirstMove = true;
 
@@ -43,6 +44,7 @@ const Gameboard = class extends Component {
   }
 
   startGame(gameId: string, color: Colors) {
+    this.gameState=null;
     this.gameId = gameId;
     this.color = color;
     if (this.color === 'b') this.board.flip();
@@ -77,6 +79,7 @@ const Gameboard = class extends Component {
     try {
       // Claim timeout. If no error, timeout succeeded
       const actions: Actions = await Actions.getInstance();
+      await sleep(1000);
       await actions.claimTimeout(this.gameId);
       this.engine(false, GameState.ABORTED);
     } catch (e) {
@@ -89,26 +92,7 @@ const Gameboard = class extends Component {
   async engine(init = false, gameover?: GameState) {
     console.log('engine called');
     await this.setGameState(true); // get the latest state once off outside the interval
-    //Remaining times in ms
-    const whiteTimeRemaining = this.gameState.time.white_time;
-    const blackTimeRemaining = this.gameState.time.black_time;
-    if (this.color == 'w') {      
-        this.call('setTimer', [whiteTimeRemaining/1000], 'gameplayers', 'me');      
-        this.call(
-          'setTimer',
-          [blackTimeRemaining / 1000],
-          'gameplayers',
-          'rival'
-        );
-    } else {
-        this.call('setTimer', [blackTimeRemaining / 1000], 'gameplayers', 'me');
-        this.call(
-          'setTimer',
-          [whiteTimeRemaining / 1000],
-          'gameplayers',
-          'rival'
-        );      
-    }
+    
     console.log(this.gameState.state);
 
     if (
@@ -150,7 +134,6 @@ const Gameboard = class extends Component {
         this.gameState.state === GameState.TIMEOUT
       ) {
         console.log('gameover for timeout');
-        clearTimeout(this.checkOngoingTimer);
         if (this.gameState.winner == 'none') {
           console.log('no winner -> abandon');
           this.call('finishGame', ['abandon', status], 'gameplayers', 'rival');
@@ -231,7 +214,26 @@ const Gameboard = class extends Component {
 
       return;
     }
-
+    //Remaining times in ms - Moved here to only update on turn change
+    const whiteTimeRemaining = this.gameState.time.white_time;
+    const blackTimeRemaining = this.gameState.time.black_time;
+    if (this.color == 'w') {      
+        this.call('setTimer', [whiteTimeRemaining/1000], 'gameplayers', 'me');      
+        this.call(
+          'setTimer',
+          [blackTimeRemaining / 1000],
+          'gameplayers',
+          'rival'
+        );
+    } else {
+        this.call('setTimer', [blackTimeRemaining / 1000], 'gameplayers', 'me');
+        this.call(
+          'setTimer',
+          [whiteTimeRemaining / 1000],
+          'gameplayers',
+          'rival'
+        );      
+    }
     // Game turn update (player timer and action balancing)
     if (this.color === this.chess.turn()) {
       // My turn to play
@@ -488,7 +490,6 @@ const Gameboard = class extends Component {
     console.log('gameboard destroyed');
     clearTimeout(this.initMoveTimer);
     clearTimeout(this.rivalTimeout);
-    clearInterval(this.checkOngoingTimer);
     this.chess.clear();
     this.board.destroy();
     //wS deco
