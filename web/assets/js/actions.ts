@@ -9,19 +9,27 @@ import {
   GameState,
   GameTime,
   Player,
-  Promotion
+  Promotion,
+  lobbyWaitTimer
 } from './types/types';
 import { defaultTxFee, GnoWallet, GnoWSProvider } from '@gnolang/gno-js-client';
-import { BroadcastTxCommitResult, TM2Error, TransactionEndpoint } from '@gnolang/tm2-js-client';
+import {
+  BroadcastTxCommitResult,
+  TM2Error,
+  TransactionEndpoint
+} from '@gnolang/tm2-js-client';
 import { generateMnemonic } from './utils/crypto.ts';
 import Long from 'long';
 import Config from './config.ts';
 import { constructFaucetError } from './utils/errors.ts';
 
-import { AlreadyInLobbyError, ErrorTransform, NotInLobbyError } from './errors.ts';
+import {
+  AlreadyInLobbyError,
+  ErrorTransform,
+  NotInLobbyError
+} from './errors.ts';
 import { prepareCategory, preparePromotion } from './utils/moves.ts';
 import { UserFundedError } from './types/errors';
-
 
 // ENV values //
 const wsURL: string = Config.GNO_WS_URL;
@@ -59,7 +67,7 @@ class Actions {
   private faucetToken: string | null = null;
   private isInTheLobby = false;
 
-  private constructor() { }
+  private constructor() {}
 
   /**
    * Fetches the Actions instance. If no instance is
@@ -71,7 +79,7 @@ class Actions {
       Actions.initPromise = new Promise(async (resolve) => {
         await Actions.instance.initialize();
         resolve(Actions.instance);
-      });      
+      });
       return Actions.initPromise;
     } else {
       return Actions.initPromise;
@@ -100,11 +108,11 @@ class Actions {
       // Initialize the provider
       this.provider = new GnoWSProvider(wsURL);
 
-      // Connect the wallet to the provider    
+      // Connect the wallet to the provider
       this.wallet.connect(this.provider);
     } catch (e) {
       //Should not happen
-      console.error("Could not create wallet from mnemonic")
+      console.error('Could not create wallet from mnemonic');
     }
 
     // Faucet token initialization //
@@ -119,9 +127,9 @@ class Actions {
         await this.fundAccount(this.faucetToken);
       } catch (e) {
         if (e instanceof UserFundedError) {
-          console.log("User already funded.");
+          console.log('User already funded.');
         } else {
-          console.error("Could not fund user.");
+          console.error('Could not fund user.');
         }
       }
     }
@@ -183,8 +191,8 @@ class Actions {
         const gkArgs = args?.map((arg) => '-args ' + arg).join(' ') ?? '';
         console.info(
           `$ gnokey maketx call -broadcast ` +
-          `-pkgpath ${chessRealm} -gas-wanted ${gasWanted} -gas-fee ${defaultTxFee} ` +
-          `-func ${method} ${gkArgs} test1`
+            `-pkgpath ${chessRealm} -gas-wanted ${gasWanted} -gas-fee ${defaultTxFee} ` +
+            `-func ${method} ${gkArgs} test1`
         );
       }
       const resp = (await this.wallet?.callMethod(
@@ -317,7 +325,7 @@ class Actions {
   private async waitForGame(timeout?: number): Promise<GameSettings> {
     this.isInTheLobby = true;
     let retryTimeout: NodeJS.Timeout;
-    const exitTimeout = timeout ? timeout : drawRequestTimer * 100000; // wait time is max 15s
+    const exitTimeout = timeout ? timeout : lobbyWaitTimer * 1000; // wait time is max 90s
     return new Promise((resolve, reject) => {
       let exit = setTimeout(() => {
         clearTimeout(retryTimeout);

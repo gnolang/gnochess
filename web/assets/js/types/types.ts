@@ -112,6 +112,7 @@ export interface TimeControl {
 export const defaultMnemonicKey = 'private-key-mnemonic';
 export const defaultFaucetTokenKey = 'faucet-token';
 export const drawRequestTimer = 15;
+export const lobbyWaitTimer = 90;
 
 export interface PlayerRating {
   wins: number;
