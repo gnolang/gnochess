@@ -108,13 +108,20 @@ z_build_realm: ## Precompile and build the generated Go files. Assumes a working
 	go run github.com/gnolang/gno/gnovm/cmd/gno precompile --verbose ../gno/examples/gno.land
 	go run github.com/gnolang/gno/gnovm/cmd/gno build --verbose ../gno/examples/gno.land/r/gnochess
 
-z_poormans_dashboard: 
-	@go run github.com/gnolang/gno/gno.land/cmd/gnokey \
-	  query 'vm/qeval' \
-	  -remote 'https://rpc.gnochess.com:443' \
-	  -data "`printf "gno.land/r/demo/chess\nLeaderboard(\\"rapid\\")"`" | \
+z_poormans_dashboard:
+	@( \
+		go run github.com/gnolang/gno/gno.land/cmd/gnokey \
+			query 'vm/qeval' \
+		  -remote 'https://rpc.gnochess.com:443' \
+		  -data "`printf "gno.land/r/demo/chess\nLeaderboard(\\"rapid\\")"`"; \
+		go run github.com/gnolang/gno/gno.land/cmd/gnokey \
+			query 'vm/qeval' \
+		  -remote 'https://rpc.gnochess.com:443' \
+		  -data "`printf "gno.land/r/demo/chess\nLeaderboard(\\"blitz\\")"`"; \
+	) | \
 	    grep data: | \
 	    cut -d ' ' -f 2 | \
-	    sed s/^.// | \
-	    jq -r . | \
-	    jq -r '.[] | (.address + " " + ((.rapid.losses + .rapid.wins + .rapid.draws) | tostring) + " " + ((.blitz.losses + .blitz.wins + .blitz.draws) | tostring))'
+		sed s/^.// | \
+	    jq -sr '.[]' | \
+	    jq -r -s '.[][] | (.address + " " + ((.rapid.losses + .rapid.wins + .rapid.draws) | tostring) + " " + ((.blitz.losses + .blitz.wins + .blitz.draws) | tostring))' | \
+		sort | uniq
