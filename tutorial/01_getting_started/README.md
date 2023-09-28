@@ -57,30 +57,9 @@ Output:
 ```console
 package greeter // import "gno.land/r/demo/001_getting_started/greeter"
 
-// You did it! You're looking at the documentation for greeter.
-package greeter
+You did it! You're looking at the documentation for greeter.
 
-import (
-	"time"
-)
-
-// Hello greets s, returning different greetings throughout the day.
-func Hello(s string) string {
-	n := time.Now()
-	v := "The time is " + time.Now().Format("Mon Jan _2 15:04:05.00000 MST 2006") + ".\n\n"
-	hour := n.Hour()
-	switch {
-	default:
-		v += "Good night, "
-	case hour >= 5 && hour < 12:
-		v += "Good morning, "
-	case hour >= 12 && hour < 17:
-		v += "Good afternoon, "
-	case hour >= 17 && hour < 22:
-		v += "Good evening, "
-	}
-	return v + s
-}
+func Hello(s string) string
 ```
 
 Great, now let's make sure our tests pass.
@@ -205,7 +184,7 @@ importing our predefined key, `test1`, which is set up in the default "genesis
 block" to contain 10^13 ugnot.
 
 > _ugnot_, where "u" stands in for µ, is a millionth of Gno.land's native token,
-> the $GNOT. 
+> the $GNOT.
 >
 > _ugnot_ is to $GNOT what [satoshi](https://www.investopedia.com/terms/s/satoshi.asp)
 > is to bitcoin; the smallest, indivisible denomination of the token.
@@ -223,12 +202,14 @@ source bonus chronic canvas draft south burst lottery vacant surface solve popul
 After this, you should have your key set up (with the same address as ours) in
 your local keychain.
 
-Now, let's list our keys to make sure everythin.
+Now, let's list our keys to make sure we got everything correctly set up.
+
 ```bash
 gnokey list
 ```
 
 Output:
+
 ```console
 0. test1 (local) - addr: g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5 pub: gpub1pgfj7ard9eg82cjtv4u4xetrwqer2dntxyfzxz3pq0skzdkmzu0r9h6gny6eg8c9dc303xrrudee6z4he4y7cs5rnjwmyf40yaj, path: <nil>
 ```
@@ -293,7 +274,7 @@ declaration can be called as a transaction through `gnokey`.
 
 By writing your key name in the `My address:` input, you
 can get an auto-generated command to execute the `Add()` transaction on the
-chain. 
+chain.
 
 Try it out!
 
@@ -384,16 +365,17 @@ gnokey add mykey --recover
 ## Extra: Deterministic time, and qeval
 
 As you may have noticed, there is an additional package within this tutorial's
-directory: `greeter`. 
+directory: `greeter`.
 
 Let's try to publish it.
 
 ```bash
-├── README.md
+01_getting_started
 ├── gno.mod
 ├── gnoweb-screenshot.png
-├── greeter // this one!
-│   └── hello.gno
+├── greeter                   # <-- this one!
+│   └── hello.gno
+├── README.md
 ├── render.gno
 └── render_test.gno
 ```
