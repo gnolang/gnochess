@@ -3,8 +3,8 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
-    "dev": "concurrently \"hugo server -D --bind='0.0.0.0' \" \"tsc && vite build --config ./vite.config.server.js \"",
-    "build": "tsc && vite build && hugo --gc",
+    "dev": "concurrently \"hugo --config hugo.toml server -D --bind='0.0.0.0' \" \"tsc && vite build --config ./vite.config.server.js \"",
+    "build": "tsc && vite build && hugo --gc --config hugo.toml ",
     "preview": "vite preview"
   },
   "devDependencies": {
