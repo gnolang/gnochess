@@ -13,6 +13,8 @@ interface QueryRequest {
 export async function handler(event: HandlerEvent) {
   const queryReq: QueryRequest = JSON.parse(event.body || '{}');
 
+  console.log('ev body', event.body);
+
   if (
     CONFIG.AUTHORIZATION_PASS &&
     event.headers['Authorization'] !== CONFIG.AUTHORIZATION_PASS
