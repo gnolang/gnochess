@@ -17,7 +17,7 @@ export async function handler(event: HandlerEvent) {
 
   if (
     CONFIG.AUTHORIZATION_PASS &&
-    event.headers['Authorization'] !== CONFIG.AUTHORIZATION_PASS
+    event.headers.authorization !== CONFIG.AUTHORIZATION_PASS
   ) {
     return {
       statusCode: 401
