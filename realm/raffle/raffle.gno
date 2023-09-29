@@ -1,6 +1,9 @@
 package raffle
 
-import "std"
+import (
+	"std"
+	"bytes"
+)
 
 type Player struct {
 	Address string
@@ -179,6 +182,11 @@ func init() {
 	}
 }
 
-func Winners() []string {
-	return winners
+func Winners() string {
+	var buf bytes.Buffer
+	for _, winner := range winners {
+		buf.WriteString(winner)
+		buf.WriteByte('\n')
+	}
+	return buf.String()
 }
