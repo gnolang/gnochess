@@ -1,0 +1,3 @@
+Verify the winners:
+
+gnokey query vm/qeval --data 'gno.land/r/demo/chessraffle'$'\n''Winners()' --remote https://rpc.gnochess.com:443 | grep data | sed -s 's/.*data: (\(".*"\) string)/\1/g' | jq -r .
