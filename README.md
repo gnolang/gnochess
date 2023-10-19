@@ -17,6 +17,10 @@ originally planned to accompany a talk for Gophercon 2023.
 
 ## Workshop tutorial
 
+> A Workshop on Gnochess has been held at Gophercon San Diego on 26/09/2023.
+> Follow along on the [video](https://www.youtube.com/watch?v=JQh7LhqW7ns)
+> or on the [slides](https://gnolang.github.io/workshops/presentations/2023-09-26--chess-the-gnolang-way--morgan/slides.html)
+
 You can learn how to make a Gno chess server yourself by following the guides
 in the `tutorial` section (at the time of writing, still being developed!).
 The tutorials are designed to be performed in a GitPod workspace. By clicking
