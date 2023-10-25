@@ -15,12 +15,15 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/gnolang/faucet"
 	"github.com/gnolang/faucet/client"
 	tm2Client "github.com/gnolang/faucet/client/http"
 	"github.com/gnolang/faucet/config"
 	"github.com/gnolang/faucet/estimate/static"
+	"github.com/gnolang/gno/gno.land/pkg/sdk/vm"
+	"github.com/gnolang/gno/tm2/pkg/sdk/bank"
 	"github.com/peterbourgon/ff/v3"
 	"github.com/peterbourgon/ff/v3/fftoml"
 	"github.com/redis/go-redis/v9"
@@ -60,6 +63,9 @@ type rootCfg struct {
 	fundLimit string
 
 	redisURL string
+
+	tokenFundMethod string
+	tokenFundRealm  string
 
 	allowedTokens stringArr // TODO temporary
 }
@@ -180,6 +186,20 @@ func registerFlags(fs *flag.FlagSet, c *rootCfg) {
 		"redis connection string",
 	)
 
+	fs.StringVar(
+		&c.tokenFundRealm,
+		"token-fund-realm",
+		"",
+		"the path to the Realm that can fund the player",
+	)
+
+	fs.StringVar(
+		&c.tokenFundMethod,
+		"token-fund-method",
+		"",
+		"the Realm method that can fund the player",
+	)
+
 	// TODO temporary
 	fs.Var(
 		&c.allowedTokens,
@@ -221,12 +241,24 @@ func execMain(cfg *rootCfg) error {
 	// Create the client (HTTP)
 	cli := tm2Client.NewClient(cfg.remote)
 
-	// Prepare the middlewares
-	var middlewares []faucet.Middleware
+	// Prepare the faucet values
+	var (
+		middlewares []faucet.Middleware
+		prepareTxFn faucet.PrepareTxMessageFn
+	)
 
 	if len(cfg.allowedTokens) != 0 {
-		// TODO temporary for testing purpose without redis
+		// TODO temporary for testing purposes without redis
 		middlewares = append(middlewares, prepareTokenListMiddleware(cfg.allowedTokens))
+
+		// By default, for testing purposes, the transaction is a MsgSend
+		prepareTxFn = func(cfg faucet.PrepareCfg) std.Msg {
+			return bank.MsgSend{
+				FromAddress: cfg.FromAddress,
+				ToAddress:   cfg.ToAddress,
+				Amount:      cfg.SendAmount,
+			}
+		}
 	} else {
 		redisOpts, err := redis.ParseURL(cfg.redisURL)
 		if err != nil {
@@ -234,7 +266,24 @@ func execMain(cfg *rootCfg) error {
 		}
 		redisClient := redis.NewClient(redisOpts)
 
+		// Prepare the middlewares
 		middlewares = append(middlewares, prepareTokenMiddleware(redisClient))
+
+		// Validate the realm values
+		if cfg.tokenFundMethod == "" {
+			return errors.New("invalid token Realm method supplied")
+		}
+
+		if cfg.tokenFundRealm == "" {
+			return errors.New("invalid token Realm path supplied")
+		}
+
+		// Prepare the tx message creation
+		prepareTxFn = prepareTxMessage(
+			redisClient,
+			cfg.tokenFundRealm,
+			cfg.tokenFundMethod,
+		)
 	}
 	// Call prepareFundMiddleware last to avoid funding users with invalid tokens
 	middlewares = append(middlewares, prepareFundMiddleware(cli, fundLimit))
@@ -247,6 +296,7 @@ func execMain(cfg *rootCfg) error {
 		faucet.WithLogger(newCommandLogger(logger)),
 		faucet.WithConfig(cfg.generateFaucetConfig()),
 		faucet.WithMiddlewares(middlewares),
+		faucet.WithPrepareTxMessageFn(prepareTxFn),
 	)
 	if err != nil {
 		return fmt.Errorf("unable to create faucet, %w", err)
@@ -260,6 +310,39 @@ func execMain(cfg *rootCfg) error {
 
 	// Wait for the faucet to exit
 	return w.wait()
+}
+
+// prepareTxMessage returns the Realm fund call message creator.
+// NOTE: This prepare method assumes the token was previously saved
+// in the redis storage, through a middleware
+func prepareTxMessage(redisClient *redis.Client, fundRealm, fundMethod string) faucet.PrepareTxMessageFn {
+	return func(cfg faucet.PrepareCfg) std.Msg {
+		var (
+			token string
+			err   error
+
+			ctx, cancelFn = context.WithTimeout(context.Background(), time.Second*10)
+		)
+
+		defer cancelFn()
+
+		// Fetch the token from Redis
+		token, err = redisClient.HGet(ctx, "GNO:"+cfg.ToAddress.String(), "token").Result()
+		if err != nil {
+			// Invalid token request, pass it
+			// to the Realm as an empty value
+			token = ""
+		}
+
+		// Prepare the method call
+		return vm.MsgCall{
+			Caller:  cfg.FromAddress,
+			PkgPath: fundRealm,
+			Func:    fundMethod,
+			Args:    []string{cfg.ToAddress.String(), token},
+			Send:    cfg.SendAmount,
+		}
+	}
 }
 
 type cmdLogger struct {
@@ -499,7 +582,7 @@ func prepareTokenMiddleware(redisClient *redis.Client) faucet.Middleware {
 				http.Error(w, "Unable to read token email", http.StatusInternalServerError)
 				return
 			}
-			// Store gno adress, email and token, so they are retrievable via the
+			// Store gno address, email and token, so they are retrievable via the
 			// getEmail middleware.
 			err = redisClient.HSet(r.Context(), "GNO:"+request.To, "email", email, "token", token).Err()
 			if err != nil {

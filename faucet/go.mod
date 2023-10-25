@@ -3,7 +3,7 @@ module github.com/gnolang/gnochess-faucet
 go 1.20
 
 require (
-	github.com/gnolang/faucet v0.0.0-20230916181707-934303e1b40d
+	github.com/gnolang/faucet v0.0.0-20230926204217-cdf94c5e2bb3
 	github.com/gnolang/gno v0.0.0-20230914214026-ef6a55bf9db2
 	github.com/peterbourgon/ff/v3 v3.4.0
 	github.com/redis/go-redis/v9 v9.2.0
@@ -16,6 +16,8 @@ require (
 	github.com/btcsuite/btcd/btcutil v1.0.0 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/cockroachdb/apd v1.1.0 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgraph-io/badger/v3 v3.2103.4 // indirect
 	github.com/dgraph-io/ristretto v0.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
@@ -45,5 +47,6 @@ require (
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/net v0.15.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/tools v0.6.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 )
