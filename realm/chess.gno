@@ -635,3 +635,9 @@ func Draw(gameID string) string {
 
 	return g.json()
 }
+
+func checkErr(err error) {
+	if err != nil {
+		panic(err.Error())
+	}
+}
