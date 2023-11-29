@@ -6,14 +6,13 @@ volumes:
 
 services:
   gnoland:
-    image: ghcr.io/gnolang/gno/gnochess:latest
+    build: ./util/gnolanddev
     environment:
       - LOG_LEVEL=4
-    command: ["gnoland", "start", "-genesis-max-vm-cycles", "100000000"]
     volumes:
       - "gnonode:/opt/gno/src/testdir"
-      - "./util/devnet/config.toml:/opt/gno/src/gno.land/testdir/config/config.toml"
-    working_dir: /opt/gno/src/gno.land
+      - "./util/gnolanddev/config.toml:/opt/gno/src/gno.land/testdir/config/config.toml"
+      - ".:/mnt"
     ports:
       - 26657:26657
     restart: on-failure
@@ -23,13 +22,13 @@ services:
         max-file: "10"
         max-size: "100m"
 
-  deployer:
-    build: ./util/devnet/deployer
+  gnoweb:
+    image: ghcr.io/gnolang/gno:latest
+    working_dir: /opt/gno/src/gno.land
+    command: gnoweb -bind 0.0.0.0:8888 -remote gnoland:26657
+    ports:
+      - 8888:8888
     restart: on-failure
-    depends_on:
-      - gnoland
-    volumes:
-      - "./realm:/realm"
     logging:
       driver: "json-file"
       options:
@@ -95,6 +94,7 @@ services:
 
   signup-functions:
     image: williamjackson/netlify-cli
+    stop_grace_period: 500ms # XXX: improve by making this a dockerfile which has dumb-init
     depends_on:
       - redis
     command: ["functions:serve", "-f", "./functions", "-p", "9000"]

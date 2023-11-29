@@ -1,1 +1,1 @@
-module gno.land/r/demo/001_getting_started
+module gno.land/r/demo/x01_getting_started

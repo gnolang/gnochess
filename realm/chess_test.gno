@@ -11,6 +11,7 @@ import (
 	"internal/os_test"
 
 	"gno.land/p/demo/avl"
+	"gno.land/p/demo/chess"
 )
 
 func cleanup() {
@@ -290,7 +291,7 @@ func (tc *testCommandNewGame) Run(t *testing.T, bufs map[string]string) {
 type testCommandMove struct {
 	addr      std.Address
 	from, to  string
-	promotion Piece
+	promotion chess.Piece
 }
 
 func (tc *testCommandMove) Run(t *testing.T, bufs map[string]string) {
@@ -418,10 +419,10 @@ func parseCommandTest(t *testing.T, command string) (funcs []testCommandRunner, 
 				panic("invalid lan move " + command[2])
 			}
 			from, to := command[2][:2], command[2][2:4]
-			var promotion Piece
+			var promotion chess.Piece
 			if len(command[2]) == 5 {
-				promotion = p[command[2][4]]
-				if promotion == PieceEmpty {
+				promotion = chess.PieceFromChar(command[2][4])
+				if promotion == chess.PieceEmpty {
 					panic("invalid piece for promotion: " + string(command[2][4]))
 				}
 			}

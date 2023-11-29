@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"gno.land/p/demo/avl"
+	"gno.land/p/demo/chess"
 	"gno.land/p/demo/ufmt"
 )
 
@@ -26,11 +27,11 @@ var (
 type Game struct {
 	ID string `json:"id"`
 
-	White    std.Address `json:"white"`
-	Black    std.Address `json:"black"`
-	Position Position    `json:"position"`
-	State    GameState   `json:"state"`
-	Winner   Winner      `json:"winner"`
+	White    std.Address    `json:"white"`
+	Black    std.Address    `json:"black"`
+	Position chess.Position `json:"position"`
+	State    GameState      `json:"state"`
+	Winner   Winner         `json:"winner"`
 
 	Creator     std.Address  `json:"creator"`
 	CreatedAt   time.Time    `json:"created_at"`
@@ -56,12 +57,12 @@ func (g Game) MarshalJSON() (_ []byte, err error) {
 		}
 		return `"` + na.String() + `"`
 	}
-	mjson := func(s string, val interface{ MarshalJSON() ([]byte, error) }, comma bool) {
+	mjson := func(s string, val func() ([]byte, error), comma bool) {
 		if err != nil {
 			return
 		}
 		var res []byte
-		res, err = val.MarshalJSON()
+		res, err = val()
 		if err != nil {
 			return
 		}
@@ -76,9 +77,9 @@ func (g Game) MarshalJSON() (_ []byte, err error) {
 	b.WriteString(`"white":"` + g.White.String() + `",`)
 	b.WriteString(`"black":"` + g.Black.String() + `",`)
 
-	mjson("position", g.Position, true)
-	mjson("state", g.State, true)
-	mjson("winner", g.Winner, true)
+	mjson("position", marshalPosition(g.Position), true)
+	mjson("state", g.State.MarshalJSON, true)
+	mjson("winner", g.Winner.MarshalJSON, true)
 	if err != nil {
 		return
 	}
@@ -88,7 +89,7 @@ func (g Game) MarshalJSON() (_ []byte, err error) {
 	b.WriteString(`"draw_offerer":` + nilAddr(g.DrawOfferer) + ",")
 	b.WriteString(`"concluder":` + nilAddr(g.Concluder) + ",")
 
-	mjson("time", g.Time, false)
+	mjson("time", g.Time.MarshalJSON, false)
 	if err != nil {
 		return
 	}
@@ -97,25 +98,27 @@ func (g Game) MarshalJSON() (_ []byte, err error) {
 	return b.Bytes(), nil
 }
 
-func (p Position) MarshalJSON() ([]byte, error) {
-	var b bytes.Buffer
-	b.WriteByte('{')
+func marshalPosition(p chess.Position) func() ([]byte, error) {
+	return func() ([]byte, error) {
+		var b bytes.Buffer
+		b.WriteByte('{')
 
-	bfen := p.EncodeFEN()
-	b.WriteString(`"fen":"` + bfen + `",`)
+		bfen := p.EncodeFEN()
+		b.WriteString(`"fen":"` + bfen + `",`)
 
-	b.WriteString(`"moves":[`)
+		b.WriteString(`"moves":[`)
 
-	for idx, m := range p.Moves {
-		b.WriteString(`"` + m.String() + `"`)
-		if idx != len(p.Moves)-1 {
-			b.WriteByte(',')
+		for idx, m := range p.Moves {
+			b.WriteString(`"` + m.String() + `"`)
+			if idx != len(p.Moves)-1 {
+				b.WriteByte(',')
+			}
 		}
-	}
 
-	b.WriteByte(']')
-	b.WriteByte('}')
-	return b.Bytes(), nil
+		b.WriteByte(']')
+		b.WriteByte('}')
+		return b.Bytes(), nil
+	}
 }
 
 // Winner represents the "direct" outcome of a game
@@ -267,7 +270,7 @@ func newGame(caller, opponent std.Address, seconds, increment int) *Game {
 		ID:        id,
 		White:     caller,
 		Black:     opponent,
-		Position:  NewPosition(),
+		Position:  chess.NewPosition(),
 		State:     GameStateOpen,
 		Creator:   caller,
 		CreatedAt: time.Now(),
@@ -351,7 +354,7 @@ func getGame(id string, wantOpen bool) *Game {
 // If the piece is a pawn which is moving to the last row, a promotion piece
 // must be specified.
 // Castling is specified by indicating the king's movement.
-func MakeMove(gameID, from, to string, promote Piece) string {
+func MakeMove(gameID, from, to string, promote chess.Piece) string {
 	std.AssertOriginCall()
 
 	g := getGame(gameID, true)
@@ -388,14 +391,14 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 	}
 
 	// validate move
-	m := Move{
-		From: SquareFromString(from),
-		To:   SquareFromString(to),
+	m := chess.Move{
+		From: chess.SquareFromString(from),
+		To:   chess.SquareFromString(to),
 	}
-	if m.From == SquareInvalid || m.To == SquareInvalid {
+	if m.From == chess.SquareInvalid || m.To == chess.SquareInvalid {
 		panic("invalid from/to square")
 	}
-	if promote > 0 && promote <= PieceKing {
+	if promote > 0 && promote <= chess.PieceKing {
 		m.Promotion = promote
 	}
 	newp, ok := g.Position.ValidateMove(m)
@@ -407,7 +410,7 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 	g.Position = newp
 
 	o := newp.IsFinished()
-	if o == NotFinished {
+	if o == chess.NotFinished {
 		// opponent of draw offerer has made a move. take as implicit rejection of draw.
 		if g.DrawOfferer != nil && *g.DrawOfferer != caller {
 			g.DrawOfferer = nil
@@ -417,20 +420,20 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 	}
 
 	switch {
-	case o == Checkmate && isBlack:
+	case o == chess.Checkmate && isBlack:
 		g.State = GameStateCheckmated
 		g.Winner = WinnerBlack
-	case o == Checkmate && !isBlack:
+	case o == chess.Checkmate && !isBlack:
 		g.State = GameStateCheckmated
 		g.Winner = WinnerWhite
-	case o == Stalemate:
+	case o == chess.Stalemate:
 		g.State = GameStateStalemate
 		g.Winner = WinnerDraw
 
-	case o == Drawn75Move:
+	case o == chess.Drawn75Move:
 		g.State = GameStateDrawn75Move
 		g.Winner = WinnerDraw
-	case o == Drawn5Fold:
+	case o == chess.Drawn5Fold:
 		g.State = GameStateDrawn5Fold
 		g.Winner = WinnerDraw
 	}
@@ -615,11 +618,11 @@ func Draw(gameID string) string {
 
 	o := g.Position.IsFinished()
 	switch {
-	case o&Can50Move != 0:
+	case o&chess.Can50Move != 0:
 		g.State = GameStateDrawn50Move
-	case o&Can3Fold != 0:
+	case o&chess.Can3Fold != 0:
 		g.State = GameStateDrawn3Fold
-	case o&CanInsufficient != 0:
+	case o&chess.CanInsufficient != 0:
 		g.State = GameStateDrawnInsufficient
 	default:
 		panic("this game can't be automatically drawn")

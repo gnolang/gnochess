@@ -1,0 +1,1964 @@
+diff --git a/examples/gno.land/r/demo/boards/z_0_a_filetest.gno b/examples/gno.land/r/demo/boards/z_0_a_filetest.gno
+index 872d01dd79..ae1724dd86 100644
+--- a/examples/gno.land/r/demo/boards/z_0_a_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_0_a_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ import (
+ 	"gno.land/r/demo/boards"
+diff --git a/examples/gno.land/r/demo/boards/z_0_b_filetest.gno b/examples/gno.land/r/demo/boards/z_0_b_filetest.gno
+index 9ada8abd0c..70f040eb7b 100644
+--- a/examples/gno.land/r/demo/boards/z_0_b_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_0_b_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 199000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_0_c_filetest.gno b/examples/gno.land/r/demo/boards/z_0_c_filetest.gno
+index 36b7bcfda0..216e4e4397 100644
+--- a/examples/gno.land/r/demo/boards/z_0_c_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_0_c_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_0_d_filetest.gno b/examples/gno.land/r/demo/boards/z_0_d_filetest.gno
+index 2e9e3f1436..9539a9769a 100644
+--- a/examples/gno.land/r/demo/boards/z_0_d_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_0_d_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_0_e_filetest.gno b/examples/gno.land/r/demo/boards/z_0_e_filetest.gno
+index a06713fcbe..3411891f46 100644
+--- a/examples/gno.land/r/demo/boards/z_0_e_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_0_e_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_0_filetest.gno b/examples/gno.land/r/demo/boards/z_0_filetest.gno
+index 5c3fc7b204..801231b67e 100644
+--- a/examples/gno.land/r/demo/boards/z_0_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_0_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_10_a_filetest.gno b/examples/gno.land/r/demo/boards/z_10_a_filetest.gno
+index 8ec2e45421..02abd7dc14 100644
+--- a/examples/gno.land/r/demo/boards/z_10_a_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_10_a_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_10_b_filetest.gno b/examples/gno.land/r/demo/boards/z_10_b_filetest.gno
+index 0981d85a57..45a06ccc04 100644
+--- a/examples/gno.land/r/demo/boards/z_10_b_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_10_b_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 2000000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_10_c_filetest.gno b/examples/gno.land/r/demo/boards/z_10_c_filetest.gno
+index f161c8cede..7f2a180b01 100644
+--- a/examples/gno.land/r/demo/boards/z_10_c_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_10_c_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_10_filetest.gno b/examples/gno.land/r/demo/boards/z_10_filetest.gno
+index 7a24efe09c..6f9264d8db 100644
+--- a/examples/gno.land/r/demo/boards/z_10_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_10_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_11_a_filetest.gno b/examples/gno.land/r/demo/boards/z_11_a_filetest.gno
+index fd62a884ef..65edb0ddee 100644
+--- a/examples/gno.land/r/demo/boards/z_11_a_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_11_a_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 2000000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_11_b_filetest.gno b/examples/gno.land/r/demo/boards/z_11_b_filetest.gno
+index 63907146f8..f1547e085d 100644
+--- a/examples/gno.land/r/demo/boards/z_11_b_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_11_b_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 2000000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_11_c_filetest.gno b/examples/gno.land/r/demo/boards/z_11_c_filetest.gno
+index ba40fa3902..9bec2d5844 100644
+--- a/examples/gno.land/r/demo/boards/z_11_c_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_11_c_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 2000000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_11_d_filetest.gno b/examples/gno.land/r/demo/boards/z_11_d_filetest.gno
+index a519d4f6a9..7c4abfa36c 100644
+--- a/examples/gno.land/r/demo/boards/z_11_d_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_11_d_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 2000000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_11_filetest.gno b/examples/gno.land/r/demo/boards/z_11_filetest.gno
+index 2d96d46dc9..d38b0223cd 100644
+--- a/examples/gno.land/r/demo/boards/z_11_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_11_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 2000000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_1_filetest.gno b/examples/gno.land/r/demo/boards/z_1_filetest.gno
+index b5c7bb863e..13bea83ae4 100644
+--- a/examples/gno.land/r/demo/boards/z_1_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_1_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_2_filetest.gno b/examples/gno.land/r/demo/boards/z_2_filetest.gno
+index 1e0b55a395..547757ef0a 100644
+--- a/examples/gno.land/r/demo/boards/z_2_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_2_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_3_filetest.gno b/examples/gno.land/r/demo/boards/z_3_filetest.gno
+index f4160e1612..757f9430c6 100644
+--- a/examples/gno.land/r/demo/boards/z_3_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_3_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_4_filetest.gno b/examples/gno.land/r/demo/boards/z_4_filetest.gno
+index 749566ea5b..68b1955ae3 100644
+--- a/examples/gno.land/r/demo/boards/z_4_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_4_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+@@ -44,929 +43,3 @@ func main() {
+ //
+ // > Second reply of the second post
+ // > \- [@gnouser](/r/users:gnouser), [2009-02-13 11:31pm (UTC)](/r/demo/boards:test_board/2/4) \[[reply](/r/demo/boards?help&__func=CreateReply&bid=1&threadid=2&postid=4&body.type=textarea)] \[[x](/r/demo/boards?help&__func=DeletePost&bid=1&threadid=2&postid=4)]
+-
+-// Realm:
+-// switchrealm["gno.land/r/demo/users"]
+-// switchrealm["gno.land/r/demo/users"]
+-// switchrealm["gno.land/r/demo/boards"]
+-// u[f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:101]={
+-//     "Fields": [
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "16"
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.StringValue",
+-//                 "value": "0000000003"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/r/demo/boards.Post"
+-//                 }
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.PointerValue",
+-//                 "Base": null,
+-//                 "Index": "0",
+-//                 "TV": {
+-//                     "T": {
+-//                         "@type": "/gno.RefType",
+-//                         "ID": "gno.land/r/demo/boards.Post"
+-//                     },
+-//                     "V": {
+-//                         "@type": "/gno.RefValue",
+-//                         "Escaped": true,
+-//                         "ObjectID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:102"
+-//                     }
+-//                 }
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "64"
+-//             }
+-//         },
+-//         {
+-//             "N": "AQAAAAAAAAA=",
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "32"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/p/demo/avl.Node"
+-//                 }
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/p/demo/avl.Node"
+-//                 }
+-//             }
+-//         }
+-//     ],
+-//     "ObjectInfo": {
+-//         "ID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:101",
+-//         "ModTime": "109",
+-//         "OwnerID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:109",
+-//         "RefCount": "1"
+-//     }
+-// }
+-// c[f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:110]={
+-//     "Fields": [
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "16"
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.StringValue",
+-//                 "value": "0000000004"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/r/demo/boards.Post"
+-//                 }
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.PointerValue",
+-//                 "Base": null,
+-//                 "Index": "0",
+-//                 "TV": {
+-//                     "T": {
+-//                         "@type": "/gno.RefType",
+-//                         "ID": "gno.land/r/demo/boards.Post"
+-//                     },
+-//                     "V": {
+-//                         "@type": "/gno.RefValue",
+-//                         "Escaped": true,
+-//                         "ObjectID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:111"
+-//                     }
+-//                 }
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "64"
+-//             }
+-//         },
+-//         {
+-//             "N": "AQAAAAAAAAA=",
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "32"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/p/demo/avl.Node"
+-//                 }
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/p/demo/avl.Node"
+-//                 }
+-//             }
+-//         }
+-//     ],
+-//     "ObjectInfo": {
+-//         "ID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:110",
+-//         "ModTime": "0",
+-//         "OwnerID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:109",
+-//         "RefCount": "1"
+-//     }
+-// }
+-// c[f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:109]={
+-//     "Fields": [
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "16"
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.StringValue",
+-//                 "value": "0000000004"
+-//             }
+-//         },
+-//         {},
+-//         {
+-//             "N": "AQAAAAAAAAA=",
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "64"
+-//             }
+-//         },
+-//         {
+-//             "N": "AgAAAAAAAAA=",
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "32"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/p/demo/avl.Node"
+-//                 }
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.PointerValue",
+-//                 "Base": null,
+-//                 "Index": "0",
+-//                 "TV": {
+-//                     "T": {
+-//                         "@type": "/gno.RefType",
+-//                         "ID": "gno.land/p/demo/avl.Node"
+-//                     },
+-//                     "V": {
+-//                         "@type": "/gno.RefValue",
+-//                         "Hash": "b58581159917d8d7ad0992009d7184fc8ca00fcc",
+-//                         "ObjectID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:101"
+-//                     }
+-//                 }
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/p/demo/avl.Node"
+-//                 }
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.PointerValue",
+-//                 "Base": null,
+-//                 "Index": "0",
+-//                 "TV": {
+-//                     "T": {
+-//                         "@type": "/gno.RefType",
+-//                         "ID": "gno.land/p/demo/avl.Node"
+-//                     },
+-//                     "V": {
+-//                         "@type": "/gno.RefValue",
+-//                         "Hash": "fb593e86d35aaf607e0d21e6bd4f84519c44585f",
+-//                         "ObjectID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:110"
+-//                     }
+-//                 }
+-//             }
+-//         }
+-//     ],
+-//     "ObjectInfo": {
+-//         "ID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:109",
+-//         "ModTime": "0",
+-//         "OwnerID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:96",
+-//         "RefCount": "1"
+-//     }
+-// }
+-// c[f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:112]={
+-//     "Fields": [
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/p/demo/avl.Node"
+-//                 }
+-//             }
+-//         }
+-//     ],
+-//     "ObjectInfo": {
+-//         "ID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:112",
+-//         "ModTime": "0",
+-//         "OwnerID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:111",
+-//         "RefCount": "1"
+-//     }
+-// }
+-// c[f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:113]={
+-//     "Fields": [
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/p/demo/avl.Node"
+-//                 }
+-//             }
+-//         }
+-//     ],
+-//     "ObjectInfo": {
+-//         "ID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:113",
+-//         "ModTime": "0",
+-//         "OwnerID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:111",
+-//         "RefCount": "1"
+-//     }
+-// }
+-// c[f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:114]={
+-//     "Fields": [
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/p/demo/avl.Node"
+-//                 }
+-//             }
+-//         }
+-//     ],
+-//     "ObjectInfo": {
+-//         "ID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:114",
+-//         "ModTime": "0",
+-//         "OwnerID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:111",
+-//         "RefCount": "1"
+-//     }
+-// }
+-// c[f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:115]={
+-//     "Fields": [
+-//         {
+-//             "N": "AAAAgJSeXbo=",
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "65536"
+-//             }
+-//         },
+-//         {
+-//             "N": "AbSNdvQQIhE=",
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "1024"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "time.Location"
+-//                 }
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.PointerValue",
+-//                 "Base": {
+-//                     "@type": "/gno.RefValue",
+-//                     "Escaped": true,
+-//                     "ObjectID": "336074805fc853987abe6f7fe3ad97a6a6f3077a:2"
+-//                 },
+-//                 "Index": "188",
+-//                 "TV": null
+-//             }
+-//         }
+-//     ],
+-//     "ObjectInfo": {
+-//         "ID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:115",
+-//         "ModTime": "0",
+-//         "OwnerID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:111",
+-//         "RefCount": "1"
+-//     }
+-// }
+-// c[f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:116]={
+-//     "Fields": [
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "65536"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "1024"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "time.Location"
+-//                 }
+-//             }
+-//         }
+-//     ],
+-//     "ObjectInfo": {
+-//         "ID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:116",
+-//         "ModTime": "0",
+-//         "OwnerID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:111",
+-//         "RefCount": "1"
+-//     }
+-// }
+-// c[f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:111]={
+-//     "Fields": [
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/r/demo/boards.Board"
+-//                 }
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.PointerValue",
+-//                 "Base": null,
+-//                 "Index": "0",
+-//                 "TV": {
+-//                     "T": {
+-//                         "@type": "/gno.RefType",
+-//                         "ID": "gno.land/r/demo/boards.Board"
+-//                     },
+-//                     "V": {
+-//                         "@type": "/gno.RefValue",
+-//                         "Escaped": true,
+-//                         "ObjectID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:81"
+-//                     }
+-//                 }
+-//             }
+-//         },
+-//         {
+-//             "N": "BAAAAAAAAAA=",
+-//             "T": {
+-//                 "@type": "/gno.RefType",
+-//                 "ID": "gno.land/r/demo/boards.PostID"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.RefType",
+-//                 "ID": "std.Address"
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.StringValue",
+-//                 "value": "g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "16"
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.StringValue",
+-//                 "value": ""
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "16"
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.StringValue",
+-//                 "value": "Second reply of the second post"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.RefType",
+-//                 "ID": "gno.land/p/demo/avl.Tree"
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.RefValue",
+-//                 "Hash": "130542396d7549d1d516a3ef4a63bb44ef3da06f",
+-//                 "ObjectID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:112"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.RefType",
+-//                 "ID": "gno.land/p/demo/avl.Tree"
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.RefValue",
+-//                 "Hash": "80acd8746478317194b8546170335c796a4dfb3f",
+-//                 "ObjectID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:113"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.RefType",
+-//                 "ID": "gno.land/p/demo/avl.Tree"
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.RefValue",
+-//                 "Hash": "c1a8f769f3b9d52dd38ac4759116edaca287636f",
+-//                 "ObjectID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:114"
+-//             }
+-//         },
+-//         {
+-//             "N": "AgAAAAAAAAA=",
+-//             "T": {
+-//                 "@type": "/gno.RefType",
+-//                 "ID": "gno.land/r/demo/boards.PostID"
+-//             }
+-//         },
+-//         {
+-//             "N": "AgAAAAAAAAA=",
+-//             "T": {
+-//                 "@type": "/gno.RefType",
+-//                 "ID": "gno.land/r/demo/boards.PostID"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.RefType",
+-//                 "ID": "gno.land/r/demo/boards.BoardID"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.RefType",
+-//                 "ID": "time.Time"
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.RefValue",
+-//                 "Hash": "8164abed5231309c88497013f7da72a1b5d427b0",
+-//                 "ObjectID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:115"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.RefType",
+-//                 "ID": "time.Time"
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.RefValue",
+-//                 "Hash": "c3a60b602b564d07677a212372f4ac1cae4270fd",
+-//                 "ObjectID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:116"
+-//             }
+-//         }
+-//     ],
+-//     "ObjectInfo": {
+-//         "ID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:111",
+-//         "IsEscaped": true,
+-//         "ModTime": "0",
+-//         "RefCount": "2"
+-//     }
+-// }
+-// u[f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:108]={
+-//     "Fields": [
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "16"
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.StringValue",
+-//                 "value": "0000000003"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/r/demo/boards.Post"
+-//                 }
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.PointerValue",
+-//                 "Base": null,
+-//                 "Index": "0",
+-//                 "TV": {
+-//                     "T": {
+-//                         "@type": "/gno.RefType",
+-//                         "ID": "gno.land/r/demo/boards.Post"
+-//                     },
+-//                     "V": {
+-//                         "@type": "/gno.RefValue",
+-//                         "Escaped": true,
+-//                         "ObjectID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:102"
+-//                     }
+-//                 }
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "64"
+-//             }
+-//         },
+-//         {
+-//             "N": "AQAAAAAAAAA=",
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "32"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/p/demo/avl.Node"
+-//                 }
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/p/demo/avl.Node"
+-//                 }
+-//             }
+-//         }
+-//     ],
+-//     "ObjectInfo": {
+-//         "ID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:108",
+-//         "ModTime": "117",
+-//         "OwnerID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:117",
+-//         "RefCount": "1"
+-//     }
+-// }
+-// c[f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:118]={
+-//     "Fields": [
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "16"
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.StringValue",
+-//                 "value": "0000000004"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/r/demo/boards.Post"
+-//                 }
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.PointerValue",
+-//                 "Base": null,
+-//                 "Index": "0",
+-//                 "TV": {
+-//                     "T": {
+-//                         "@type": "/gno.RefType",
+-//                         "ID": "gno.land/r/demo/boards.Post"
+-//                     },
+-//                     "V": {
+-//                         "@type": "/gno.RefValue",
+-//                         "Escaped": true,
+-//                         "ObjectID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:111"
+-//                     }
+-//                 }
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "64"
+-//             }
+-//         },
+-//         {
+-//             "N": "AQAAAAAAAAA=",
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "32"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/p/demo/avl.Node"
+-//                 }
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/p/demo/avl.Node"
+-//                 }
+-//             }
+-//         }
+-//     ],
+-//     "ObjectInfo": {
+-//         "ID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:118",
+-//         "ModTime": "0",
+-//         "OwnerID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:117",
+-//         "RefCount": "1"
+-//     }
+-// }
+-// c[f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:117]={
+-//     "Fields": [
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "16"
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.StringValue",
+-//                 "value": "0000000004"
+-//             }
+-//         },
+-//         {},
+-//         {
+-//             "N": "AQAAAAAAAAA=",
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "64"
+-//             }
+-//         },
+-//         {
+-//             "N": "AgAAAAAAAAA=",
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "32"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/p/demo/avl.Node"
+-//                 }
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.PointerValue",
+-//                 "Base": null,
+-//                 "Index": "0",
+-//                 "TV": {
+-//                     "T": {
+-//                         "@type": "/gno.RefType",
+-//                         "ID": "gno.land/p/demo/avl.Node"
+-//                     },
+-//                     "V": {
+-//                         "@type": "/gno.RefValue",
+-//                         "Hash": "6a86bc7763703c8f2b9d286368921159d6db121c",
+-//                         "ObjectID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:108"
+-//                     }
+-//                 }
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/p/demo/avl.Node"
+-//                 }
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.PointerValue",
+-//                 "Base": null,
+-//                 "Index": "0",
+-//                 "TV": {
+-//                     "T": {
+-//                         "@type": "/gno.RefType",
+-//                         "ID": "gno.land/p/demo/avl.Node"
+-//                     },
+-//                     "V": {
+-//                         "@type": "/gno.RefValue",
+-//                         "Hash": "52faa8a2dfefd4b6b6249eff2f9c123ad455e81d",
+-//                         "ObjectID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:118"
+-//                     }
+-//                 }
+-//             }
+-//         }
+-//     ],
+-//     "ObjectInfo": {
+-//         "ID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:117",
+-//         "ModTime": "0",
+-//         "OwnerID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:97",
+-//         "RefCount": "1"
+-//     }
+-// }
+-// u[f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:81]={
+-//     "Fields": [
+-//         {
+-//             "N": "AQAAAAAAAAA=",
+-//             "T": {
+-//                 "@type": "/gno.RefType",
+-//                 "ID": "gno.land/r/demo/boards.BoardID"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "16"
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.StringValue",
+-//                 "value": "/r/demo/boards:test_board"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "16"
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.StringValue",
+-//                 "value": "test_board"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.RefType",
+-//                 "ID": "std.Address"
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.StringValue",
+-//                 "value": "g1wymu47drhr0kuq2098m792lytgtj2nyx77yrsm"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.RefType",
+-//                 "ID": "gno.land/p/demo/avl.Tree"
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.RefValue",
+-//                 "Hash": "5b4b593f1d4b37cb99166247ea28174f91087fdd",
+-//                 "ObjectID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:82"
+-//             }
+-//         },
+-//         {
+-//             "N": "BAAAAAAAAAA=",
+-//             "T": {
+-//                 "@type": "/gno.PrimitiveType",
+-//                 "value": "65536"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.RefType",
+-//                 "ID": "time.Time"
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.RefValue",
+-//                 "Hash": "7e9fd9bb5e90a06c7751585cd80f23aedddde25b",
+-//                 "ObjectID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:83"
+-//             }
+-//         },
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.RefType",
+-//                 "ID": "gno.land/p/demo/avl.Tree"
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.RefValue",
+-//                 "Hash": "edb1857302fa916c562cd077cdf2a3626e29ae2b",
+-//                 "ObjectID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:84"
+-//             }
+-//         }
+-//     ],
+-//     "ObjectInfo": {
+-//         "ID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:81",
+-//         "IsEscaped": true,
+-//         "ModTime": "108",
+-//         "RefCount": "6"
+-//     }
+-// }
+-// u[f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:96]={
+-//     "Fields": [
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/p/demo/avl.Node"
+-//                 }
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.PointerValue",
+-//                 "Base": null,
+-//                 "Index": "0",
+-//                 "TV": {
+-//                     "T": {
+-//                         "@type": "/gno.RefType",
+-//                         "ID": "gno.land/p/demo/avl.Node"
+-//                     },
+-//                     "V": {
+-//                         "@type": "/gno.RefValue",
+-//                         "Hash": "609e7f519c65f94503427a14f973b4b83989cdc8",
+-//                         "ObjectID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:109"
+-//                     }
+-//                 }
+-//             }
+-//         }
+-//     ],
+-//     "ObjectInfo": {
+-//         "ID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:96",
+-//         "ModTime": "108",
+-//         "OwnerID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:95",
+-//         "RefCount": "1"
+-//     }
+-// }
+-// u[f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:97]={
+-//     "Fields": [
+-//         {
+-//             "T": {
+-//                 "@type": "/gno.PointerType",
+-//                 "Elt": {
+-//                     "@type": "/gno.RefType",
+-//                     "ID": "gno.land/p/demo/avl.Node"
+-//                 }
+-//             },
+-//             "V": {
+-//                 "@type": "/gno.PointerValue",
+-//                 "Base": null,
+-//                 "Index": "0",
+-//                 "TV": {
+-//                     "T": {
+-//                         "@type": "/gno.RefType",
+-//                         "ID": "gno.land/p/demo/avl.Node"
+-//                     },
+-//                     "V": {
+-//                         "@type": "/gno.RefValue",
+-//                         "Hash": "6760340f5b40e05221dc530940683b0b9a422503",
+-//                         "ObjectID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:117"
+-//                     }
+-//                 }
+-//             }
+-//         }
+-//     ],
+-//     "ObjectInfo": {
+-//         "ID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:97",
+-//         "ModTime": "108",
+-//         "OwnerID": "f6dbf411da22e67d74cd7ddba6a76cd7e14a4822:95",
+-//         "RefCount": "1"
+-//     }
+-// }
+-// switchrealm["gno.land/r/demo/boards"]
+-// switchrealm["gno.land/r/demo/users"]
+-// switchrealm["gno.land/r/demo/users"]
+-// switchrealm["gno.land/r/demo/users"]
+-// switchrealm["gno.land/r/demo/users"]
+-// switchrealm["gno.land/r/demo/users"]
+-// switchrealm["gno.land/r/demo/users"]
+-// switchrealm["gno.land/r/demo/users"]
+-// switchrealm["gno.land/r/demo/users"]
+-// switchrealm["gno.land/r/demo/users"]
+-// switchrealm["gno.land/r/demo/boards"]
+-// switchrealm["gno.land/r/boards_test"]
+diff --git a/examples/gno.land/r/demo/boards/z_5_filetest.gno b/examples/gno.land/r/demo/boards/z_5_filetest.gno
+index 421d944078..d9ebf69e0d 100644
+--- a/examples/gno.land/r/demo/boards/z_5_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_5_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_6_filetest.gno b/examples/gno.land/r/demo/boards/z_6_filetest.gno
+index 2a392808d3..6647848894 100644
+--- a/examples/gno.land/r/demo/boards/z_6_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_6_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_7_filetest.gno b/examples/gno.land/r/demo/boards/z_7_filetest.gno
+index 1294f72c1b..bb46372ec7 100644
+--- a/examples/gno.land/r/demo/boards/z_7_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_7_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 2000000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_8_filetest.gno b/examples/gno.land/r/demo/boards/z_8_filetest.gno
+index 5ba0b34ad3..c4e6c33643 100644
+--- a/examples/gno.land/r/demo/boards/z_8_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_8_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 2000000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_9_a_filetest.gno b/examples/gno.land/r/demo/boards/z_9_a_filetest.gno
+index 9ba9786c51..351235fba3 100644
+--- a/examples/gno.land/r/demo/boards/z_9_a_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_9_a_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_9_b_filetest.gno b/examples/gno.land/r/demo/boards/z_9_b_filetest.gno
+index 4d53f60f10..7715456564 100644
+--- a/examples/gno.land/r/demo/boards/z_9_b_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_9_b_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/boards/z_9_filetest.gno b/examples/gno.land/r/demo/boards/z_9_filetest.gno
+index 66f8950732..7461a3b67c 100644
+--- a/examples/gno.land/r/demo/boards/z_9_filetest.gno
++++ b/examples/gno.land/r/demo/boards/z_9_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/boards_test
+-package boards_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/groups/z_0_a_filetest.gno b/examples/gno.land/r/demo/groups/z_0_a_filetest.gno
+index 41d515b9d0..95c5c2d0e6 100644
+--- a/examples/gno.land/r/demo/groups/z_0_a_filetest.gno
++++ b/examples/gno.land/r/demo/groups/z_0_a_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/groups_test
+-package groups_test
++package main
+ 
+ import (
+ 	"gno.land/r/demo/groups"
+diff --git a/examples/gno.land/r/demo/groups/z_0_b_filetest.gno b/examples/gno.land/r/demo/groups/z_0_b_filetest.gno
+index ca74c59913..047a5915bb 100644
+--- a/examples/gno.land/r/demo/groups/z_0_b_filetest.gno
++++ b/examples/gno.land/r/demo/groups/z_0_b_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/groups_test
+-package groups_test
++package main
+ 
+ import (
+ 	"gno.land/r/demo/groups"
+diff --git a/examples/gno.land/r/demo/groups/z_0_c_filetest.gno b/examples/gno.land/r/demo/groups/z_0_c_filetest.gno
+index 10a4771c52..92fc412374 100644
+--- a/examples/gno.land/r/demo/groups/z_0_c_filetest.gno
++++ b/examples/gno.land/r/demo/groups/z_0_c_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/groups_test
+-package groups_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/groups/z_1_a_filetest.gno b/examples/gno.land/r/demo/groups/z_1_a_filetest.gno
+index 460fb79afb..8a957f1de1 100644
+--- a/examples/gno.land/r/demo/groups/z_1_a_filetest.gno
++++ b/examples/gno.land/r/demo/groups/z_1_a_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/groups_test
+-package groups_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/groups/z_1_b_filetest.gno b/examples/gno.land/r/demo/groups/z_1_b_filetest.gno
+index 3271e74e28..99ed8e39b1 100644
+--- a/examples/gno.land/r/demo/groups/z_1_b_filetest.gno
++++ b/examples/gno.land/r/demo/groups/z_1_b_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/groups_test
+-package groups_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/groups/z_1_c_filetest.gno b/examples/gno.land/r/demo/groups/z_1_c_filetest.gno
+index 93cd3b39d5..e2988c7d9d 100644
+--- a/examples/gno.land/r/demo/groups/z_1_c_filetest.gno
++++ b/examples/gno.land/r/demo/groups/z_1_c_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/groups_test
+-package groups_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/groups/z_2_a_filetest.gno b/examples/gno.land/r/demo/groups/z_2_a_filetest.gno
+index f4a96905fc..7136ae0433 100644
+--- a/examples/gno.land/r/demo/groups/z_2_a_filetest.gno
++++ b/examples/gno.land/r/demo/groups/z_2_a_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/groups_test
+-package groups_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/groups/z_2_b_filetest.gno b/examples/gno.land/r/demo/groups/z_2_b_filetest.gno
+index bf10939c66..5614c8039b 100644
+--- a/examples/gno.land/r/demo/groups/z_2_b_filetest.gno
++++ b/examples/gno.land/r/demo/groups/z_2_b_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/groups_test
+-package groups_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/groups/z_2_d_filetest.gno b/examples/gno.land/r/demo/groups/z_2_d_filetest.gno
+index 95f22f4ec4..c45e6c3b2a 100644
+--- a/examples/gno.land/r/demo/groups/z_2_d_filetest.gno
++++ b/examples/gno.land/r/demo/groups/z_2_d_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/groups_test
+-package groups_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/groups/z_2_e_filetest.gno b/examples/gno.land/r/demo/groups/z_2_e_filetest.gno
+index 270ddb8aa3..6ebc4d8bbe 100644
+--- a/examples/gno.land/r/demo/groups/z_2_e_filetest.gno
++++ b/examples/gno.land/r/demo/groups/z_2_e_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/groups_test
+-package groups_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/groups/z_2_f_filetest.gno b/examples/gno.land/r/demo/groups/z_2_f_filetest.gno
+index 4ec0ec211f..9c51e31edf 100644
+--- a/examples/gno.land/r/demo/groups/z_2_f_filetest.gno
++++ b/examples/gno.land/r/demo/groups/z_2_f_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/groups_test
+-package groups_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/groups/z_2_g_filetest.gno b/examples/gno.land/r/demo/groups/z_2_g_filetest.gno
+index 8f98cfeb2d..cd5ebf62c8 100644
+--- a/examples/gno.land/r/demo/groups/z_2_g_filetest.gno
++++ b/examples/gno.land/r/demo/groups/z_2_g_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/groups_test
+-package groups_test
++package main
+ 
+ // SEND: 200000000ugnot
+ 
+diff --git a/examples/gno.land/r/demo/tests/subtests/subtests.gno b/examples/gno.land/r/demo/tests/subtests/subtests.gno
+index e8796a7308..5cc4d1bea1 100644
+--- a/examples/gno.land/r/demo/tests/subtests/subtests.gno
++++ b/examples/gno.land/r/demo/tests/subtests/subtests.gno
+@@ -15,3 +15,11 @@ func GetPrevRealm() std.Realm {
+ func Exec(fn func()) {
+ 	fn()
+ }
++
++func AssertOriginCall() {
++	std.AssertOriginCall()
++}
++
++func IsOriginCall() bool {
++	return std.IsOriginCall()
++}
+diff --git a/examples/gno.land/r/demo/tests/tests.gno b/examples/gno.land/r/demo/tests/tests.gno
+index fb49b2273a..67ae4bc917 100644
+--- a/examples/gno.land/r/demo/tests/tests.gno
++++ b/examples/gno.land/r/demo/tests/tests.gno
+@@ -28,6 +28,14 @@ func IsOriginCall() bool {
+ 	return std.IsOriginCall()
+ }
+ 
++func RSubtestsAssertOriginCall() {
++	rsubtests.AssertOriginCall()
++}
++
++func RSubtestsIsOriginCall() bool {
++	return rsubtests.IsOriginCall()
++}
++
+ //----------------------------------------
+ // Test structure to ensure cross-realm modification is prevented.
+ 
+diff --git a/examples/gno.land/r/demo/tests/tests_test.gno b/examples/gno.land/r/demo/tests/tests_test.gno
+index 3dcbeecf18..3c92613d3d 100644
+--- a/examples/gno.land/r/demo/tests/tests_test.gno
++++ b/examples/gno.land/r/demo/tests/tests_test.gno
+@@ -22,14 +22,10 @@ func TestAssertOriginCall(t *testing.T) {
+ 			t.Errorf("expected panic with '%v', got '%v'", expectedReason, r)
+ 		}
+ 	}()
+-	func() {
+-		// if called inside a function literal, this is no longer an origin call
+-		// because there's one additional frame (the function literal).
+-		if IsOriginCall() {
+-			t.Errorf("expected IsOriginCall=false but got true")
+-		}
+-		AssertOriginCall()
+-	}()
++	if RSubtestsIsOriginCall() {
++		t.Errorf("expected RSubtestsIsOriginCall=false but got true")
++	}
++	RSubtestsAssertOriginCall()
+ }
+ 
+ func TestPrevRealm(t *testing.T) {
+diff --git a/examples/gno.land/r/demo/tests/z0_filetest.gno b/examples/gno.land/r/demo/tests/z0_filetest.gno
+index c4beb8e200..2f5ab9fa05 100644
+--- a/examples/gno.land/r/demo/tests/z0_filetest.gno
++++ b/examples/gno.land/r/demo/tests/z0_filetest.gno
+@@ -9,16 +9,12 @@ func main() {
+ 	tests.AssertOriginCall()
+ 	println("AssertOriginCall doesn't panic when called directly")
+ 
+-	func() {
+-		// if called inside a function literal, this is no longer an origin call
+-		// because there's one additional frame (the function literal).
+-		println("IsOriginCall:", tests.IsOriginCall())
+-		defer func() {
+-			r := recover()
+-			println("AssertOriginCall panics if when called inside a function literal:", r)
+-		}()
+-		tests.AssertOriginCall()
++	println("IsOriginCall:", tests.RSubtestsIsOriginCall())
++	defer func() {
++		r := recover()
++		println("AssertOriginCall panics if when called inside a function literal:", r)
+ 	}()
++	tests.RSubtestsAssertOriginCall()
+ }
+ 
+ // Output:
+diff --git a/examples/gno.land/r/demo/users/z_10_filetest.gno b/examples/gno.land/r/demo/users/z_10_filetest.gno
+index 0065d907e4..607ced8e2d 100644
+--- a/examples/gno.land/r/demo/users/z_10_filetest.gno
++++ b/examples/gno.land/r/demo/users/z_10_filetest.gno
+@@ -1,5 +1,4 @@
+-// PKGPATH: gno.land/r/users_test
+-package users_test
++package main
+ 
+ import (
+ 	"std"
+diff --git a/gnovm/stdlibs/frame.go b/gnovm/stdlibs/frame.go
+index e428bb1776..a8c50ee6bf 100644
+--- a/gnovm/stdlibs/frame.go
++++ b/gnovm/stdlibs/frame.go
+@@ -1,6 +1,9 @@
+ package stdlibs
+ 
+-import "github.com/gnolang/gno/tm2/pkg/crypto"
++import (
++	gno "github.com/gnolang/gno/gnovm/pkg/gnolang"
++	"github.com/gnolang/gno/tm2/pkg/crypto"
++)
+ 
+ type Realm struct {
+ 	addr    crypto.Bech32Address
+@@ -18,3 +21,39 @@ func (r Realm) PkgPath() string {
+ func (r Realm) IsUser() bool {
+ 	return r.pkgPath == ""
+ }
++
++// isOriginCall returns true if the std.OrigCaller == std.PrevRealm
++func isOriginCall(m *gno.Machine) bool {
++	return prevRealm(m).addr == m.Context.(ExecContext).OrigCaller
++}
++
++// prevRealm loops on frames and returns the second realm found in the calling
++// order. If no such realm was found, returns the tx signer (aka OrigCaller).
++func prevRealm(m *gno.Machine) Realm {
++	var lastRealmPath string
++	for i := m.NumFrames() - 1; i > 0; i-- {
++		fr := m.Frames[i]
++		if fr.LastPackage == nil || !fr.LastPackage.IsRealm() {
++			// Ignore non-realm frame
++			continue
++		}
++		realmPath := fr.LastPackage.PkgPath
++		if lastRealmPath == "" {
++			// Record the path of the first encountered realm and continue
++			lastRealmPath = realmPath
++			continue
++		}
++		if lastRealmPath != realmPath {
++			// Second realm detected, return it.
++			return Realm{
++				addr:    fr.LastPackage.GetPkgAddr().Bech32(),
++				pkgPath: realmPath,
++			}
++		}
++	}
++	// No second realm found, return the tx signer.
++	return Realm{
++		addr:    m.Context.(ExecContext).OrigCaller,
++		pkgPath: "", // empty for users
++	}
++}
+diff --git a/gnovm/stdlibs/frame_test.go b/gnovm/stdlibs/frame_test.go
+new file mode 100644
+index 0000000000..fdcb324cd0
+--- /dev/null
++++ b/gnovm/stdlibs/frame_test.go
+@@ -0,0 +1,125 @@
++package stdlibs
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	gno "github.com/gnolang/gno/gnovm/pkg/gnolang"
++)
++
++func TestPrevRealmIsOrigin(t *testing.T) {
++	var (
++		user = gno.DerivePkgAddr("user1.gno").Bech32()
++		ctx  = ExecContext{
++			OrigCaller: user,
++		}
++	)
++	tests := []struct {
++		name                 string
++		machine              *gno.Machine
++		expectedRealm        Realm
++		expectedIsOriginCall bool
++	}{
++		{
++			name: "no frames",
++			machine: &gno.Machine{
++				Context: ctx,
++				Frames:  []gno.Frame{},
++			},
++			expectedRealm: Realm{
++				addr:    user,
++				pkgPath: "",
++			},
++			expectedIsOriginCall: true,
++		},
++		{
++			name: "one frame w/o LastPackage",
++			machine: &gno.Machine{
++				Context: ctx,
++				Frames: []gno.Frame{
++					{LastPackage: nil},
++				},
++			},
++			expectedRealm: Realm{
++				addr:    user,
++				pkgPath: "",
++			},
++			expectedIsOriginCall: true,
++		},
++		{
++			name: "one non-realm frame",
++			machine: &gno.Machine{
++				Context: ctx,
++				Frames: []gno.Frame{
++					{LastPackage: &gno.PackageValue{PkgPath: "gno.land/p/xxx"}},
++				},
++			},
++			expectedRealm: Realm{
++				addr:    user,
++				pkgPath: "",
++			},
++			expectedIsOriginCall: true,
++		},
++		{
++			name: "one realm frame",
++			machine: &gno.Machine{
++				Context: ctx,
++				Frames: []gno.Frame{
++					{LastPackage: &gno.PackageValue{PkgPath: "gno.land/r/xxx"}},
++				},
++			},
++			expectedRealm: Realm{
++				addr:    user,
++				pkgPath: "",
++			},
++			expectedIsOriginCall: true,
++		},
++		{
++			name: "multiple frames with one realm",
++			machine: &gno.Machine{
++				Context: ctx,
++				Frames: []gno.Frame{
++					{LastPackage: &gno.PackageValue{PkgPath: "gno.land/p/xxx"}},
++					{LastPackage: &gno.PackageValue{PkgPath: "gno.land/p/xxx"}},
++					{LastPackage: &gno.PackageValue{PkgPath: "gno.land/r/xxx"}},
++				},
++			},
++			expectedRealm: Realm{
++				addr:    user,
++				pkgPath: "",
++			},
++			expectedIsOriginCall: true,
++		},
++		{
++			name: "multiple frames with multiple realms",
++			machine: &gno.Machine{
++				Context: ctx,
++				Frames: []gno.Frame{
++					{LastPackage: &gno.PackageValue{PkgPath: "gno.land/r/zzz"}},
++					{LastPackage: &gno.PackageValue{PkgPath: "gno.land/r/zzz"}},
++					{LastPackage: &gno.PackageValue{PkgPath: "gno.land/r/yyy"}},
++					{LastPackage: &gno.PackageValue{PkgPath: "gno.land/p/yyy"}},
++					{LastPackage: &gno.PackageValue{PkgPath: "gno.land/p/xxx"}},
++					{LastPackage: &gno.PackageValue{PkgPath: "gno.land/r/xxx"}},
++				},
++			},
++			expectedRealm: Realm{
++				addr:    gno.DerivePkgAddr("gno.land/r/yyy").Bech32(),
++				pkgPath: "gno.land/r/yyy",
++			},
++			expectedIsOriginCall: false,
++		},
++	}
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			assert := assert.New(t)
++
++			realm := prevRealm(tt.machine)
++			isOrigin := isOriginCall(tt.machine)
++
++			assert.Equal(tt.expectedRealm, realm)
++			assert.Equal(tt.expectedIsOriginCall, isOrigin)
++		})
++	}
++}
+diff --git a/gnovm/stdlibs/stdlibs.go b/gnovm/stdlibs/stdlibs.go
+index fb230a0cf8..2e73665a18 100644
+--- a/gnovm/stdlibs/stdlibs.go
++++ b/gnovm/stdlibs/stdlibs.go
+@@ -151,8 +151,7 @@ func InjectPackage(store gno.Store, pn *gno.PackageNode) {
+ 			gno.Flds( // results
+ 			),
+ 			func(m *gno.Machine) {
+-				isOrigin := len(m.Frames) == 2
+-				if !isOrigin {
++				if !isOriginCall(m) {
+ 					m.Panic(typedString("invalid non-origin call"))
+ 					return
+ 				}
+@@ -165,7 +164,7 @@ func InjectPackage(store gno.Store, pn *gno.PackageNode) {
+ 				"isOrigin", "bool",
+ 			),
+ 			func(m *gno.Machine) {
+-				isOrigin := len(m.Frames) == 2
++				isOrigin := isOriginCall(m)
+ 				res0 := gno.TypedValue{T: gno.BoolType}
+ 				res0.SetBool(isOrigin)
+ 				m.PushValue(res0)
+@@ -308,47 +307,13 @@ func InjectPackage(store gno.Store, pn *gno.PackageNode) {
+ 				"", "Realm",
+ 			),
+ 			func(m *gno.Machine) {
+-				var (
+-					ctx = m.Context.(ExecContext)
+-					// Default lastCaller is OrigCaller, the signer of the tx
+-					lastCaller  = ctx.OrigCaller
+-					lastPkgPath = ""
+-				)
+-
+-				for i := m.NumFrames() - 1; i > 0; i-- {
+-					fr := m.Frames[i]
+-					if fr.LastPackage == nil || !fr.LastPackage.IsRealm() {
+-						// Ignore non-realm frame
+-						continue
+-					}
+-					pkgPath := fr.LastPackage.PkgPath
+-					// The first realm we encounter will be the one calling
+-					// this function; to get the calling realm determine the first frame
+-					// where fr.LastPackage changes.
+-					if lastPkgPath == "" {
+-						lastPkgPath = pkgPath
+-					} else if lastPkgPath == pkgPath {
+-						continue
+-					} else {
+-						lastCaller = fr.LastPackage.GetPkgAddr().Bech32()
+-						lastPkgPath = pkgPath
+-						break
+-					}
+-				}
+-
+-				// Empty the pkgPath if we return a user
+-				if ctx.OrigCaller == lastCaller {
+-					lastPkgPath = ""
+-				}
++				realm := prevRealm(m)
+ 
+ 				// Return the result
+ 				res0 := gno.Go2GnoValue(
+ 					m.Alloc,
+ 					m.Store,
+-					reflect.ValueOf(Realm{
+-						addr:    lastCaller,
+-						pkgPath: lastPkgPath,
+-					}),
++					reflect.ValueOf(realm),
+ 				)
+ 
+ 				realmT := store.GetType(gno.DeclaredTypeID("std", "Realm"))
+diff --git a/gnovm/tests/files/std9.gno b/gnovm/tests/files/std9.gno
+deleted file mode 100644
+index 95ccfb2c8a..0000000000
+--- a/gnovm/tests/files/std9.gno
++++ /dev/null
+@@ -1,14 +0,0 @@
+-package main
+-
+-import "std"
+-
+-func main() {
+-	defer func() {
+-		// assert panic is recoverable
+-		println(recover())
+-	}()
+-	std.AssertOriginCall()
+-}
+-
+-// Output:
+-// invalid non-origin call
+diff --git a/gnovm/tests/files/zrealm_tests0.gno b/gnovm/tests/files/zrealm_tests0.gno
+index cfb1f08c6f..036e91b8a8 100644
+--- a/gnovm/tests/files/zrealm_tests0.gno
++++ b/gnovm/tests/files/zrealm_tests0.gno
+@@ -245,7 +245,7 @@ func main() {
+ //                                     "BlockNode": null,
+ //                                     "Location": {
+ //                                         "File": "tests.gno",
+-//                                         "Line": "42",
++//                                         "Line": "50",
+ //                                         "Nonce": "0",
+ //                                         "PkgPath": "gno.land/r/demo/tests"
+ //                                     }
+@@ -301,7 +301,7 @@ func main() {
+ //                                     "BlockNode": null,
+ //                                     "Location": {
+ //                                         "File": "tests.gno",
+-//                                         "Line": "42",
++//                                         "Line": "50",
+ //                                         "Nonce": "0",
+ //                                         "PkgPath": "gno.land/r/demo/tests"
+ //                                     }
+@@ -734,6 +734,94 @@ func main() {
+ //         {
+ //             "T": {
+ //                 "@type": "/gno.FuncType",
++//                 "Params": [],
++//                 "Results": []
++//             },
++//             "V": {
++//                 "@type": "/gno.FuncValue",
++//                 "Closure": {
++//                     "@type": "/gno.RefValue",
++//                     "Escaped": true,
++//                     "ObjectID": "0ffe7732b4d549b4cf9ec18bd68641cd2c75ad0a:4"
++//                 },
++//                 "FileName": "tests.gno",
++//                 "IsMethod": false,
++//                 "Name": "RSubtestsAssertOriginCall",
++//                 "PkgPath": "gno.land/r/demo/tests",
++//                 "Source": {
++//                     "@type": "/gno.RefNode",
++//                     "BlockNode": null,
++//                     "Location": {
++//                         "File": "tests.gno",
++//                         "Line": "31",
++//                         "Nonce": "0",
++//                         "PkgPath": "gno.land/r/demo/tests"
++//                     }
++//                 },
++//                 "Type": {
++//                     "@type": "/gno.FuncType",
++//                     "Params": [],
++//                     "Results": []
++//                 }
++//             }
++//         },
++//         {
++//             "T": {
++//                 "@type": "/gno.FuncType",
++//                 "Params": [],
++//                 "Results": [
++//                     {
++//                         "Embedded": false,
++//                         "Name": "",
++//                         "Tag": "",
++//                         "Type": {
++//                             "@type": "/gno.PrimitiveType",
++//                             "value": "4"
++//                         }
++//                     }
++//                 ]
++//             },
++//             "V": {
++//                 "@type": "/gno.FuncValue",
++//                 "Closure": {
++//                     "@type": "/gno.RefValue",
++//                     "Escaped": true,
++//                     "ObjectID": "0ffe7732b4d549b4cf9ec18bd68641cd2c75ad0a:4"
++//                 },
++//                 "FileName": "tests.gno",
++//                 "IsMethod": false,
++//                 "Name": "RSubtestsIsOriginCall",
++//                 "PkgPath": "gno.land/r/demo/tests",
++//                 "Source": {
++//                     "@type": "/gno.RefNode",
++//                     "BlockNode": null,
++//                     "Location": {
++//                         "File": "tests.gno",
++//                         "Line": "35",
++//                         "Nonce": "0",
++//                         "PkgPath": "gno.land/r/demo/tests"
++//                     }
++//                 },
++//                 "Type": {
++//                     "@type": "/gno.FuncType",
++//                     "Params": [],
++//                     "Results": [
++//                         {
++//                             "Embedded": false,
++//                             "Name": "",
++//                             "Tag": "",
++//                             "Type": {
++//                                 "@type": "/gno.PrimitiveType",
++//                                 "value": "4"
++//                             }
++//                         }
++//                     ]
++//                 }
++//             }
++//         },
++//         {
++//             "T": {
++//                 "@type": "/gno.FuncType",
+ //                 "Params": [
+ //                     {
+ //                         "Embedded": false,
+@@ -766,7 +854,7 @@ func main() {
+ //                     "BlockNode": null,
+ //                     "Location": {
+ //                         "File": "tests.gno",
+-//                         "Line": "38",
++//                         "Line": "46",
+ //                         "Nonce": "0",
+ //                         "PkgPath": "gno.land/r/demo/tests"
+ //                     }
+@@ -813,7 +901,7 @@ func main() {
+ //                     "BlockNode": null,
+ //                     "Location": {
+ //                         "File": "tests.gno",
+-//                         "Line": "60",
++//                         "Line": "68",
+ //                         "Nonce": "0",
+ //                         "PkgPath": "gno.land/r/demo/tests"
+ //                     }
+@@ -847,7 +935,7 @@ func main() {
+ //                     "BlockNode": null,
+ //                     "Location": {
+ //                         "File": "tests.gno",
+-//                         "Line": "65",
++//                         "Line": "73",
+ //                         "Nonce": "0",
+ //                         "PkgPath": "gno.land/r/demo/tests"
+ //                     }
+@@ -881,7 +969,7 @@ func main() {
+ //                     "BlockNode": null,
+ //                     "Location": {
+ //                         "File": "tests.gno",
+-//                         "Line": "73",
++//                         "Line": "81",
+ //                         "Nonce": "0",
+ //                         "PkgPath": "gno.land/r/demo/tests"
+ //                     }
+@@ -925,7 +1013,7 @@ func main() {
+ //                     "BlockNode": null,
+ //                     "Location": {
+ //                         "File": "tests.gno",
+-//                         "Line": "77",
++//                         "Line": "85",
+ //                         "Nonce": "0",
+ //                         "PkgPath": "gno.land/r/demo/tests"
+ //                     }
+@@ -979,7 +1067,7 @@ func main() {
+ //                     "BlockNode": null,
+ //                     "Location": {
+ //                         "File": "tests.gno",
+-//                         "Line": "81",
++//                         "Line": "89",
+ //                         "Nonce": "0",
+ //                         "PkgPath": "gno.land/r/demo/tests"
+ //                     }
+@@ -1034,7 +1122,7 @@ func main() {
+ //                     "BlockNode": null,
+ //                     "Location": {
+ //                         "File": "tests.gno",
+-//                         "Line": "85",
++//                         "Line": "93",
+ //                         "Nonce": "0",
+ //                         "PkgPath": "gno.land/r/demo/tests"
+ //                     }
+diff --git a/gnovm/tests/imports.go b/gnovm/tests/imports.go
+index fc2820ce00..f4ad1a8d3e 100644
+--- a/gnovm/tests/imports.go
++++ b/gnovm/tests/imports.go
+@@ -471,22 +471,6 @@ func TestStore(rootDir, filesPath string, stdin io.Reader, stdout, stderr io.Wri
+ func testPackageInjector(store gno.Store, pn *gno.PackageNode) {
+ 	// Also inject stdlibs native functions.
+ 	stdlibs.InjectPackage(store, pn)
+-	isOriginCall := func(m *gno.Machine) bool {
+-		tname := m.Frames[0].Func.Name
+-		switch tname {
+-		case "main": // test is a _filetest
+-			return len(m.Frames) == 3
+-		case "runtest": // test is a _test
+-			return len(m.Frames) == 7
+-		}
+-		// support init() in _filetest
+-		// XXX do we need to distinguish from 'runtest'/_test?
+-		// XXX pretty hacky even if not.
+-		if strings.HasPrefix(string(tname), "init.") {
+-			return len(m.Frames) == 3
+-		}
+-		panic("unable to determine if test is a _test or a _filetest")
+-	}
+ 	// Test specific injections:
+ 	switch pn.PkgPath {
+ 	case "strconv":
+@@ -497,34 +481,6 @@ func testPackageInjector(store gno.Store, pn *gno.PackageNode) {
+ 	case "std":
+ 		// NOTE: some of these are overrides.
+ 		// Also see stdlibs/InjectPackage.
+-		pn.DefineNativeOverride("AssertOriginCall",
+-			/*
+-				gno.Flds( // params
+-				),
+-				gno.Flds( // results
+-				),
+-			*/
+-			func(m *gno.Machine) {
+-				if !isOriginCall(m) {
+-					m.Panic(typedString("invalid non-origin call"))
+-					return
+-				}
+-			},
+-		)
+-		pn.DefineNativeOverride("IsOriginCall",
+-			/*
+-				gno.Flds( // params
+-				),
+-				gno.Flds( // results
+-					"isOrigin", "bool",
+-				),
+-			*/
+-			func(m *gno.Machine) {
+-				res0 := gno.TypedValue{T: gno.BoolType}
+-				res0.SetBool(isOriginCall(m))
+-				m.PushValue(res0)
+-			},
+-		)
+ 		pn.DefineNativeOverride("GetCallerAt",
+ 			/*
+ 				gno.Flds( // params
