@@ -220,6 +220,8 @@ func xNewGame(opponentRaw string, seconds, increment int) string {
 
 	opponent := parsePlayer(opponentRaw)
 	caller := std.GetOrigCaller()
+	getPlayerStats(opponent).StartedGames++
+	getPlayerStats(caller).StartedGames++
 	assertUserNotInLobby(caller)
 
 	return newGame(caller, opponent, seconds, increment).json()
@@ -359,6 +361,10 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 	isBlack := len(g.Position.Moves)%2 == 1
 
 	caller := std.GetOrigCaller()
+
+	// see stats.gno
+	getPlayerStats(caller).Moves++
+
 	if (isBlack && g.Black != caller) ||
 		(!isBlack && g.White != caller) {
 		// either not a player involved; or not the caller's turn.
@@ -372,6 +378,7 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 			g.State = GameStateAborted
 			g.Concluder = &caller
 			g.Winner = WinnerNone
+			g.updateEndgameStats()
 			return g.json()
 		}
 		if !valid {
@@ -381,6 +388,7 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 			} else {
 				g.Winner = WinnerWhite
 			}
+			g.updateEndgameStats()
 			g.saveResult()
 			return g.json()
 		}
@@ -425,7 +433,6 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 	case o == Stalemate:
 		g.State = GameStateStalemate
 		g.Winner = WinnerDraw
-
 	case o == Drawn75Move:
 		g.State = GameStateDrawn75Move
 		g.Winner = WinnerDraw
@@ -433,8 +440,10 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 		g.State = GameStateDrawn5Fold
 		g.Winner = WinnerDraw
 	}
+
 	g.DrawOfferer = nil
 	g.saveResult()
+	g.updateEndgameStats()
 
 	return g.json()
 }
@@ -461,6 +470,7 @@ func (g *Game) claimTimeout() error {
 			g.Concluder = &g.White
 		}
 		g.Winner = WinnerNone
+		g.updateEndgameStats()
 		return nil
 	}
 
@@ -471,8 +481,8 @@ func (g *Game) claimTimeout() error {
 		g.Winner = WinnerWhite
 	}
 	g.DrawOfferer = nil
+	g.updateEndgameStats()
 	g.saveResult()
-
 	return nil
 }
 
@@ -542,8 +552,8 @@ func resign(g *Game) error {
 		return errors.New("you are not involved in this game")
 	}
 	g.DrawOfferer = nil
+	g.updateEndgameStats()
 	g.saveResult()
-
 	return nil
 }
 
@@ -606,9 +616,8 @@ func Draw(gameID string) string {
 		g.State = GameStateDrawnByAgreement
 		g.Winner = WinnerDraw
 		g.Concluder = &caller
-
 		g.saveResult()
-
+		g.updateEndgameStats()
 		return g.json()
 	}
 
@@ -626,8 +635,7 @@ func Draw(gameID string) string {
 	g.Concluder = &caller
 	g.Winner = WinnerDraw
 	g.DrawOfferer = nil
-
 	g.saveResult()
-
+	g.updateEndgameStats()
 	return g.json()
 }

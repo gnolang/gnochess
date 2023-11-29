@@ -22,6 +22,7 @@ func cleanup() {
 	lobby = [tcLobbyMax][]lobbyPlayer{}
 	lobbyPlayer2Game = avl.Tree{}
 	playerRatings = [CategoryMax][]*PlayerRating{}
+	allPlayerStats = avl.Tree{}
 }
 
 func TestNewGame(t *testing.T) {
@@ -116,6 +117,8 @@ var commandTests = [...]string{
 		newgame
 		# contains "white":"g1black" "black":"g1white"
 		#id equal 000000002
+		stats white # contains moves:2 started:2 won:0 lost:1 timedout:0 resigned:1 drawn:0 serious:0
+		stats black # contains moves:1 started:2 won:1 lost:0 timedout:0 resigned:0 drawn:0 serious:0
 	`,
 	// Otherwise, invert from p1's history.
 	`	name ColoursInvert3p
@@ -141,6 +144,8 @@ var commandTests = [...]string{
 		# contains "address":"g1white" "position":0 "wins":1 "losses":0 "draws":0
 		player black
 		# contains "address":"g1black" "position":1 "wins":0 "losses":1 "draws":0
+		stats white # contains moves:4 started:1 won:1 lost:0 timedout:0 resigned:0 drawn:0 serious:1
+		stats black # contains moves:3 started:1 won:0 lost:1 timedout:0 resigned:0 drawn:0 serious:1
 	`,
 	`	name DrawByAgreement
 		newgame
@@ -155,12 +160,15 @@ var commandTests = [...]string{
 		# contains "open" "concluder":null "draw_offerer":"g1white"
 		draw black
 		# contains "drawn_by_agreement" "concluder":"g1black" "draw_offerer":"g1white"
+		stats white # contains moves:2 started:1 won:0 lost:0 timedout:0 resigned:0 drawn:1 serious:0
+		stats black # contains moves:2 started:1 won:0 lost:0 timedout:0 resigned:0 drawn:1 serious:0
 	`,
 	`	name AbortFirstMove
 		newgame
 		abort white # contains "winner":"none" "concluder":"g1white"
+		stats white # contains moves:0 started:1 won:0 lost:0 timedout:0 resigned:0 drawn:0 serious:0
+		stats black # contains moves:0 started:1 won:0 lost:0 timedout:0 resigned:0 drawn:0 serious:0
 	`,
-
 	`	name ThreefoldRepetition
 		newgame
 
@@ -176,6 +184,8 @@ var commandTests = [...]string{
 
 		draw black # contains "winner":"draw" "concluder":"g1black"
 		# contains "state":"drawn_3_fold"
+		stats white # contains moves:4 started:1 won:0 lost:0 timedout:0 resigned:0 drawn:1 serious:0
+		stats black # contains moves:4 started:1 won:0 lost:0 timedout:0 resigned:0 drawn:1 serious:0
 	`,
 	`	name FivefoldRepetition
 		newgame
@@ -203,6 +213,8 @@ var commandTests = [...]string{
 		# contains "winner":"draw" "concluder":null "state":"drawn_5_fold"
 
 		move white g1f3 #panic contains game is already finished
+		stats white # contains moves:8 started:1 won:0 lost:0 timedout:0 resigned:0 drawn:1 serious:0
+		stats black # contains moves:8 started:1 won:0 lost:0 timedout:0 resigned:0 drawn:1 serious:0
 	`,
 	`	name TimeoutAborted
 		newgame white black 3
@@ -213,6 +225,8 @@ var commandTests = [...]string{
 		# contains e2e4
 		# contains "aborted"
 		# contains "concluder":"g1black"
+		stats white # contains moves:1 started:1 won:0 lost:0 timedout:1 resigned:0 drawn:0 serious:0
+		stats black # contains moves:1 started:1 won:0 lost:0 timedout:1 resigned:0 drawn:0 serious:0
 	`,
 	`	name TimeoutAbandoned
 		newgame white black 1
@@ -221,6 +235,8 @@ var commandTests = [...]string{
 		sleep 61
 		timeout black
 		# contains "state":"timeout" "winner":"black"
+		stats white # contains moves:1 started:1 won:0 lost:1 timedout:1 resigned:0 drawn:0 serious:0
+		stats black # contains moves:1 started:1 won:1 lost:0 timedout:1 resigned:0 drawn:0 serious:0
 	`,
 }
 
@@ -334,6 +350,14 @@ func (tc *testCommandSleep) Run(t *testing.T, bufs map[string]string) {
 	os_test.Sleep(tc.dur)
 }
 
+type testCommandStats struct {
+	addr string
+}
+
+func (tc *testCommandStats) Run(t *testing.T, bufs map[string]string) {
+	bufs["result"] = GetPlayerStats(std.Address(tc.addr)).String()
+}
+
 type testChecker struct {
 	fn    func(t *testing.T, bufs map[string]string, tc *testChecker)
 	tf    func(*testing.T, string, ...interface{})
@@ -441,6 +465,8 @@ func parseCommandTest(t *testing.T, command string) (funcs []testCommandRunner, 
 			funcs = append(funcs, newTestCommandColorID(ClaimTimeout, "timeout", command[1]))
 		case "resign":
 			funcs = append(funcs, newTestCommandColorID(Resign, "resign", command[1]))
+		case "stats":
+			funcs = append(funcs, &testCommandStats{"g1" + command[1]})
 		case "game":
 			if len(command) > 2 {
 				panic("invalid game command " + line)
