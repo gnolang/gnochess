@@ -12,6 +12,7 @@ import (
 
 	"gno.land/p/demo/avl"
 	"gno.land/p/demo/chess"
+	"gno.land/p/demo/chess/glicko2"
 )
 
 func cleanup() {
@@ -22,7 +23,7 @@ func cleanup() {
 	leaderboard = [CategoryMax]leaderboardType{}
 	lobby = [tcLobbyMax][]lobbyPlayer{}
 	lobbyPlayer2Game = avl.Tree{}
-	playerRatings = [CategoryMax][]*PlayerRating{}
+	playerRatings = [CategoryMax][]*glicko2.PlayerRating{}
 }
 
 func TestNewGame(t *testing.T) {
