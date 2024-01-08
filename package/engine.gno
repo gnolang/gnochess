@@ -1,9 +1,12 @@
-// This file is focused on elemental types and functions for handling
-// chess games. Thus, the move legality rules are implemented here.
+// Package chess implements a simple chess engine, designed to implement all
+// of the official FIDE rules with the intention of validating moves for a
+// "chess server" realm (gno.land/r/demo/chess).
 //
-// To verify the following section, see the FIDE "Laws of Chess":
+// To implement the rules, the FIDE "Laws of Chess" are used as a reference:
 // https://www.fide.com/FIDE/handbook/LawsOfChess.pdf
-
+//
+// This package was designed with a focus on clarity and on using this code as
+// a didactic tool. Any contributions to the code should respect this.
 package chess
 
 import (
@@ -11,6 +14,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"gno.land/p/demo/chess/zobrist"
 )
 
 // PositionFlags. The lower 4 bits indicate an en passant column; the upper
@@ -51,6 +56,8 @@ func (p PositionFlags) CastlingRights() string {
 
 // Position contains the information about a chessboard, and surrounding
 // context: the previous moves, the castling rights and "en passant" column.
+//
+// NOTE: the position of a piece is encoded in a [Square].
 type Position struct {
 	B     Board
 	Moves []Move
@@ -70,7 +77,7 @@ func NewPosition() Position {
 	return Position{
 		B:      NewBoard(),
 		Moves:  make([]Move, 0, 80), // typical chess game is ~40 moves, 80 half-moves
-		Hashes: []uint64{hashInitialPosition},
+		Hashes: []uint64{zobrist.InitialPosition},
 	}
 }
 
@@ -206,6 +213,7 @@ func (p Position) ValidateMove(m Move) (newP Position, valid bool) {
 
 // validateMove allows for m to be a "king-capture" move, which is illegal in
 // chess, but it is useful for InCheck.
+// This is commonly known in chess programming as a "pseudo-legal" move.
 func (oldp Position) validateMove(m Move) (_ Position, ok bool) {
 	p := oldp.clone()
 
@@ -447,7 +455,7 @@ func (oldp Position) validateMove(m Move) (_ Position, ok bool) {
 		p.Hashes,
 		// color is inverted, because we consider the present move as already
 		// done (hence, it is the other player to move).
-		zobrist(p.B, bool(!color), byte(p.Flags)>>4, ep),
+		zobrist.Hash(zobrist.Board(p.B), bool(!color), byte(p.Flags)>>4, ep),
 	)
 
 	// is our king in check, as a result of the current move?
@@ -957,6 +965,13 @@ func (c Color) Piece() Piece {
 
 // Piece represents a piece on the board.
 type Piece byte
+
+// PieceFromChar returns the piece corresponding to the given character.
+// White pieces are uppercase, and black pieces are lowercase.
+// If a piece is invalid, PieceInvalid is returned.
+func PieceFromChar(b byte) Piece {
+	return p[b]
+}
 
 // piece character to internal piece
 var p = [256]Piece{

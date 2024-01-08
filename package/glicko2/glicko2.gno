@@ -1,16 +1,14 @@
-package chess
+package glicko2
 
 import (
 	"bytes"
 	"math"
 	"std"
+
 	"strconv"
 )
 
 // http://www.glicko.net/glicko/glicko2.pdf
-
-// realm global variable containing player ratings.
-var playerRatings [CategoryMax][]*PlayerRating
 
 const (
 	// Step 1.
@@ -80,7 +78,7 @@ func getRatingScore(scores []RatingScore, player, opponent std.Address) float64 
 	return -1
 }
 
-func updateRatings(source []*PlayerRating, scores []RatingScore) {
+func UpdateRatings(source []*PlayerRating, scores []RatingScore) {
 	// step 2: assign working wr/wrd/wrv
 	for i, player := range source {
 		player.wr = (player.Rating - GlickoInitialRating) / glickoScaleFactor

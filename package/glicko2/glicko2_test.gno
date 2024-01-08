@@ -1,4 +1,4 @@
-package chess
+package glicko2
 
 import (
 	"testing"
@@ -20,6 +20,10 @@ func TestExampleCalculations(t *testing.T) {
 		{White: "1", Black: "3", Score: 0},
 		{White: "1", Black: "4", Score: 0},
 	}
-	updateRatings(ratings, scores)
-	t.Logf("%+v\n", ratings[0])
+	UpdateRatings(ratings, scores)
+	r := ratings[0]
+	t.Logf("%.4f (± %.4f, volatility: %.4f); working values: %.2f / %.2f / %.2f\n",
+		r.Rating, r.RatingDeviation, r.RatingVolatility,
+		r.wr, r.wrd, r.wrv,
+	)
 }
