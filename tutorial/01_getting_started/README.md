@@ -189,10 +189,13 @@ block" to contain 10^13 ugnot.
 > _ugnot_ is to $GNOT what [satoshi](https://www.investopedia.com/terms/s/satoshi.asp)
 > is to bitcoin; the smallest, indivisible denomination of the token.
 
-Execute the following command, and input the mnemonic below:
+Execute the following command, a passphrase to use the key, the passphrase repeated, and input the mnemonic below:
 
 ```console
 gnokey add test1 --recover
+# Enter a passphrase to encrypt your key to disk:
+# Repeat the passphrase:
+# Enter your bip39 mnemonic
 ```
 
 ```
