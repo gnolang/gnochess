@@ -1,9 +1,11 @@
-name: rules
+name: perft
 
 on:
   pull_request:
     paths:
-      - "realm/rules.gno"
+      - "package/**"
+      - "Makefile"
+      - "go.sum"
   push:
     branches:
       - master
@@ -19,4 +21,4 @@ jobs:
         with:
           go-version: 'stable'
       - run: go mod download -x
-      - run: go run github.com/gnolang/gno/gnovm/cmd/gno test -verbose -run 'TestPerft' ./realm
+      - run: make test.perft

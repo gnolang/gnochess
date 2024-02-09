@@ -7,22 +7,22 @@ GNOCMD ?= go run github.com/gnolang/gno/gnovm/cmd/gno
 GNODEV ?= go run github.com/gnolang/gno/contribs/gnodev
 
 GNOROOT ?= `gno env GNOROOT`
-GNO_TEST_FLAGS ?= -verbose -run '^Test(?:[^P]|P[^e]|Pe[^r])'
+GNO_TEST_FLAGS ?= -verbose
 GNO_TEST_PKGS ?= gno.land/p/demo/chess/... gno.land/r/demo/chess
 
 MNEMONIC_TEST1 ?= source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast
 
 .PHONY: help
 help: ## Display this help message.
-	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make [\033[36m<target>\033[0m...]\n"} /^[0-9a-zA-Z_\.-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make [\033[36m<target>\033[0m...]\n"} /^[[0-9a-zA-Z_\.-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
 .PHONY: clean
 clean: ## Remove temporary files.
 	find . -name '*.gen.go' -exec rm -rf {} +
 	rm -rf .test
 
-.PHONY: test
-test: ## Test packages and realms.
+.PHONY: test.prepare
+test.prepare:
 	rm -rf .test
 	# Create fake GNOROOT with stdlibs, testing stdlibs, and p/ dependencies.
 	# This is currently necessary as gno.mod's `replace` functionality is not linked with the VM.
@@ -35,12 +35,14 @@ test: ## Test packages and realms.
 	# Copy over gnochess code.
 	cp -r "$(PWD)/package" ".test/examples/gno.land/p/demo/chess"
 	cp -r "$(PWD)/realm" ".test/examples/gno.land/r/demo/chess"
-	# Test.
-	cd .test/examples; GNOROOT="$(PWD)/.test" $(GNOCMD) test $(GNO_TEST_FLAGS) $(GNO_TEST_PKGS)
 
-gnokey.add_test1: ## Add an account that will be used for Realm deployment (to gnokey).
-	printf '\n\n%s\n\n' "$(MNEMONIC_TEST1)" | $(GNOKEY) add --recover --insecure-password-stdin test1 || true
-	$(GNOKEY) list | grep test1
+.PHONY: test
+test: test.prepare ## Test packages and realms.
+	cd .test/examples; GNOROOT="$(PWD)/.test" $(GNOCMD) test -run '^Test(?:[^P]|P[^e]|Pe[^r])' $(GNO_TEST_FLAGS) $(GNO_TEST_PKGS)
+
+.PHONY: test.perft
+test.perft: test.prepare ## Run perft tests.
+	cd .test/examples; GNOROOT="$(PWD)/.test" $(GNOCMD) test -run 'TestPerft' $(GNO_TEST_FLAGS) gno.land/p/demo/chess
 
 run.faucet: ## Run the GnoChess faucet.
 	cd faucet; go run main.go \
@@ -89,7 +91,11 @@ run.web: ## Run the web server.
 run.gnodev: ## Run gnodev with the gnochess packages and realm.
 	$(GNODEV) ./package/glicko2 ./package/zobrist ./package ./realm
 
-z_test_integration: ## Test the realm.
+z_add_test1: ## Add the test1 key to gnokey.
+	printf '\n\n%s\n\n' "$(MNEMONIC_TEST1)" | $(GNOKEY) add --recover --insecure-password-stdin test1 || true
+	$(GNOKEY) list | grep test1
+
+z_test_integration: ## Test the realm using integration tests.
 	go test -v -run='TestIntegration/.*'  .
 
 z_build_realm: ## Precompile and build the generated Go files. Assumes a working clone of gno in ../gno.

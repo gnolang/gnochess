@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "realm/**"
+      - "packages/**"
       - "Makefile"
       - "go.sum"
   push:
@@ -21,4 +22,4 @@ jobs:
         with:
           go-version: 'stable'
       - run: go mod download -x
-      - run: go run github.com/gnolang/gno/gnovm/cmd/gno test -verbose ./realm
+      - run: make test

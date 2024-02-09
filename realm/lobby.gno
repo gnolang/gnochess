@@ -65,7 +65,7 @@ var (
 )
 
 func LobbyJoin(seconds, increment int) {
-	std.AssertOriginCall()
+	assertOriginCall()
 
 	var tc tcLobby
 	switch {
