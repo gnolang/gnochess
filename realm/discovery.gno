@@ -5,6 +5,7 @@ package chess
 
 import (
 	"bytes"
+	"math"
 	"sort"
 	"std"
 	"strconv"
@@ -113,6 +114,36 @@ func (p Player) LeaderboardPosition(cat Category) int {
 	return pos
 }
 
+func marshalPlayerRating(p *glicko2.PlayerRating) ([]byte, error) {
+	var buf bytes.Buffer
+	buf.WriteByte('{')
+	buf.WriteString(`"rating":` + formatFloat(p.Rating, 5) + `,`)
+	buf.WriteString(`"deviation":` + formatFloat(p.RatingDeviation, 5) + `,`)
+	buf.WriteString(`"volatility":` + formatFloat(p.RatingVolatility, 5))
+	buf.WriteByte('}')
+	return buf.Bytes(), nil
+}
+
+// XXX: dumb formatFloat implementation while we don't have strconv.FormatFloat
+// https://github.com/gnolang/gno/pull/1464
+func formatFloat(f float64, decimals int) string {
+	if decimals > 10 {
+		decimals = 10
+	}
+	neg := ""
+	if f < 0 {
+		f *= -1
+		neg = "-"
+	}
+	const zeroes = "0000000000" // 10 zeroes
+	whole := math.Floor(f)
+	fractional := f - whole
+	leading := strconv.Itoa(int(whole))
+	trailing := strconv.Itoa(int(fractional * 1e10))
+	trailing = zeroes[:10-len(trailing)] + trailing
+	return neg + leading + "." + trailing
+}
+
 func (p Player) MarshalJSON() ([]byte, error) {
 	u := users.GetUserByAddress(p.Address)
 
@@ -133,7 +164,7 @@ func (p Player) MarshalJSON() ([]byte, error) {
 		buf.WriteString(`"losses":` + strconv.Itoa(stat.Losses) + ",")
 		buf.WriteString(`"draws":` + strconv.Itoa(stat.Draws) + ",")
 		buf.WriteString(`"rating":`)
-		if res, err := stat.PlayerRating.MarshalJSON(); err != nil {
+		if res, err := marshalPlayerRating(stat.PlayerRating); err != nil {
 			return nil, err
 		} else {
 			buf.Write(res)

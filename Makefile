@@ -57,6 +57,7 @@ run.faucet: ## Run the GnoChess faucet.
 		-fund-limit 250000000ugnot \
 		-send-amount 1000000000ugnot \
 		-chain-id tendermint_test \
+		-remote http://127.0.0.1:36657 \
 		-tokens juhb8a7p1D -tokens 6wrBVqzBgQ -tokens Ko3z72NaQm -tokens 6j7v0lDR39 -tokens xqh4stG702 \
 		-tokens lWGjlfP5rs -tokens UG8f8igNO6 -tokens b3JUurpCFb -tokens 4azfjy6hE9 -tokens dzNR5KAz2r \
 		-tokens lZOO7O5OeE -tokens epxa67WQ2c -tokens GnfMj2sDCO -tokens kDN7hiiSWE -tokens OtLfdJC279 \

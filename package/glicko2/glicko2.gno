@@ -50,36 +50,6 @@ func NewPlayerRating(addr std.Address) *PlayerRating {
 	}
 }
 
-func (p PlayerRating) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	buf.WriteByte('{')
-	buf.WriteString(`"rating":` + formatFloat(p.Rating, 5) + `,`)
-	buf.WriteString(`"deviation":` + formatFloat(p.RatingDeviation, 5) + `,`)
-	buf.WriteString(`"volatility":` + formatFloat(p.RatingVolatility, 5))
-	buf.WriteByte('}')
-	return buf.Bytes(), nil
-}
-
-// XXX: dumb formatFloat implementation while we don't have strconv.FormatFloat
-// https://github.com/gnolang/gno/pull/1464
-func formatFloat(f float64, decimals int) string {
-	if decimals > 10 {
-		decimals = 10
-	}
-	neg := ""
-	if f < 0 {
-		f *= -1
-		neg = "-"
-	}
-	const zeroes = "0000000000" // 10 zeroes
-	whole := math.Floor(f)
-	fractional := f - whole
-	leading := strconv.Itoa(int(whole))
-	trailing := strconv.Itoa(int(fractional * 1e10))
-	trailing = zeroes[:10-len(trailing)] + trailing
-	return neg + leading + "." + trailing
-}
-
 // RatingScore is the outcome of a game between two players.
 type RatingScore struct {
 	White, Black std.Address
