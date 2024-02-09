@@ -6,7 +6,7 @@ GNOLAND ?= go run github.com/gnolang/gno/gno.land/cmd/gnoland
 GNOCMD ?= go run github.com/gnolang/gno/gnovm/cmd/gno
 GNODEV ?= go run github.com/gnolang/gno/contribs/gnodev
 
-GNOROOT ?= `gno env GNOROOT`
+GNOROOT ?= `$(GNOCMD) env GNOROOT`
 GNO_TEST_FLAGS ?= -verbose
 GNO_TEST_PKGS ?= gno.land/p/demo/chess/... gno.land/r/demo/chess
 
