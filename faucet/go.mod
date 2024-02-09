@@ -3,12 +3,12 @@ module github.com/gnolang/gnochess-faucet
 go 1.20
 
 require (
-	github.com/gnolang/faucet v0.0.0-20230916181707-934303e1b40d
+	github.com/gnolang/faucet v0.0.0-20240112121623-353b2f2ae616
 	github.com/gnolang/gno v0.0.0-20230914214026-ef6a55bf9db2
 	github.com/peterbourgon/ff/v3 v3.4.0
 	github.com/redis/go-redis/v9 v9.2.0
 	go.uber.org/zap v1.26.0
-	golang.org/x/sync v0.3.0
+	golang.org/x/sync v0.6.0
 )
 
 require (
@@ -22,7 +22,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/gnolang/goleveldb v0.0.9 // indirect
 	github.com/gnolang/overflow v0.0.0-20170615021017-4d914c927216 // indirect
-	github.com/go-chi/chi/v5 v5.0.10 // indirect
+	github.com/go-chi/chi/v5 v5.0.11 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
@@ -36,7 +36,7 @@ require (
 	github.com/linxGnu/grocksdb v1.8.4 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/rs/cors v1.10.0 // indirect
+	github.com/rs/cors v1.10.1 // indirect
 	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c // indirect
 	go.etcd.io/bbolt v1.3.7 // indirect
 	go.opencensus.io v0.22.5 // indirect

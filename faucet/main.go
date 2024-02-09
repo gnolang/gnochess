@@ -37,7 +37,7 @@ const (
 	defaultGasFee    = "1000000ugnot"
 	defaultGasWanted = "100000"
 	defaultFundLimit = "100ugnot"
-	defaultRemote    = "http://127.0.0.1:26657"
+	defaultRemote    = "http://127.0.0.1:36657"
 )
 
 const (
