@@ -600,6 +600,7 @@ func runCommandTest(t *testing.T, command string) {
 
 func catchPanic(tc testCommandRunner, t *testing.T, bufs map[string]string) {
 	defer func() {
+		// XXX: should prefer testing.Recover, but see: https://github.com/gnolang/gno/issues/1650
 		e := recover()
 		if e == nil {
 			bufs["panic"] = ""

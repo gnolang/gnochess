@@ -1,10 +1,42 @@
+.PHONY: default
 default: help
 
 GNOKEY ?= go run github.com/gnolang/gno/gno.land/cmd/gnokey
 GNOLAND ?= go run github.com/gnolang/gno/gno.land/cmd/gnoland
+GNODEV ?= go run github.com/gnolang/gno/contribs/gnodev
 
+GNOROOT ?= `gno env GNOROOT`
+GNO_TEST_FLAGS ?= -verbose -run '^Test(?:[^P]|P[^e]|Pe[^r])'
+GNO_TEST_PKGS ?= gno.land/p/demo/chess/... gno.land/r/demo/chess
+
+.PHONY: help
 help: ## Display this help message.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[0-9a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+
+.PHONY: dev
+dev:
+	$(GNODEV) ./package/glicko2 ./package/zobrist ./package ./realm
+
+.PHONY: clean
+clean:
+	find . -name '*.gen.go' -exec rm -rf {} +
+
+.PHONY: test
+test:
+	rm -rf .test
+	# Create fake GNOROOT with stdlibs, testing stdlibs, and p/ dependencies.
+	# This is currently necessary as gno.mod's `replace` functionality is not linked with the VM.
+	mkdir -p .test/gnovm/tests .test/examples/gno.land/p/demo .test/examples/gno.land/r/demo
+	cp -r "$(GNOROOT)/gnovm/stdlibs" .test/gnovm/stdlibs
+	cp -r "$(GNOROOT)/gnovm/tests/stdlibs" .test/gnovm/tests/stdlibs
+	for i in gno.land/p/demo/ufmt gno.land/p/demo/avl gno.land/r/demo/users; do \
+		cp -r "$(GNOROOT)/examples/$$i" ".test/examples/$$i";\
+	done
+	# Copy over gnochess code.
+	cp -r "$(PWD)/package" ".test/examples/gno.land/p/demo/chess"
+	cp -r "$(PWD)/realm" ".test/examples/gno.land/r/demo/chess"
+	# Test.
+	cd .test/examples; GNOROOT="$(PWD)/.test" gno test $(GNO_TEST_FLAGS) $(GNO_TEST_PKGS)
 
 0_setup_gnokey: ## Add an account that will be used for Realm deployment (to gnokey).
 	printf '\n\n%s\n\n' "source bonus chronic canvas draft south burst lottery vacant surface solve popular case indicate oppose farm nothing bullet exhibit title speed wink action roast" | $(GNOKEY) add --recover --insecure-password-stdin DeployKey || true
