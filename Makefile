@@ -37,13 +37,21 @@ test.prepare:
 	cp -r "$(PWD)/realm" ".test/examples/gno.land/r/demo/chess"
 
 .PHONY: test
-test: test.prepare ## Test packages and realms.
+test: test.prepare ## Test packages and realms using gno, excluding perft tests.
 	cd .test/examples; GNOROOT="$(PWD)/.test" $(GNOCMD) test -run '^Test(?:[^P]|P[^e]|Pe[^r])' $(GNO_TEST_FLAGS) $(GNO_TEST_PKGS)
 
 .PHONY: test.perft
 test.perft: test.prepare ## Run perft tests.
 	cd .test/examples; GNOROOT="$(PWD)/.test" $(GNOCMD) test -run 'TestPerft' $(GNO_TEST_FLAGS) gno.land/p/demo/chess
 
+.PHONY: test.integration
+test.integration: ## Test the realm using integration tests.
+	go test -v ./util/integration
+
+.PHONY: test.all
+test.all: test test.perft test.integration ## Run all tests
+
+.PHONY: run.faucet
 run.faucet: ## Run the GnoChess faucet.
 	cd faucet; go run main.go \
 		-fund-limit 250000000ugnot \
@@ -76,6 +84,7 @@ run.faucet: ## Run the GnoChess faucet.
 		-mnemonic "$(MNEMONIC_TEST1)" \
 		-num-accounts 1
 
+.PHONY: run.web
 run.web: ## Run the web server.
 	cd web; npm install
 	( \
@@ -88,15 +97,13 @@ run.web: ## Run the web server.
 	cd web; npm run build
 	cd web; npm run dev
 
+.PHONY: run.gnodev
 run.gnodev: ## Run gnodev with the gnochess packages and realm.
 	$(GNODEV) ./package/glicko2 ./package/zobrist ./package ./realm
 
 z_add_test1: ## Add the test1 key to gnokey.
 	printf '\n\n%s\n\n' "$(MNEMONIC_TEST1)" | $(GNOKEY) add --recover --insecure-password-stdin test1 || true
 	$(GNOKEY) list | grep test1
-
-z_test_integration: ## Test the realm using integration tests.
-	go test -v -run='TestIntegration/.*'  .
 
 z_build_realm: ## Precompile and build the generated Go files. Assumes a working clone of gno in ../gno.
 	mkdir -p ../gno/examples/gno.land/r/gnochess
