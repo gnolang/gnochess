@@ -47,80 +47,6 @@ func (g Game) json() string {
 	return string(s)
 }
 
-func (g Game) MarshalJSON() (_ []byte, err error) {
-	var b bytes.Buffer
-	b.WriteByte('{')
-
-	nilAddr := func(na *std.Address) string {
-		if na == nil {
-			return `null`
-		}
-		return `"` + na.String() + `"`
-	}
-	mjson := func(s string, val func() ([]byte, error), comma bool) {
-		if err != nil {
-			return
-		}
-		var res []byte
-		res, err = val()
-		if err != nil {
-			return
-		}
-		b.WriteString(`"` + s + `":`)
-		b.Write(res)
-		if comma {
-			b.WriteByte(',')
-		}
-	}
-
-	b.WriteString(`"id":"` + g.ID + `",`)
-	b.WriteString(`"white":"` + g.White.String() + `",`)
-	b.WriteString(`"black":"` + g.Black.String() + `",`)
-
-	mjson("position", marshalPosition(g.Position), true)
-	mjson("state", g.State.MarshalJSON, true)
-	mjson("winner", g.Winner.MarshalJSON, true)
-	if err != nil {
-		return
-	}
-
-	b.WriteString(`"creator":"` + g.Creator.String() + `",`)
-	b.WriteString(`"created_at":"` + g.CreatedAt.Format(time.RFC3339) + `",`)
-	b.WriteString(`"draw_offerer":` + nilAddr(g.DrawOfferer) + ",")
-	b.WriteString(`"concluder":` + nilAddr(g.Concluder) + ",")
-
-	mjson("time", g.Time.MarshalJSON, false)
-	if err != nil {
-		return
-	}
-
-	b.WriteByte('}')
-	return b.Bytes(), nil
-}
-
-func marshalPosition(p chess.Position) func() ([]byte, error) {
-	return func() ([]byte, error) {
-		var b bytes.Buffer
-		b.WriteByte('{')
-
-		bfen := p.EncodeFEN()
-		b.WriteString(`"fen":"` + bfen + `",`)
-
-		b.WriteString(`"moves":[`)
-
-		for idx, m := range p.Moves {
-			b.WriteString(`"` + m.String() + `"`)
-			if idx != len(p.Moves)-1 {
-				b.WriteByte(',')
-			}
-		}
-
-		b.WriteByte(']')
-		b.WriteByte('}')
-		return b.Bytes(), nil
-	}
-}
-
 // Winner represents the "direct" outcome of a game
 // (white, black or draw?)
 type Winner byte
@@ -137,13 +63,6 @@ var winnerString = [...]string{
 	WinnerWhite: "white",
 	WinnerBlack: "black",
 	WinnerDraw:  "draw",
-}
-
-func (w Winner) MarshalJSON() ([]byte, error) {
-	if n := int(w); n < len(winnerString) {
-		return []byte(`"` + winnerString[n] + `"`), nil
-	}
-	return nil, errors.New("invalid winner value")
 }
 
 // GameState represents the current game state.
@@ -189,13 +108,6 @@ var gameStatesSnake = [...]string{
 	GameStateAborted:           "aborted",
 	GameStateResigned:          "resigned",
 	GameStateDrawnByAgreement:  "drawn_by_agreement",
-}
-
-func (g GameState) MarshalJSON() ([]byte, error) {
-	if int(g) >= len(gameStatesSnake) {
-		return nil, errors.New("invalid game state")
-	}
-	return []byte(`"` + gameStatesSnake[g] + `"`), nil
 }
 
 // IsFinished returns whether the game is in a finished state.

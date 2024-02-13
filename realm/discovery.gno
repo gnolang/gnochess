@@ -5,7 +5,6 @@ package chess
 
 import (
 	"bytes"
-	"math"
 	"sort"
 	"std"
 	"strconv"
@@ -112,73 +111,6 @@ func (p Player) LeaderboardPosition(cat Category) int {
 		return -1
 	}
 	return pos
-}
-
-func marshalPlayerRating(p *glicko2.PlayerRating) ([]byte, error) {
-	var buf bytes.Buffer
-	buf.WriteByte('{')
-	buf.WriteString(`"rating":` + formatFloat(p.Rating, 5) + `,`)
-	buf.WriteString(`"deviation":` + formatFloat(p.RatingDeviation, 5) + `,`)
-	buf.WriteString(`"volatility":` + formatFloat(p.RatingVolatility, 5))
-	buf.WriteByte('}')
-	return buf.Bytes(), nil
-}
-
-// XXX: dumb formatFloat implementation while we don't have strconv.FormatFloat
-// https://github.com/gnolang/gno/pull/1464
-func formatFloat(f float64, decimals int) string {
-	if decimals > 10 {
-		decimals = 10
-	}
-	neg := ""
-	if f < 0 {
-		f *= -1
-		neg = "-"
-	}
-	const zeroes = "0000000000" // 10 zeroes
-	whole := math.Floor(f)
-	fractional := f - whole
-	leading := strconv.Itoa(int(whole))
-	trailing := strconv.Itoa(int(fractional * 1e10))
-	trailing = zeroes[:10-len(trailing)] + trailing
-	return neg + leading + "." + trailing
-}
-
-func (p Player) MarshalJSON() ([]byte, error) {
-	u := users.GetUserByAddress(p.Address)
-
-	var buf bytes.Buffer
-	buf.WriteByte('{')
-
-	buf.WriteString(`"address":"` + p.Address.String() + `",`)
-	if u == nil {
-		buf.WriteString(`"username":"",`)
-	} else {
-		buf.WriteString(`"username":"` + u.Name() + `",`)
-	}
-
-	for idx, cat := range categoryList {
-		stat := p.CategoryInfo[cat]
-		buf.WriteString(`"` + cat.String() + `":{`)
-		buf.WriteString(`"wins":` + strconv.Itoa(stat.Wins) + ",")
-		buf.WriteString(`"losses":` + strconv.Itoa(stat.Losses) + ",")
-		buf.WriteString(`"draws":` + strconv.Itoa(stat.Draws) + ",")
-		buf.WriteString(`"rating":`)
-		if res, err := marshalPlayerRating(stat.PlayerRating); err != nil {
-			return nil, err
-		} else {
-			buf.Write(res)
-		}
-		buf.WriteByte(',')
-		buf.WriteString(`"position":` + strconv.Itoa(p.LeaderboardPosition(cat)))
-		buf.WriteByte('}')
-		if idx != len(categoryList)-1 {
-			buf.WriteByte(',')
-		}
-	}
-
-	buf.WriteByte('}')
-	return buf.Bytes(), nil
 }
 
 func (g *Game) saveResult() {

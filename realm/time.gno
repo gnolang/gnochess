@@ -31,33 +31,6 @@ func NewTimeControl(seconds, incr int) *TimeControl {
 	}
 }
 
-func (tc *TimeControl) MarshalJSON() ([]byte, error) {
-	if tc == nil {
-		return []byte("null"), nil
-	}
-	var buf bytes.Buffer
-
-	buf.WriteByte('{')
-	buf.WriteString(`"seconds":` + strconv.Itoa(tc.Seconds) + `,`)
-	buf.WriteString(`"increment":` + strconv.Itoa(tc.Increment) + `,`)
-	buf.WriteString(`"started_at":"` + tc.StartedAt.Format(time.RFC3339) + `",`)
-
-	buf.WriteString(`"move_timestamps":[`)
-	for idx, mt := range tc.MoveTimestamps {
-		buf.WriteString(`"` + mt.Format(time.RFC3339) + `"`)
-		if idx != len(tc.MoveTimestamps)-1 {
-			buf.WriteByte(',')
-		}
-	}
-	buf.WriteString("],")
-
-	buf.WriteString(`"white_time":` + strconv.FormatInt(tc.WhiteTime.Milliseconds(), 10) + ",")
-	buf.WriteString(`"black_time":` + strconv.FormatInt(tc.BlackTime.Milliseconds(), 10))
-	buf.WriteByte('}')
-
-	return buf.Bytes(), nil
-}
-
 // AddMove records that at the current time, a new move was added.
 func (tc *TimeControl) AddMove() (valid bool) {
 	nd, v := tc.timedOut()
