@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"gno.land/p/demo/avl"
+	"gno.land/p/demo/chess/glicko2"
 	"gno.land/r/demo/users"
 )
 
@@ -70,8 +71,9 @@ func (tc *TimeControl) Category() Category {
 
 // realm state
 var (
-	playerStore avl.Tree // std.Address -> *Player
-	leaderboard [CategoryMax]leaderboardType
+	playerStore   avl.Tree // std.Address -> *Player
+	leaderboard   [CategoryMax]leaderboardType
+	playerRatings [CategoryMax][]*glicko2.PlayerRating
 )
 
 func GetPlayer(player string) string {
@@ -93,7 +95,7 @@ type Player struct {
 
 type CategoryInfo struct {
 	Wins, Losses, Draws int
-	*PlayerRating
+	*glicko2.PlayerRating
 }
 
 // Score for determining leaderboards.
@@ -109,43 +111,6 @@ func (p Player) LeaderboardPosition(cat Category) int {
 		return -1
 	}
 	return pos
-}
-
-func (p Player) MarshalJSON() ([]byte, error) {
-	u := users.GetUserByAddress(p.Address)
-
-	var buf bytes.Buffer
-	buf.WriteByte('{')
-
-	buf.WriteString(`"address":"` + p.Address.String() + `",`)
-	if u == nil {
-		buf.WriteString(`"username":"",`)
-	} else {
-		buf.WriteString(`"username":"` + u.Name() + `",`)
-	}
-
-	for idx, cat := range categoryList {
-		stat := p.CategoryInfo[cat]
-		buf.WriteString(`"` + cat.String() + `":{`)
-		buf.WriteString(`"wins":` + strconv.Itoa(stat.Wins) + ",")
-		buf.WriteString(`"losses":` + strconv.Itoa(stat.Losses) + ",")
-		buf.WriteString(`"draws":` + strconv.Itoa(stat.Draws) + ",")
-		buf.WriteString(`"rating":`)
-		if res, err := stat.PlayerRating.MarshalJSON(); err != nil {
-			return nil, err
-		} else {
-			buf.Write(res)
-		}
-		buf.WriteByte(',')
-		buf.WriteString(`"position":` + strconv.Itoa(p.LeaderboardPosition(cat)))
-		buf.WriteByte('}')
-		if idx != len(categoryList)-1 {
-			buf.WriteByte(',')
-		}
-	}
-
-	buf.WriteByte('}')
-	return buf.Bytes(), nil
 }
 
 func (g *Game) saveResult() {
@@ -174,7 +139,7 @@ func (g *Game) saveResult() {
 
 	// Call glicko 2 rating calculator.
 	owr, obr := w.CategoryInfo[cat].Rating, b.CategoryInfo[cat].Rating
-	updateRatings(playerRatings[cat], []RatingScore{{
+	glicko2.UpdateRatings(playerRatings[cat], []glicko2.RatingScore{{
 		White: g.White,
 		Black: g.Black,
 		Score: result,
@@ -195,12 +160,12 @@ func getPlayer(addr std.Address) *Player {
 	p := new(Player)
 	p.Address = addr
 	for _, cat := range categoryList {
-		pr := NewPlayerRating(addr)
+		pr := glicko2.NewPlayerRating(addr)
 		p.CategoryInfo[cat] = CategoryInfo{
 			PlayerRating: pr,
 		}
 		// https://github.com/gnolang/gno/pull/1170
-		prs := append([]*PlayerRating{}, playerRatings[cat]...)
+		prs := append([]*glicko2.PlayerRating{}, playerRatings[cat]...)
 		playerRatings[cat] = append(prs, pr)
 	}
 	playerStore.Set(addr.String(), p)

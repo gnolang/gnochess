@@ -1,16 +1,14 @@
-package chess
+package glicko2
 
 import (
 	"bytes"
 	"math"
 	"std"
+
 	"strconv"
 )
 
 // http://www.glicko.net/glicko/glicko2.pdf
-
-// realm global variable containing player ratings.
-var playerRatings [CategoryMax][]*PlayerRating
 
 const (
 	// Step 1.
@@ -52,16 +50,6 @@ func NewPlayerRating(addr std.Address) *PlayerRating {
 	}
 }
 
-func (p PlayerRating) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	buf.WriteByte('{')
-	buf.WriteString(`"rating":` + strconv.FormatFloat(p.Rating, 'f', -1, 64) + `,`)
-	buf.WriteString(`"deviation":` + strconv.FormatFloat(p.RatingDeviation, 'f', -1, 64) + `,`)
-	buf.WriteString(`"volatility":` + strconv.FormatFloat(p.RatingVolatility, 'f', -1, 64))
-	buf.WriteByte('}')
-	return buf.Bytes(), nil
-}
-
 // RatingScore is the outcome of a game between two players.
 type RatingScore struct {
 	White, Black std.Address
@@ -80,7 +68,7 @@ func getRatingScore(scores []RatingScore, player, opponent std.Address) float64 
 	return -1
 }
 
-func updateRatings(source []*PlayerRating, scores []RatingScore) {
+func UpdateRatings(source []*PlayerRating, scores []RatingScore) {
 	// step 2: assign working wr/wrd/wrv
 	for i, player := range source {
 		player.wr = (player.Rating - GlickoInitialRating) / glickoScaleFactor

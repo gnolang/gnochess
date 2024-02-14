@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"gno.land/p/demo/avl"
+	"gno.land/p/demo/chess"
+	"gno.land/p/demo/ufmt"
 )
 
 // realm state
@@ -25,11 +27,11 @@ var (
 type Game struct {
 	ID string `json:"id"`
 
-	White    std.Address `json:"white"`
-	Black    std.Address `json:"black"`
-	Position Position    `json:"position"`
-	State    GameState   `json:"state"`
-	Winner   Winner      `json:"winner"`
+	White    std.Address    `json:"white"`
+	Black    std.Address    `json:"black"`
+	Position chess.Position `json:"position"`
+	State    GameState      `json:"state"`
+	Winner   Winner         `json:"winner"`
 
 	Creator     std.Address  `json:"creator"`
 	CreatedAt   time.Time    `json:"created_at"`
@@ -43,78 +45,6 @@ func (g Game) json() string {
 	s, err := g.MarshalJSON()
 	checkErr(err)
 	return string(s)
-}
-
-func (g Game) MarshalJSON() (_ []byte, err error) {
-	var b bytes.Buffer
-	b.WriteByte('{')
-
-	nilAddr := func(na *std.Address) string {
-		if na == nil {
-			return `null`
-		}
-		return `"` + na.String() + `"`
-	}
-	mjson := func(s string, val interface{ MarshalJSON() ([]byte, error) }, comma bool) {
-		if err != nil {
-			return
-		}
-		var res []byte
-		res, err = val.MarshalJSON()
-		if err != nil {
-			return
-		}
-		b.WriteString(`"` + s + `":`)
-		b.Write(res)
-		if comma {
-			b.WriteByte(',')
-		}
-	}
-
-	b.WriteString(`"id":"` + g.ID + `",`)
-	b.WriteString(`"white":"` + g.White.String() + `",`)
-	b.WriteString(`"black":"` + g.Black.String() + `",`)
-
-	mjson("position", g.Position, true)
-	mjson("state", g.State, true)
-	mjson("winner", g.Winner, true)
-	if err != nil {
-		return
-	}
-
-	b.WriteString(`"creator":"` + g.Creator.String() + `",`)
-	b.WriteString(`"created_at":"` + g.CreatedAt.Format(time.RFC3339) + `",`)
-	b.WriteString(`"draw_offerer":` + nilAddr(g.DrawOfferer) + ",")
-	b.WriteString(`"concluder":` + nilAddr(g.Concluder) + ",")
-
-	mjson("time", g.Time, false)
-	if err != nil {
-		return
-	}
-
-	b.WriteByte('}')
-	return b.Bytes(), nil
-}
-
-func (p Position) MarshalJSON() ([]byte, error) {
-	var b bytes.Buffer
-	b.WriteByte('{')
-
-	bfen := p.EncodeFEN()
-	b.WriteString(`"fen":"` + bfen + `",`)
-
-	b.WriteString(`"moves":[`)
-
-	for idx, m := range p.Moves {
-		b.WriteString(`"` + m.String() + `"`)
-		if idx != len(p.Moves)-1 {
-			b.WriteByte(',')
-		}
-	}
-
-	b.WriteByte(']')
-	b.WriteByte('}')
-	return b.Bytes(), nil
 }
 
 // Winner represents the "direct" outcome of a game
@@ -133,13 +63,6 @@ var winnerString = [...]string{
 	WinnerWhite: "white",
 	WinnerBlack: "black",
 	WinnerDraw:  "draw",
-}
-
-func (w Winner) MarshalJSON() ([]byte, error) {
-	if n := int(w); n < len(winnerString) {
-		return []byte(`"` + winnerString[n] + `"`), nil
-	}
-	return nil, errors.New("invalid winner value")
 }
 
 // GameState represents the current game state.
@@ -187,13 +110,6 @@ var gameStatesSnake = [...]string{
 	GameStateDrawnByAgreement:  "drawn_by_agreement",
 }
 
-func (g GameState) MarshalJSON() ([]byte, error) {
-	if int(g) >= len(gameStatesSnake) {
-		return nil, errors.New("invalid game state")
-	}
-	return []byte(`"` + gameStatesSnake[g] + `"`), nil
-}
-
 // IsFinished returns whether the game is in a finished state.
 func (g GameState) IsFinished() bool {
 	return g != GameStateOpen
@@ -212,7 +128,7 @@ func (g GameState) IsFinished() bool {
 // parallel games OR by introducing a "request" system, so that a game is not
 // immediately considered "open" when calling NewGame.
 func xNewGame(opponentRaw string, seconds, increment int) string {
-	std.AssertOriginCall()
+	assertOriginCall()
 
 	if seconds >= 0 && increment < 0 {
 		panic("negative increment invalid")
@@ -266,7 +182,7 @@ func newGame(caller, opponent std.Address, seconds, increment int) *Game {
 		ID:        id,
 		White:     caller,
 		Black:     opponent,
-		Position:  NewPosition(),
+		Position:  chess.NewPosition(),
 		State:     GameStateOpen,
 		Creator:   caller,
 		CreatedAt: time.Now(),
@@ -350,8 +266,8 @@ func getGame(id string, wantOpen bool) *Game {
 // If the piece is a pawn which is moving to the last row, a promotion piece
 // must be specified.
 // Castling is specified by indicating the king's movement.
-func MakeMove(gameID, from, to string, promote Piece) string {
-	std.AssertOriginCall()
+func MakeMove(gameID, from, to string, promote chess.Piece) string {
+	assertOriginCall()
 
 	g := getGame(gameID, true)
 
@@ -387,14 +303,14 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 	}
 
 	// validate move
-	m := Move{
-		From: SquareFromString(from),
-		To:   SquareFromString(to),
+	m := chess.Move{
+		From: chess.SquareFromString(from),
+		To:   chess.SquareFromString(to),
 	}
-	if m.From == SquareInvalid || m.To == SquareInvalid {
+	if m.From == chess.SquareInvalid || m.To == chess.SquareInvalid {
 		panic("invalid from/to square")
 	}
-	if promote > 0 && promote <= PieceKing {
+	if promote > 0 && promote <= chess.PieceKing {
 		m.Promotion = promote
 	}
 	newp, ok := g.Position.ValidateMove(m)
@@ -406,7 +322,7 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 	g.Position = newp
 
 	o := newp.IsFinished()
-	if o == NotFinished {
+	if o == chess.NotFinished {
 		// opponent of draw offerer has made a move. take as implicit rejection of draw.
 		if g.DrawOfferer != nil && *g.DrawOfferer != caller {
 			g.DrawOfferer = nil
@@ -416,20 +332,20 @@ func MakeMove(gameID, from, to string, promote Piece) string {
 	}
 
 	switch {
-	case o == Checkmate && isBlack:
+	case o == chess.Checkmate && isBlack:
 		g.State = GameStateCheckmated
 		g.Winner = WinnerBlack
-	case o == Checkmate && !isBlack:
+	case o == chess.Checkmate && !isBlack:
 		g.State = GameStateCheckmated
 		g.Winner = WinnerWhite
-	case o == Stalemate:
+	case o == chess.Stalemate:
 		g.State = GameStateStalemate
 		g.Winner = WinnerDraw
 
-	case o == Drawn75Move:
+	case o == chess.Drawn75Move:
 		g.State = GameStateDrawn75Move
 		g.Winner = WinnerDraw
-	case o == Drawn5Fold:
+	case o == chess.Drawn5Fold:
 		g.State = GameStateDrawn5Fold
 		g.Winner = WinnerDraw
 	}
@@ -488,7 +404,7 @@ func ClaimTimeout(gameID string) string {
 }
 
 func Abort(gameID string) string {
-	std.AssertOriginCall()
+	assertOriginCall()
 
 	g := getGame(gameID, true)
 	err := abort(g)
@@ -516,7 +432,7 @@ func abort(g *Game) error {
 }
 
 func Resign(gameID string) string {
-	std.AssertOriginCall()
+	assertOriginCall()
 
 	g := getGame(gameID, true)
 	err := resign(g)
@@ -550,7 +466,7 @@ func resign(g *Game) error {
 // DrawOffer creates a draw offer in the current game, if one doesn't already
 // exist.
 func DrawOffer(gameID string) string {
-	std.AssertOriginCall()
+	assertOriginCall()
 
 	g := getGame(gameID, true)
 	caller := std.GetOrigCaller()
@@ -568,7 +484,7 @@ func DrawOffer(gameID string) string {
 
 // DrawRefuse refuse a draw offer in the given game.
 func DrawRefuse(gameID string) string {
-	std.AssertOriginCall()
+	assertOriginCall()
 
 	g := getGame(gameID, true)
 	caller := std.GetOrigCaller()
@@ -592,7 +508,7 @@ func DrawRefuse(gameID string) string {
 // - Insufficient material (§9.4)
 // Note: stalemate happens as a consequence of a Move, and thus is handled in that function.
 func Draw(gameID string) string {
-	std.AssertOriginCall()
+	assertOriginCall()
 
 	g := getGame(gameID, true)
 
@@ -614,11 +530,11 @@ func Draw(gameID string) string {
 
 	o := g.Position.IsFinished()
 	switch {
-	case o&Can50Move != 0:
+	case o&chess.Can50Move != 0:
 		g.State = GameStateDrawn50Move
-	case o&Can3Fold != 0:
+	case o&chess.Can3Fold != 0:
 		g.State = GameStateDrawn3Fold
-	case o&CanInsufficient != 0:
+	case o&chess.CanInsufficient != 0:
 		g.State = GameStateDrawnInsufficient
 	default:
 		panic("this game can't be automatically drawn")
@@ -630,4 +546,18 @@ func Draw(gameID string) string {
 	g.saveResult()
 
 	return g.json()
+}
+
+func checkErr(err error) {
+	if err != nil {
+		panic(err.Error())
+	}
+}
+
+// Replacement for OriginCall using std.PrevRealm().
+// See: https://github.com/gnolang/gno/pull/1048
+func assertOriginCall() {
+	if !std.PrevRealm().IsUser() {
+		panic("invalid non-origin call")
+	}
 }

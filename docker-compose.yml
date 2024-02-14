@@ -4,32 +4,39 @@ volumes:
   gnonode: {}
   faucet: {}
 
+networks:
+  gnochess:
+    enable_ipv6: false
+
 services:
   gnoland:
-    image: ghcr.io/gnolang/gno/gnochess:latest
+    build: .
+    image: ghcr.io/gnolang/gnochess:latest
     environment:
       - LOG_LEVEL=4
-    command: ["gnoland", "start", "-genesis-max-vm-cycles", "100000000"]
-    volumes:
-      - "gnonode:/opt/gno/src/testdir"
-      - "./util/devnet/config.toml:/opt/gno/src/gno.land/testdir/config/config.toml"
-    working_dir: /opt/gno/src/gno.land
     ports:
-      - 26657:26657
+      - "26657:26657"
     restart: on-failure
+    working_dir: /opt/gno/src/gno.land
+    command: gnoland start
+    networks:
+      gnochess:
     logging:
       driver: "json-file"
       options:
         max-file: "10"
         max-size: "100m"
 
-  deployer:
-    build: ./util/devnet/deployer
+  gnoweb:
+    build: .
+    image: ghcr.io/gnolang/gnochess:latest
+    working_dir: /opt/gno/src/gno.land
+    command: gnoweb -bind 0.0.0.0:8888 -remote gnoland:26657
+    ports:
+      - "8888:8888"
     restart: on-failure
-    depends_on:
-      - gnoland
-    volumes:
-      - "./realm:/realm"
+    networks:
+      gnochess:
     logging:
       driver: "json-file"
       options:
@@ -38,9 +45,12 @@ services:
 
   web:
     build: ./web
+    image: ghcr.io/gnolang/gnochess/web:latest
     ports:
-      - 1313:1313
+      - "1313:1313"
     restart: on-failure
+    networks:
+      gnochess:
     logging:
       driver: "json-file"
       options:
@@ -56,6 +66,8 @@ services:
 
   redis:
     image: "redis:7.2"
+    networks:
+      gnochess:
     ports:
       - "6379:6379"
 
@@ -80,6 +92,10 @@ services:
     volumes:
       - "faucet:/go"
       - "./faucet:/app"
+    ports:
+      - "5050:5050"
+    networks:
+      gnochess:
 
   signup-web:
     image: node
@@ -92,9 +108,12 @@ services:
     environment:
       VITE_API_BASE_URL: "localhost:8080"
       VITE_NETLIFY_FUNCTIONS_URL: "http://localhost:9000"
+    networks:
+      gnochess:
 
   signup-functions:
     image: williamjackson/netlify-cli
+    stop_grace_period: 500ms # XXX: improve by making this a dockerfile which has dumb-init
     depends_on:
       - redis
     command: ["functions:serve", "-f", "./functions", "-p", "9000"]
@@ -106,3 +125,5 @@ services:
     environment:
       NODE_ENV: "development"
       REDIS_URL: "redis://redis:6379"
+    networks:
+      gnochess:

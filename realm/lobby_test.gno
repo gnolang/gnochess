@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"internal/os_test"
+
+	"gno.land/p/demo/chess/glicko2"
 )
 
 func TestLobbyJoin(t *testing.T) {
@@ -147,7 +149,7 @@ func TestLobbyGameFound(t *testing.T) {
 					player: &Player{
 						Address: p.id,
 						CategoryInfo: [CategoryMax]CategoryInfo{
-							Blitz: {PlayerRating: &PlayerRating{Rating: p.rating}},
+							Blitz: {PlayerRating: &glicko2.PlayerRating{Rating: p.rating}},
 						},
 					},
 				})

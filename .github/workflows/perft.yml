@@ -1,9 +1,9 @@
-name: realm
+name: perft
 
 on:
   pull_request:
     paths:
-      - "realm/**"
+      - "package/**"
       - "Makefile"
       - "go.sum"
   push:
@@ -21,4 +21,4 @@ jobs:
         with:
           go-version: 'stable'
       - run: go mod download -x
-      - run: go run github.com/gnolang/gno/gnovm/cmd/gno test -verbose -run 'Test([^P]|P[^e])' ./realm
+      - run: make test.perft

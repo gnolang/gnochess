@@ -1,25 +1,44 @@
-// this file contains an implementation of Zobrist Hashing
+// Package zobrist contains an implementation of the Zobrist Hashing algorithm.
 // https://www.chessprogramming.org/Zobrist_Hashing
+//
+// The hash is performed using a series of random numbers generated through
+// rands.go, in this source directory.
+package zobrist
 
-package chess
+// Board is a representation of a chess board.
+// Details on how to transform a chess algebraic position into an index
+// can be found at [Square].
+type Board [64]Piece
 
-/* to generate hashInitialPosition
-func init() {
-	println(
-		"initial position hash",
-		zobrist(
-			NewBoard(),
-			false,
-			0,
-			255,
-		),
-	)
-}
-*/
+// Piece represents a piece on the board.
+type Piece byte
 
-const hashInitialPosition uint64 = 1957848132405881468
+// Possible values of Piece. Within the context of Board, Piece is assumed to
+// be white, unless p&PieceBlack != 0. Note PieceBlack is not a valid piece; it
+// must be bitwise OR'd to a non-empty piece.
+const (
+	PieceEmpty Piece = iota
 
-func zobrist(b Board, isBlack bool, castling, epFile byte) uint64 {
+	PiecePawn
+	PieceRook
+	PieceKnight
+	PieceBishop
+	PieceQueen
+	PieceKing
+
+	PieceBlack Piece = 8 // bit-flag
+)
+
+// InitialPosition is the zobrist hash (as implemented by this package)
+// for the initial chess position.
+const InitialPosition uint64 = 1957848132405881468
+
+// Hash generates a Zobrist hash with the given parameter.
+//
+// castling can assume a value between [0,16),
+// epFile should be set to a value between [0,8) -- if there is no en passant
+// file, pass 255 (as a convention).
+func Hash(b Board, isBlack bool, castling, epFile byte) uint64 {
 	var hash uint64
 	if isBlack {
 		hash ^= hashBlack
@@ -28,7 +47,7 @@ func zobrist(b Board, isBlack bool, castling, epFile byte) uint64 {
 		if p == PieceEmpty {
 			continue
 		}
-		if p.Color() == White {
+		if p&PieceBlack == 0 {
 			// values 0-5
 			p--
 		} else {
@@ -44,7 +63,6 @@ func zobrist(b Board, isBlack bool, castling, epFile byte) uint64 {
 	return hash
 }
 
-// randomly generated using utils/rand.go
 var (
 	hashBlack    uint64 = 0x331cf7440c179431
 	hashCastling        = [...]uint64{

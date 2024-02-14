@@ -11,6 +11,8 @@ import (
 	"internal/os_test"
 
 	"gno.land/p/demo/avl"
+	"gno.land/p/demo/chess"
+	"gno.land/p/demo/chess/glicko2"
 )
 
 func cleanup() {
@@ -21,7 +23,7 @@ func cleanup() {
 	leaderboard = [CategoryMax]leaderboardType{}
 	lobby = [tcLobbyMax][]lobbyPlayer{}
 	lobbyPlayer2Game = avl.Tree{}
-	playerRatings = [CategoryMax][]*PlayerRating{}
+	playerRatings = [CategoryMax][]*glicko2.PlayerRating{}
 }
 
 func TestNewGame(t *testing.T) {
@@ -290,7 +292,7 @@ func (tc *testCommandNewGame) Run(t *testing.T, bufs map[string]string) {
 type testCommandMove struct {
 	addr      std.Address
 	from, to  string
-	promotion Piece
+	promotion chess.Piece
 }
 
 func (tc *testCommandMove) Run(t *testing.T, bufs map[string]string) {
@@ -418,10 +420,10 @@ func parseCommandTest(t *testing.T, command string) (funcs []testCommandRunner, 
 				panic("invalid lan move " + command[2])
 			}
 			from, to := command[2][:2], command[2][2:4]
-			var promotion Piece
+			var promotion chess.Piece
 			if len(command[2]) == 5 {
-				promotion = p[command[2][4]]
-				if promotion == PieceEmpty {
+				promotion = chess.PieceFromChar(command[2][4])
+				if promotion == chess.PieceEmpty {
 					panic("invalid piece for promotion: " + string(command[2][4]))
 				}
 			}
@@ -598,6 +600,7 @@ func runCommandTest(t *testing.T, command string) {
 
 func catchPanic(tc testCommandRunner, t *testing.T, bufs map[string]string) {
 	defer func() {
+		// XXX: should prefer testing.Recover, but see: https://github.com/gnolang/gno/issues/1650
 		e := recover()
 		if e == nil {
 			bufs["panic"] = ""
