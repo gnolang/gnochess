@@ -4,18 +4,25 @@ volumes:
   gnonode: {}
   faucet: {}
 
+networks:
+  gnochess:
+    enable_ipv6: false
+
 services:
   gnoland:
-    build: ./util/gnolanddev
+    build: .
+    image: ghcr.io/gnolang/gnochess:latest
     environment:
       - LOG_LEVEL=4
-    volumes:
-      - "gnonode:/opt/gno/src/testdir"
-      - "./util/gnolanddev/config.toml:/opt/gno/src/gno.land/testdir/config/config.toml"
-      - ".:/mnt"
     ports:
-      - 26657:26657
+      - "26657:26657"
     restart: on-failure
+    working_dir: /opt/gno/src/gno.land
+    command: gnoland start
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1
+    networks:
+      gnochess:
     logging:
       driver: "json-file"
       options:
@@ -23,12 +30,17 @@ services:
         max-size: "100m"
 
   gnoweb:
-    image: ghcr.io/gnolang/gno:latest
+    build: .
+    image: ghcr.io/gnolang/gnochess:latest
     working_dir: /opt/gno/src/gno.land
     command: gnoweb -bind 0.0.0.0:8888 -remote gnoland:26657
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1
     ports:
-      - 8888:8888
+      - "8888:8888"
     restart: on-failure
+    networks:
+      gnochess:
     logging:
       driver: "json-file"
       options:
@@ -37,9 +49,14 @@ services:
 
   web:
     build: ./web
+    image: ghcr.io/gnolang/gnochess/web:latest
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1
     ports:
-      - 1313:1313
+      - "1313:1313"
     restart: on-failure
+    networks:
+      gnochess:
     logging:
       driver: "json-file"
       options:
@@ -55,6 +72,10 @@ services:
 
   redis:
     image: "redis:7.2"
+    networks:
+      gnochess:
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1
     ports:
       - "6379:6379"
 
@@ -63,6 +84,8 @@ services:
     depends_on:
       - "redis"
       - "gnoland"
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1
     command:
       - "go"
       - "run"
@@ -79,11 +102,17 @@ services:
     volumes:
       - "faucet:/go"
       - "./faucet:/app"
+    ports:
+      - "5050:5050"
+    networks:
+      gnochess:
 
   signup-web:
     image: node
     command: ["yarn", "run", "dev", "--host=0.0.0.0", "--port=8080"]
     working_dir: "/app"
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1
     volumes:
       - "./signup:/app"
     ports:
@@ -91,10 +120,14 @@ services:
     environment:
       VITE_API_BASE_URL: "localhost:8080"
       VITE_NETLIFY_FUNCTIONS_URL: "http://localhost:9000"
+    networks:
+      gnochess:
 
   signup-functions:
     image: williamjackson/netlify-cli
     stop_grace_period: 500ms # XXX: improve by making this a dockerfile which has dumb-init
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1
     depends_on:
       - redis
     command: ["functions:serve", "-f", "./functions", "-p", "9000"]
@@ -106,3 +139,5 @@ services:
     environment:
       NODE_ENV: "development"
       REDIS_URL: "redis://redis:6379"
+    networks:
+      gnochess:
