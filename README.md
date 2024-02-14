@@ -15,6 +15,39 @@ This repository hosts both the source code for the [GnoChess realm and
 website](https://gnochess.com), as well as a dedicted tutorial section,
 originally planned to accompany a talk for Gophercon 2023.
 
+## Getting Started
+
+Running GnoChess has a few requirements:
+
+- Go 1.21+
+- Node 16+
+- make
+- git
+- A POSIX environment (ie. have a UNIX shell, so Linux or macOS.
+  WSL probably works but nobody tested it.)
+
+After cloning the repository, run `go get` to install the dependencies, then you
+can get started by running the following:
+
+```sh
+make run.web & make run.faucet & make run.gnodev
+```
+
+You can also call the three commands separately to have their individual
+outputs; here is an example with tmux:
+
+![637248](https://github.com/gnolang/gnochess/assets/4681308/03433d02-85e3-40a5-bf3b-ba46efc5c65c)
+
+With that done, you will be able to access a (hopefully) working local set-up of
+GnoChess on <http://localhost:1313>. At the time of writing, this still requires
+access through a token: you can pick one of the ones available in the
+[Makefile](Makefile) at the `run.faucet` section. (Annoying -- it will improve,
+we're working on it!)
+
+There's a rudimentary set up for working with docker also available on our
+[docker-compose file](docker-compose.yml), though for the time being the local
+set up using make is recommended!
+
 ## Workshop tutorial
 
 > A Workshop on Gnochess has been held at Gophercon San Diego on 26/09/2023.
