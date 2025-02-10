@@ -3,6 +3,7 @@
 	<a href="https://gitpod.io/new/#https://github.com/gnolang/gnochess">
 	<img alt="Open in Gitpod" src="https://gitpod.io/button/open-in-gitpod.svg">
 	</a>
+	<a href="https://app.codeanywhere.com/#https://github.com/gnolang/gnochess)"> <img src="https://codeanywhere.com/img/open-in-codeanywhere-btn.svg"></a>
 </h1>
 
 GnoChess is an implementation of an online chess server with Gno. It is used to
